@@ -21,7 +21,7 @@ urlpatterns = [
     path("healthz/", healthcheck, name="healthcheck"),
     # API
     path("api/", include("apps.core.urls")),
-    # path("api/", include("apps.editorial.urls")),  # ÉTAPE 3
+    path("api/", include("apps.editorial.urls")),
     # OpenAPI / Swagger
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

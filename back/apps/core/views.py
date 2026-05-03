@@ -1,4 +1,4 @@
-"""Vues API core (sprint 1 minimal)."""
+"""Vues API core."""
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -16,7 +16,17 @@ def api_root(request):
                 "schema": "/api/schema/",
                 "swagger": "/api/schema/swagger-ui/",
                 "redoc": "/api/schema/redoc/",
-                # ÉTAPE 3 : articles, categories, communes, tags, search
+                "articles": "/api/articles/",
+                "categories": "/api/categories/",
+                "communes": "/api/communes/",
+                "tags": "/api/tags/",
+                "search": "/api/search/?q=...",
+                "auth": {
+                    "csrf": "/api/auth/csrf/",
+                    "login": "/api/auth/login/",
+                    "logout": "/api/auth/logout/",
+                    "me": "/api/auth/me/",
+                },
             },
         }
     )
