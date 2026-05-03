@@ -1,0 +1,106 @@
+[
+  {
+    "model": "editorial.category",
+    "pk": 1,
+    "fields": {
+      "name": "Mémoire vivante",
+      "slug": "memoire-vivante",
+      "description": "Témoignages, archives orales, gens du pays.",
+      "color": "#8B4513",
+      "icon": "BookOpen",
+      "sort_order": 10,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 2,
+    "fields": {
+      "name": "Patrimoine",
+      "slug": "patrimoine",
+      "description": "Monuments, sites historiques, traditions du territoire.",
+      "color": "#B8860B",
+      "icon": "Landmark",
+      "sort_order": 20,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 3,
+    "fields": {
+      "name": "Pêche et traditions",
+      "slug": "peche-et-traditions",
+      "description": "Pêche, manades, gardians, courses camarguaises.",
+      "color": "#2F4F4F",
+      "icon": "Fish",
+      "sort_order": 30,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 4,
+    "fields": {
+      "name": "Portraits",
+      "slug": "portraits",
+      "description": "Habitants, artisans, figures locales.",
+      "color": "#4682B4",
+      "icon": "User",
+      "sort_order": 40,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 5,
+    "fields": {
+      "name": "Reportages",
+      "slug": "reportages",
+      "description": "Enquêtes, immersions, articles de fond.",
+      "color": "#1a4d6e",
+      "icon": "Newspaper",
+      "sort_order": 50,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 6,
+    "fields": {
+      "name": "Archives photos",
+      "slug": "archives-photos",
+      "description": "Photos d'époque, séries thématiques, fonds locaux.",
+      "color": "#696969",
+      "icon": "Image",
+      "sort_order": 60,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 7,
+    "fields": {
+      "name": "Bons plans",
+      "slug": "bons-plans",
+      "description": "Adresses, événements, à voir / à faire.",
+      "color": "#228B22",
+      "icon": "MapPin",
+      "sort_order": 70,
+      "is_active": true
+    }
+  },
+  {
+    "model": "editorial.category",
+    "pk": 8,
+    "fields": {
+      "name": "Tribune libre",
+      "slug": "tribune-libre",
+      "description": "Opinions, débats, paroles de lecteurs.",
+      "color": "#800020",
+      "icon": "MessageSquare",
+      "sort_order": 80,
+      "is_active": true
+    }
+  }
+]

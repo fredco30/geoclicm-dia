@@ -1,0 +1,107 @@
+[
+  {
+    "model": "core.commune",
+    "pk": 1,
+    "fields": {
+      "name": "Le Grau-du-Roi",
+      "slug": "le-grau-du-roi",
+      "insee_code": "30133",
+      "postal_codes": ["30240"],
+      "department": "30",
+      "intercommunalite": "Communauté de Communes Terre de Camargue",
+      "short_description": "Station balnéaire et port de pêche du littoral camarguais.",
+      "is_active": true,
+      "sort_order": 10
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 2,
+    "fields": {
+      "name": "Aigues-Mortes",
+      "slug": "aigues-mortes",
+      "insee_code": "30003",
+      "postal_codes": ["30220"],
+      "department": "30",
+      "intercommunalite": "Communauté de Communes Terre de Camargue",
+      "short_description": "Cité médiévale fortifiée, salins et port fluvial.",
+      "is_active": true,
+      "sort_order": 20
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 3,
+    "fields": {
+      "name": "La Grande-Motte",
+      "slug": "la-grande-motte",
+      "insee_code": "34344",
+      "postal_codes": ["34280"],
+      "department": "34",
+      "intercommunalite": "Communauté d'Agglomération du Pays de l'Or",
+      "short_description": "Architecture pyramidale, station balnéaire emblématique des années 70.",
+      "is_active": true,
+      "sort_order": 30
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 4,
+    "fields": {
+      "name": "Saint-Laurent-d'Aigouze",
+      "slug": "saint-laurent-d-aigouze",
+      "insee_code": "30290",
+      "postal_codes": ["30220"],
+      "department": "30",
+      "intercommunalite": "Communauté de Communes Terre de Camargue",
+      "short_description": "Village de Petite Camargue, traditions taurines.",
+      "is_active": true,
+      "sort_order": 40
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 5,
+    "fields": {
+      "name": "Marsillargues",
+      "slug": "marsillargues",
+      "insee_code": "34150",
+      "postal_codes": ["34590"],
+      "department": "34",
+      "intercommunalite": "Communauté de Communes du Pays de Lunel",
+      "short_description": "Aux portes de la Camargue gardoise, vignobles et marais.",
+      "is_active": true,
+      "sort_order": 50
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 6,
+    "fields": {
+      "name": "Lunel",
+      "slug": "lunel",
+      "insee_code": "34145",
+      "postal_codes": ["34400"],
+      "department": "34",
+      "intercommunalite": "Communauté de Communes du Pays de Lunel",
+      "short_description": "Ville-pivot entre Camargue et Méditerranée, traditions et marchés.",
+      "is_active": true,
+      "sort_order": 60
+    }
+  },
+  {
+    "model": "core.commune",
+    "pk": 7,
+    "fields": {
+      "name": "Vauvert",
+      "slug": "vauvert",
+      "insee_code": "30341",
+      "postal_codes": ["30600"],
+      "department": "30",
+      "intercommunalite": "Communauté de Communes de Petite Camargue",
+      "short_description": "Capitale historique de la Petite Camargue, riziculture et manades.",
+      "is_active": true,
+      "sort_order": 70
+    }
+  }
+]

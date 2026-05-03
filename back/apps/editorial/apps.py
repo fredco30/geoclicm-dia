@@ -1,10 +1,10 @@
 from django.apps import AppConfig
 
 
-class CoreConfig(AppConfig):
+class EditorialConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.core"
-    verbose_name = "Core (utilisateurs, communes, médias)"
+    name = "apps.editorial"
+    verbose_name = "Editorial (articles, catégories, tags)"
 
     def ready(self) -> None:
         from . import signals  # noqa: F401
