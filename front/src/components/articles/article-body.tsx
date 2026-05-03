@@ -13,7 +13,7 @@ type Props = {
  */
 export function ArticleBody({ content }: Props) {
   return (
-    <div className="article-body mx-auto max-w-2xl text-slate-800 leading-relaxed text-lg">
+    <div className="article-body text-slate-800 leading-relaxed text-lg">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

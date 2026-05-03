@@ -63,7 +63,7 @@ export default async function ArticlePage({ params }: Props) {
   const articleUrl = `${siteUrl}/articles/${article.slug}`;
 
   return (
-    <article className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
+    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
       {/* Breadcrumb */}
       <nav className="mb-4 text-sm text-slate-600" aria-label="Fil d'Ariane">
         <Link href="/" className="inline-flex items-center gap-1 hover:text-[#1a4d6e]">
@@ -72,7 +72,7 @@ export default async function ArticlePage({ params }: Props) {
       </nav>
 
       {/* En-tête */}
-      <header className="mb-6 max-w-3xl">
+      <header className="mb-8">
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
           <CategoryBadge category={article.category} />
           {article.commune ? (
@@ -85,17 +85,17 @@ export default async function ArticlePage({ params }: Props) {
           ) : null}
         </div>
 
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+        <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
           {article.title}
         </h1>
 
         {article.chapeau ? (
-          <p className="mt-4 text-lg leading-relaxed text-slate-600 sm:text-xl">
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">
             {article.chapeau}
           </p>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-slate-500">
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
           <span className="inline-flex items-center gap-1.5">
             <User className="h-4 w-4" /> {article.author.full_name}
           </span>
@@ -104,7 +104,7 @@ export default async function ArticlePage({ params }: Props) {
               Publié le {formatDate(article.published_at)}
             </time>
           ) : null}
-          <span>· {article.view_count} lectures</span>
+          <span>{article.view_count} lectures</span>
         </div>
 
         {article.sponsor_disclosure ? (
@@ -129,23 +129,21 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Tags */}
       {article.tags.length > 0 ? (
-        <div className="mx-auto mt-12 max-w-2xl">
-          <div className="flex flex-wrap gap-2">
-            {article.tags.map((t) => (
-              <Link
-                key={t.id}
-                href={`/tags/${t.slug}`}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
-              >
-                #{t.name}
-              </Link>
-            ))}
-          </div>
+        <div className="mt-12 flex flex-wrap gap-2">
+          {article.tags.map((t) => (
+            <Link
+              key={t.id}
+              href={`/tags/${t.slug}`}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+            >
+              #{t.name}
+            </Link>
+          ))}
         </div>
       ) : null}
 
       {/* Partage */}
-      <div className="mx-auto mt-10 max-w-2xl border-t border-slate-200 pt-6">
+      <div className="mt-10 border-t border-slate-200 pt-6">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Partager cet article</h2>
         <ShareButtons url={articleUrl} title={article.title} />
       </div>
