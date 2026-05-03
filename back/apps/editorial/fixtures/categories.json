@@ -9,7 +9,9 @@
       "color": "#8B4513",
       "icon": "BookOpen",
       "sort_order": 10,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -22,7 +24,9 @@
       "color": "#B8860B",
       "icon": "Landmark",
       "sort_order": 20,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -35,7 +39,9 @@
       "color": "#2F4F4F",
       "icon": "Fish",
       "sort_order": 30,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -48,7 +54,9 @@
       "color": "#4682B4",
       "icon": "User",
       "sort_order": 40,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -61,7 +69,9 @@
       "color": "#1a4d6e",
       "icon": "Newspaper",
       "sort_order": 50,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -74,7 +84,9 @@
       "color": "#696969",
       "icon": "Image",
       "sort_order": 60,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -87,7 +99,9 @@
       "color": "#228B22",
       "icon": "MapPin",
       "sort_order": 70,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -100,7 +114,9 @@
       "color": "#800020",
       "icon": "MessageSquare",
       "sort_order": 80,
-      "is_active": true
+      "is_active": true,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   }
 ]

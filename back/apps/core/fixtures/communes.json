@@ -11,7 +11,9 @@
       "intercommunalite": "Communauté de Communes Terre de Camargue",
       "short_description": "Station balnéaire et port de pêche du littoral camarguais.",
       "is_active": true,
-      "sort_order": 10
+      "sort_order": 10,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -26,7 +28,9 @@
       "intercommunalite": "Communauté de Communes Terre de Camargue",
       "short_description": "Cité médiévale fortifiée, salins et port fluvial.",
       "is_active": true,
-      "sort_order": 20
+      "sort_order": 20,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -41,7 +45,9 @@
       "intercommunalite": "Communauté d'Agglomération du Pays de l'Or",
       "short_description": "Architecture pyramidale, station balnéaire emblématique des années 70.",
       "is_active": true,
-      "sort_order": 30
+      "sort_order": 30,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -56,7 +62,9 @@
       "intercommunalite": "Communauté de Communes Terre de Camargue",
       "short_description": "Village de Petite Camargue, traditions taurines.",
       "is_active": true,
-      "sort_order": 40
+      "sort_order": 40,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -71,7 +79,9 @@
       "intercommunalite": "Communauté de Communes du Pays de Lunel",
       "short_description": "Aux portes de la Camargue gardoise, vignobles et marais.",
       "is_active": true,
-      "sort_order": 50
+      "sort_order": 50,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -86,7 +96,9 @@
       "intercommunalite": "Communauté de Communes du Pays de Lunel",
       "short_description": "Ville-pivot entre Camargue et Méditerranée, traditions et marchés.",
       "is_active": true,
-      "sort_order": 60
+      "sort_order": 60,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   },
   {
@@ -101,7 +113,9 @@
       "intercommunalite": "Communauté de Communes de Petite Camargue",
       "short_description": "Capitale historique de la Petite Camargue, riziculture et manades.",
       "is_active": true,
-      "sort_order": 70
+      "sort_order": 70,
+      "created_at": "2026-05-03T20:00:00Z",
+      "updated_at": "2026-05-03T20:00:00Z"
     }
   }
 ]
