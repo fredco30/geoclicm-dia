@@ -68,19 +68,43 @@ Historique des sessions de dev, décisions, blocages et fixes. **Tenu à jour à
 
 ---
 
-### 🟡 ÉTAPE 2 — Modèles éditoriaux complets (en cours, démarrage 2026-05-03)
+### ✅ ÉTAPE 2 — Modèles éditoriaux complets (2026-05-03)
+
+**Réalisations**
+- 5 nouveaux modèles : `Commune`, `Media` (core) + `Category`, `Tag`, `Article` (editorial).
+- Champs anticipés sprints 2-4 : `facebook_*` (sprint 2 publication auto), `sponsor_data` + `sponsor_disclosure` (sprint 3-4), `meta_title` + `meta_description` (SEO), `view_count`.
+- 3 indexes composites Article : (status, -published_at), (category, -published_at), (commune, -published_at).
+- Pillow `apps/core/services/images.py` : redimensionnement auto WebP en 3 tailles (400/800/1600px) via signals post_save sur `Media`, `Commune.cover_image`, `Article.cover_image`.
+- Fixtures seed chargées : 7 communes du territoire + 8 catégories éditoriales.
+- Admin Django minimal fonctionnel (search, filters, prepopulated_fields, raw_id_fields, filter_horizontal, fieldsets repliés pour les sections anticipation).
+
+**Blocages rencontrés et fixes**
+| Blocage | Cause | Fix |
+|---|---|---|
+| `loaddata communes` : NotNullViolation sur `created_at` | `auto_now_add=True` est ignoré par loaddata (mode raw save) | Ajouter `created_at` + `updated_at` explicitement dans les fixtures JSON |
+
+**État de validation**
+- [x] Migrations Django Sprint 1 ÉTAPE 2 appliquées sans erreur (core 0002, editorial 0001)
+- [x] 7 communes + 8 catégories visibles dans Django Admin
+- [x] Articles, Catégories, Tags accessibles dans la section EDITORIAL de l'admin
+
+**Reste à valider** (test manuel par Fred)
+- [ ] Créer un article avec cover_image via admin → vérifier que `mediafiles/articles/2026/05/<nom>_thumbnail.webp`, `_medium.webp`, `_large.webp` sont bien générés.
+
+---
+
+### 🟡 ÉTAPE 3 — API REST DRF (en cours, démarrage 2026-05-03)
 
 **À faire**
-- Modèles : `Commune`, `Media`, `Category`, `Tag`, `Article` avec champs anticipés sprints 2-4 (facebook_*, sponsor, *).
-- Index DB pour les requêtes courantes (status+published_at, category+published_at).
-- Pillow : redimensionnement auto en 3 tailles à l'upload (thumbnail 400px, medium 800px, large 1600px).
-- Fixtures seed : 7 communes du territoire + 8 catégories éditoriales.
-- Admin Django minimal (juste fonctionnel pour seed et debug).
-
-**Critère de validation**
-- `python manage.py migrate` applique toutes les nouvelles migrations sans erreur.
-- Via Django Admin, on peut créer une commune, une catégorie, un article avec image, et l'image est redimensionnée en 3 tailles dans `mediafiles/`.
-- Fixtures chargées : `python manage.py loaddata communes catégories` rempli la base.
+- Endpoints lecture publique : `GET /api/articles/`, `/api/articles/<slug>/`, `/api/categories/`, `/api/communes/`, `/api/tags/`, `/api/search/?q=`.
+- Endpoints écriture pour back-office : `POST /api/articles/`, `PATCH /api/articles/<id>/`, `DELETE`, upload Media.
+- Auth : DRF Token + cookie HttpOnly (compatible SSR Next.js).
+- Permissions : reader = read-only, editor/admin = écriture, propriétaire-only sur édition.
+- Filtres django-filter : par category, commune, tag, date, status, is_featured.
+- Recherche full-text PostgreSQL via SearchVector + pg_trgm.
+- Pagination : 20 articles/page.
+- Cache HTTP 60s sur les listes publiques.
+- Swagger auto-généré accessible sur `/api/schema/swagger-ui/`.
 
 ---
 
