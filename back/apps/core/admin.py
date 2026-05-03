@@ -6,6 +6,8 @@ Pas besoin d'investir dans l'UX de cet admin.
 """
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.gis.admin import GISModelAdmin
+from django.contrib.gis.forms import OSMWidget
 
 from .models import Commune, Media, User
 
@@ -31,17 +33,25 @@ class UserAdmin(DjangoUserAdmin):
 
 
 @admin.register(Commune)
-class CommuneAdmin(admin.ModelAdmin):
+class CommuneAdmin(GISModelAdmin):
     list_display = ("name", "insee_code", "department", "is_active", "sort_order")
     list_filter = ("department", "is_active")
     search_fields = ("name", "insee_code")
     prepopulated_fields = {"slug": ("name",)}
     ordering = ("sort_order", "name")
+    gis_widget = OSMWidget
+    gis_widget_kwargs = {
+        "attrs": {"default_lat": 43.55, "default_lon": 4.15, "default_zoom": 11}
+    }
 
 
 @admin.register(Media)
-class MediaAdmin(admin.ModelAdmin):
+class MediaAdmin(GISModelAdmin):
     list_display = ("title", "file", "credit", "uploaded_by", "created_at")
     search_fields = ("title", "alt_text", "credit")
     raw_id_fields = ("uploaded_by",)
     readonly_fields = ("created_at",)
+    gis_widget = OSMWidget
+    gis_widget_kwargs = {
+        "attrs": {"default_lat": 43.55, "default_lon": 4.15, "default_zoom": 11}
+    }
