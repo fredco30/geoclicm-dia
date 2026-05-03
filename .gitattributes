@@ -1,0 +1,33 @@
+# Normaliser les fins de ligne en LF (cible : VPS Linux)
+* text=auto eol=lf
+
+# Fichiers explicitement texte
+*.py    text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.ini   text eol=lf
+*.sh    text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.scss  text eol=lf
+*.sql   text eol=lf
+.env*   text eol=lf
+
+# Fichiers binaires (pas de conversion)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.tar.gz binary

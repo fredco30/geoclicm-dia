@@ -1,0 +1,68 @@
+# Environnement et secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+mediafiles/
+staticfiles/
+local_settings.py
+*.log
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+.pnpm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# next-pwa généré
+front/public/sw.js
+front/public/sw.js.map
+front/public/workbox-*.js
+front/public/workbox-*.js.map
+front/public/worker-*.js
+front/public/fallback-*.js
+
+# OS / Editeurs
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+
+# Backups éventuels
+backups/
+*.bak
+*.dump
+
+# Si tu ajoutes un dossier references/ plus tard
+references/

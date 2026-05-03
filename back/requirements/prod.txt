@@ -1,0 +1,6 @@
+-r base.txt
+
+# --- Serveur prod ---
+gunicorn>=23.0,<24.0
+whitenoise>=6.7,<7.0               # static files servis par Django (simple, pas de Nginx static)
+sentry-sdk>=2.14,<3.0              # monitoring erreurs (optionnel sprint 1, recommandé)

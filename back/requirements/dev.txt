@@ -1,0 +1,12 @@
+-r base.txt
+
+# --- Outils dev ---
+django-extensions>=3.2,<4.0        # shell_plus, runserver_plus, etc.
+ipython>=8.27,<9.0                 # shell interactif
+ruff>=0.6,<1.0                     # lint + format
+black>=24.10,<25.0                 # formatter (cohérence avec Ruff)
+
+# --- Tests ---
+pytest>=8.3,<9.0
+pytest-django>=4.9,<5.0
+factory-boy>=3.3,<4.0              # fixtures de test (pas de factories métier en sprint 1, ok pour tests)

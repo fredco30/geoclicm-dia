@@ -1,0 +1,34 @@
+# geoclicMédia — back / dépendances communes
+# Pinning sur versions majeures stables, mises à jour mineures libres
+
+# --- Django core ---
+Django>=5.1,<5.2
+django-environ>=0.11,<1.0          # lecture .env, override par env vars
+psycopg[binary]>=3.2,<4.0          # driver PostgreSQL moderne (remplace psycopg2)
+
+# --- DRF + extensions ---
+djangorestframework>=3.15,<4.0
+django-filter>=24.3,<25.0          # filtres list views
+drf-spectacular>=0.27,<1.0         # OpenAPI/Swagger auto
+django-cors-headers>=4.4,<5.0
+
+# --- GIS ---
+# PostGIS côté DB, GDAL/GEOS côté Python via django.contrib.gis
+# Sur Ubuntu: apt install gdal-bin libgdal-dev
+# Sur Windows: GDAL/GEOS bundled dans OSGeo4W ou via wheels conda
+
+# --- Médias / images ---
+Pillow>=10.4,<12.0                 # redimensionnement images, JPEG/PNG/WebP
+
+# --- Async / queues ---
+celery>=5.4,<6.0
+redis>=5.0,<6.0
+django-celery-beat>=2.7,<3.0       # tâches périodiques (sprint 2 pour FB)
+
+# --- Auth / sécurité ---
+django-otp>=1.5,<2.0               # 2FA admin (TOTP)
+qrcode[pil]>=7.4,<8.0              # affichage QR code 2FA dans admin
+
+# --- Utils ---
+python-slugify>=8.0,<9.0           # slugs propres avec translittération unicode
+markdown>=3.7,<4.0                 # rendu corps article (preview admin)
