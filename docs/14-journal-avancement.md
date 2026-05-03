@@ -93,18 +93,55 @@ Historique des sessions de dev, décisions, blocages et fixes. **Tenu à jour à
 
 ---
 
-### 🟡 ÉTAPE 3 — API REST DRF (en cours, démarrage 2026-05-03)
+### ✅ ÉTAPE 3 — API REST DRF (2026-05-03)
+
+**Réalisations**
+- Sérialiseurs DRF 3 niveaux : `ArticleListSerializer`, `ArticleDetailSerializer`, `ArticleWriteSerializer`. Plus `CommuneSerializer`, `MediaSerializer`, `CategorySerializer`, `TagSerializer`, `AuthorSerializer`.
+- `ImageVariantsField` custom : retourne `{thumbnail, medium, large, original}` pour chaque image.
+- Endpoints lecture publique (anon, sans auth) :
+  - `GET /api/articles/?category=&commune=&tag=&department=&article_type=&is_featured=&published_after=&published_before=`
+  - `GET /api/articles/<slug>/` (incrémente view_count anon)
+  - `GET /api/categories/`, `/api/communes/`, `/api/tags/` (sans pagination)
+  - `GET /api/search/?q=...` — full-text PG via `SearchVector("title"=A, "chapeau"=B, "body"=C, config="french")`.
+- Auth back-office (Session Django, cookie HttpOnly, CSRF protégé) :
+  - `GET /api/auth/csrf/` → pose csrftoken
+  - `POST /api/auth/login/` → session
+  - `POST /api/auth/logout/`
+  - `GET /api/auth/me/` → profil + can_publish + role
+- Permissions custom : `IsEditorOrAdmin` (lecture libre, écriture role-gated) + `IsAuthorOrReadOnly` (objet-level, admin bypass).
+- Filtres django-filter : `ArticleFilter` avec slugs au lieu d'IDs (plus parlant côté URL).
+- Cache `cache_page(60)` sur le viewset de recherche.
+- Swagger auto-généré sur `/api/schema/swagger-ui/`.
+
+**Anticipation** : passage en service systemd `geoclicmedia-django.service` (au lieu de tmux/runserver foreground). Anticipe ÉTAPE 6, libère Fred du tmux.
+
+**Service systemd** (à remplacer par gunicorn ÉTAPE 6) :
+- WorkingDirectory : `/var/www/geoclicmedia/back`
+- ExecStart : `.venv/bin/python manage.py runserver 0.0.0.0:8002`
+- Restart : on-failure
+- Logs : `/var/log/geoclicmedia-django.log`
+- Commande de redéploiement code : `cd /var/www/geoclicmedia && git pull && sudo systemctl restart geoclicmedia-django`
+
+**État de validation**
+- [x] Service systemd `active (running)`
+- [x] `/api/categories/` retourne 8 catégories en JSON
+- [x] `/api/articles/` retourne l'article test publié
+- [x] Swagger UI accessible sur `/api/schema/swagger-ui/`
+
+---
+
+### 🟡 ÉTAPE 4 — Init Next.js 15 + PWA (en cours, démarrage 2026-05-03)
 
 **À faire**
-- Endpoints lecture publique : `GET /api/articles/`, `/api/articles/<slug>/`, `/api/categories/`, `/api/communes/`, `/api/tags/`, `/api/search/?q=`.
-- Endpoints écriture pour back-office : `POST /api/articles/`, `PATCH /api/articles/<id>/`, `DELETE`, upload Media.
-- Auth : DRF Token + cookie HttpOnly (compatible SSR Next.js).
-- Permissions : reader = read-only, editor/admin = écriture, propriétaire-only sur édition.
-- Filtres django-filter : par category, commune, tag, date, status, is_featured.
-- Recherche full-text PostgreSQL via SearchVector + pg_trgm.
-- Pagination : 20 articles/page.
-- Cache HTTP 60s sur les listes publiques.
-- Swagger auto-généré accessible sur `/api/schema/swagger-ui/`.
+- `create-next-app` avec TypeScript strict + Tailwind + App Router + src dir.
+- shadcn/ui init + composants de base (button, card, badge, input, separator).
+- `@ducanh2912/next-pwa` configuré avec service worker.
+- Manifest PWA dans `app/manifest.ts`.
+- Icônes PWA générées (192, 384, 512, maskable).
+- Layout principal mobile-first avec navigation.
+- Footer avec mentions légales placeholder.
+- Configuration ESLint + Prettier par défaut Next 15.
+- Variables d'env : `NEXT_PUBLIC_API_URL=http://135.125.159.142:8002`.
 
 ---
 
