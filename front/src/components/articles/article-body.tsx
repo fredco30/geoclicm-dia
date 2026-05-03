@@ -54,7 +54,7 @@ export function ArticleBody({ content }: Props) {
             <img
               src={src as string}
               alt={alt || ""}
-              className="my-6 w-full rounded-xl shadow-sm"
+              className="mx-auto my-6 block max-h-[70vh] w-auto max-w-full rounded-xl shadow-sm"
               loading="lazy"
             />
           ),

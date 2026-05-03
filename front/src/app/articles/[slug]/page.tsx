@@ -116,12 +116,14 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Cover */}
       {article.cover_image?.large ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={article.cover_image.large}
-          alt={article.title}
-          className="mb-10 w-full rounded-2xl shadow-sm"
-        />
+        <div className="mb-10 aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={article.cover_image.large}
+            alt={article.title}
+            className="h-full w-full object-cover"
+          />
+        </div>
       ) : null}
 
       {/* Corps */}
