@@ -102,8 +102,22 @@ back/
 - **Migrations** : un commit = une migration cohérente, jamais squashées sans raison
 - **Commits** : format `<scope>: <verbe à l'infinitif>`, ex : `core: add User.role field`
 
-## Sprint 1 — limitations connues
+## Workflow dev (édit local Windows, runtime VPS)
 
-- `django.contrib.gis` désactivé (pas de GDAL Windows). Coords en `DecimalField` en attendant Sprint 2.
+```
+Windows                             VPS OVH 135.125.159.142
+───────                             ────────────────────────
+1. Édite le code (VS Code)
+2. git push GitHub          ──────► 3. cd /var/www/geoclicmedia/back && git pull
+                                    4. .venv/bin/python manage.py migrate
+                                    5. (runserver tourne dans tmux, ou systemd)
+                                    6. Site live 24/7
+```
+
+Le PC peut être éteint, le site reste accessible.
+
+## Sprint 1 — notes
+
+- Runtime 100% sur le VPS (GDAL/PostGIS dispos, dev = prod).
 - Pas de tests automatisés exhaustifs : juste la couverture des endpoints publics.
 - Pas de pre-commit hooks (sprint 1 = lean).

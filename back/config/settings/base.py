@@ -31,7 +31,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.gis",  # Activé en Sprint 2 quand GDAL sera dispo (VPS) — voir README
+    "django.contrib.gis",  # PostGIS / champs géo (GDAL installé sur VPS Linux)
     "django.contrib.postgres",  # SearchVector, ArrayField, etc.
 ]
 
@@ -86,13 +86,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # --- Base de données ---
-# Sprint 1 : PostgreSQL standard (sans PostGIS) pour compatibilité dev Windows.
-# Sprint 2 : passage à postgis dès que GDAL est dispo (VPS) ou dev SSH-first.
-# La DB elle-même (sur le VPS) AURA l'extension postgis activée dès le départ —
-# c'est juste le backend Django qu'on garde en "postgresql" en sprint 1.
+# PostgreSQL + PostGIS via django.contrib.gis.db.backends.postgis.
+# Tout le runtime tourne sur le VPS Linux où GDAL est installé.
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
