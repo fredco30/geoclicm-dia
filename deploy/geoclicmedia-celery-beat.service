@@ -1,0 +1,21 @@
+[Unit]
+Description=geoclicMedia Celery beat (scheduled tasks)
+After=network.target redis-server.service postgresql.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/geoclicmedia/back
+Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
+ExecStart=/var/www/geoclicmedia/back/.venv/bin/celery -A config.celery beat \
+    --loglevel=info \
+    --scheduler django_celery_beat.schedulers:DatabaseScheduler
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/geoclicmedia-celery-beat.log
+StandardError=append:/var/log/geoclicmedia-celery-beat.log
+
+[Install]
+WantedBy=multi-user.target

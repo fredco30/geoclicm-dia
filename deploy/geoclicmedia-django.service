@@ -1,0 +1,35 @@
+[Unit]
+Description=geoclicMedia Django (gunicorn) — production
+After=network.target postgresql.service redis-server.service
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/geoclicmedia/back
+Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
+ExecStart=/var/www/geoclicmedia/back/.venv/bin/gunicorn config.wsgi:application \
+    --bind 127.0.0.1:8002 \
+    --workers 3 \
+    --threads 2 \
+    --timeout 60 \
+    --graceful-timeout 30 \
+    --access-logfile /var/log/geoclicmedia-django-access.log \
+    --error-logfile /var/log/geoclicmedia-django-error.log
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/www/geoclicmedia /var/log
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

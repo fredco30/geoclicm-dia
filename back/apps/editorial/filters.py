@@ -15,6 +15,7 @@ class ArticleFilter(django_filters.FilterSet):
     department = django_filters.CharFilter(field_name="commune__department")
     article_type = django_filters.CharFilter(field_name="article_type")
     is_featured = django_filters.BooleanFilter(field_name="is_featured")
+    status = django_filters.CharFilter(field_name="status")  # back-office
     published_after = django_filters.IsoDateTimeFilter(
         field_name="published_at", lookup_expr="gte"
     )
@@ -26,6 +27,6 @@ class ArticleFilter(django_filters.FilterSet):
         model = Article
         fields = (
             "category", "commune", "tag", "department",
-            "article_type", "is_featured",
+            "article_type", "is_featured", "status",
             "published_after", "published_before",
         )

@@ -36,3 +36,12 @@ LOGGING = {
 
 # CORS large en dev
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# CSRF — accepter les origins front en dev pour les POST/PATCH/DELETE depuis Next.js
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "http://135.125.159.142:3001",
+    "https://media.geoclic.fr",
+]

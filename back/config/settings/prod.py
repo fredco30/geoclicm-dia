@@ -4,6 +4,12 @@ from .base import MIDDLEWARE, env
 
 DEBUG = False
 
+# CSRF trusted origins — nécessaire pour les form POST depuis le front sur autre origin
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=["https://media.geoclic.fr"],
+)
+
 # --- HTTPS / sécurité ---
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True

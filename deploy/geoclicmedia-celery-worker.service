@@ -1,0 +1,21 @@
+[Unit]
+Description=geoclicMedia Celery worker
+After=network.target redis-server.service postgresql.service
+Requires=redis-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/var/www/geoclicmedia/back
+Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
+ExecStart=/var/www/geoclicmedia/back/.venv/bin/celery -A config.celery worker \
+    --loglevel=info \
+    --concurrency=2
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/geoclicmedia-celery-worker.log
+StandardError=append:/var/log/geoclicmedia-celery-worker.log
+
+[Install]
+WantedBy=multi-user.target

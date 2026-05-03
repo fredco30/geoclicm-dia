@@ -130,18 +130,144 @@ Historique des sessions de dev, décisions, blocages et fixes. **Tenu à jour à
 
 ---
 
-### 🟡 ÉTAPE 4 — Init Next.js 15 + PWA (en cours, démarrage 2026-05-03)
+### ✅ ÉTAPE 4 — Init Next.js 16 + PWA (2026-05-03)
 
-**À faire**
-- `create-next-app` avec TypeScript strict + Tailwind + App Router + src dir.
-- shadcn/ui init + composants de base (button, card, badge, input, separator).
-- `@ducanh2912/next-pwa` configuré avec service worker.
-- Manifest PWA dans `app/manifest.ts`.
-- Icônes PWA générées (192, 384, 512, maskable).
-- Layout principal mobile-first avec navigation.
-- Footer avec mentions légales placeholder.
-- Configuration ESLint + Prettier par défaut Next 15.
-- Variables d'env : `NEXT_PUBLIC_API_URL=http://135.125.159.142:8002`.
+**Réalisations**
+- `create-next-app` Next.js **16.2.4** (et non 15) + React 19 + Tailwind 4 + TypeScript strict + App Router + src dir.
+- @ducanh2912/next-pwa 10.2.9, lucide-react, react-markdown + remark-gfm installés.
+- next.config.ts : PWA configurée (dest: public, register, cacheOnFrontEndNav, disable en dev).
+- Manifest PWA via `app/manifest.ts` (theme #1a4d6e, lang fr, 3 icônes).
+- Icônes PWA générées via Pillow (gradient + lettre "g") : 192, 512, maskable, apple-touch.
+- Layout racine + Header (nav mobile-first) + Footer (rubriques + territoire + légal).
+- Page d'accueil avec hero (pattern letterbox + blur background pour préserver toutes orientations photo) + chips catégories cliquables + grille derniers articles.
+- Composants ArticleCard, CategoryBadge.
+- Client API typé `lib/api.ts` (apiGet ISR-aware, apiFetch auth, auth.{login,logout,me}).
+- Types TS miroirs des serializers DRF (`types/api.ts`).
+- Service systemd `geoclicmedia-next.service` sur port 3001.
+
+**Adaptations Next 16 (breaking 15→16)**
+- `params` et `searchParams` sont `Promise` — toujours `await`.
+- `cookies()` et `headers()` async — toujours `await`.
+- Turbopack par défaut en dev, **build forcé en `--webpack`** car next-pwa injecte une config webpack incompatible Turbopack.
+- `fetch` n'est plus cached par défaut → ISR explicite via `{ next: { revalidate } }`.
+
+**Blocages rencontrés et fixes**
+| Blocage | Cause | Fix |
+|---|---|---|
+| Build webpack/turbopack mix-up | next-pwa injecte webpack, Next 16 par défaut Turbopack | Script build = `next build --webpack` |
+| `Facebook` icon import error lucide-react 1.14 | Icônes de marques retirées (licence) | Remplacer par `Share2` + `MessageSquare` + label texte |
+| Build VPS lent silencieux | Webpack + 7.6Gi RAM modeste | `NODE_OPTIONS=--max-old-space-size=4096` + patience |
+
+---
+
+### ✅ ÉTAPE 5a — Pages publiques (2026-05-03)
+
+**Réalisations**
+- `/articles/[slug]` : détail ISR 1h, generateMetadata avec OG + Twitter card + auteur + publishedTime + image, breadcrumb, badge cat, commune, chapeau, cover orientation préservée (max-h 600), ArticleBody markdown stylé (h1-h3, p, a, ul, ol, blockquote, img, code, pre), tags, ShareButtons.
+- `/categories/[slug]` : listing paginé ISR 10min, header coloré (chip catégorie + description).
+- `/communes/[slug]` : listing paginé par commune (INSEE, département, intercommunalité).
+- `/recherche?q=...` : page dynamique force-dynamic, formulaire GET, full-text PostgreSQL.
+- 5 pages légales : /mentions-legales, /politique-confidentialite (RGPD + Meta), /cgu, /contact, /suppression-donnees (URL obligatoire pour Meta App Review).
+- Composants : ArticleBody (markdown styling sans @tailwindcss/typography), ShareButtons (FB+WA+copy, client component), Pagination (ellipsis ±2 autour current), LegalPage (layout commun).
+
+**Blocages rencontrés et fixes**
+| Blocage | Cause | Fix |
+|---|---|---|
+| Images invisibles côté front | URLs relatives (`/media/...`) interprétées sur port front 3001 | `ImageVariantsField` retourne URLs absolues via `request.build_absolute_uri` |
+| `MEDIA_URL=http://...` cassait static | `static()` Django attend URL relative pour la route dev | Revert à `MEDIA_URL=/media/`, NEXT_PUBLIC_API_URL fait que Next fetch via IP publique → Django build URLs avec ce host |
+| Cover article massive en hauteur | aspect-[16/9] forcé + photo portrait → crop massif | Page article : pas d'aspect ratio, max-h-[600px] + w-auto + mx-auto (préserve orientation). Hero accueil : pattern letterbox + blur (background image cover blurred + foreground image contain). |
+| Filtre catégorie ne fonctionne pas | `filter_backends = (OrderingFilter,)` écrasait DEFAULT_FILTER_BACKENDS | Override explicite : `filter_backends = (DjangoFilterBackend, OrderingFilter)` |
+| Tous les chips catégorie d'accueil cliquaient sur le même article | `after:absolute after:inset-0` du Link dans ArticleCard se positionnait par rapport au plus proche `relative`, qui était trop haut → couvrait toute la viewport | Ajouter `relative` à `<article>` parent dans ArticleCard |
+
+---
+
+### ✅ ÉTAPE Bonus — Seed 4 articles avec covers générées (2026-05-04)
+
+**Réalisations**
+- Management command `python manage.py seed_articles [--force]`.
+- Génère 4 articles éditoriaux variés :
+  - "Les saliniers d'Aigues-Mortes racontent leurs étés de braise" (Mémoire vivante / Aigues-Mortes / portrait)
+  - "La Grande-Motte célèbre 50 ans d'architecture pyramidale" (Patrimoine / La Grande-Motte / dossier / **is_featured=True**)
+  - "Une nuit avec les chalutiers du Grau-du-Roi" (Pêche et traditions / Le Grau-du-Roi / reportage)
+  - "Marc, gardian de la dernière manade traditionnelle de Petite Camargue" (Portraits / Vauvert / portrait)
+- Cover images générées via Pillow : gradient diagonal aux couleurs de la catégorie + titre wrap blanc avec ombre.
+- Tags créés à la volée (sel, tradition, agriculture, climat, architecture, Balladur, pêche, chalutier, gardian, manade, etc.).
+- Signal post_save génère les 3 versions WebP automatiquement.
+
+---
+
+### ✅ ÉTAPE 5b — Back-office custom front (2026-05-04 nuit)
+
+**Réalisations Backend**
+- `MediaViewSet` (POST /api/media/) : upload multipart, auth editor/admin requise, signal post_save génère 3 versions WebP.
+- `ArticleListSerializer` enrichi avec `status` + `updated_at` pour dashboard.
+- `ArticleFilter` accepte `?status=draft|scheduled|published|archived`.
+- `CSRF_TRUSTED_ORIGINS` configuré dev (localhost:3001 + IP publique:3001) et prod (media.geoclic.fr).
+
+**Réalisations Frontend**
+- Composants UI : `Button`, `Input`, `Textarea`, `Label`, `Select` (Tailwind, sans dépendance shadcn).
+- Helpers auth server : `getCurrentUser()`, `getCookieHeader()` (cookies forwardés vers Django).
+- Layouts : `/admin/layout.tsx` (root, dynamic, robots noindex) + `/admin/(protected)/layout.tsx` (auth check + sidebar).
+- Pages :
+  - `/admin/login` — formulaire login + redirect vers /admin si déjà connecté.
+  - `/admin` — dashboard avec table de tous les articles (drafts + publiés + archivés), badge status coloré, actions Voir/Éditer.
+  - `/admin/articles/new` — création nouvel article.
+  - `/admin/articles/[slug]/edit` — édition avec data fetched côté serveur (cookie auth).
+- Composants admin :
+  - `LoginForm` (client component, gestion CSRF auto).
+  - `LogoutButton` (client component).
+  - `ArticleForm` (création + édition unifiés, sticky header, sidebar paramètres, sponsor disclosure, SEO meta).
+  - `MarkdownEditor` (tabs Édition/Aperçu, lien vers cheat sheet, rendu live identique au rendu public).
+  - `ImageUploader` (preview, retirer image, accepte image/*).
+
+**Pattern auth utilisé**
+- Session Django (cookie HttpOnly `sessionid`) + CSRF (cookie `csrftoken`).
+- Front Next.js : `apiFetch` avec `credentials: 'include'` + header `X-CSRFToken` extrait du cookie.
+- Layout protégé fait un `fetch /api/auth/me/` avec `Cookie:` header forwardé → redirect vers /admin/login si null ou pas can_publish.
+
+---
+
+### 🟡 ÉTAPE 6 — Préparation déploiement prod (fichiers prêts, 2026-05-04 nuit)
+
+**Fichiers prêts dans `deploy/`**
+- `geoclicmedia-django.service` — gunicorn 3 workers + 2 threads, hardening systemd (NoNewPrivileges, ProtectSystem, PrivateTmp).
+- `geoclicmedia-celery-worker.service` — Celery worker 2 concurrency.
+- `geoclicmedia-celery-beat.service` — Celery beat avec DatabaseScheduler.
+- `nginx-media.geoclic.fr.conf` — vhost HTTPS + HSTS + security headers + reverse proxy Django/Next + cache static + media servis directement par Nginx.
+- `backup-pg.sh` — script bash backup quotidien PG → /var/backups/geoclicmedia/, rétention 14 jours, compressé .sql.gz.
+- `deploy-prod.sh` — script d'installation complet (systemd + Nginx + Let's Encrypt + cron backup) idempotent.
+
+**À lancer manuellement par Fred** (une seule fois) :
+```bash
+sudo bash /var/www/geoclicmedia/deploy/deploy-prod.sh
+```
+
+**Pré-requis avant ce script** :
+- DNS `media.geoclic.fr` → `135.125.159.142` (configuré chez OVH ?)
+- Service `geoclicmedia-next` actif (déjà OK)
+- Build front à jour (`npm run build` dans `front/`)
+- Email contact valide dans le script (modifiable)
+
+---
+
+## Récap final Sprint 1
+
+| Étape | Statut | Anticipations |
+|---|---|---|
+| 1 — Fondations | ✅ | systemd Django dès Sprint 1 ÉTAPE 3 |
+| 2 — Modèles + Pillow | ✅ | Champs FB/sponsor anticipés |
+| 3 — API DRF + auth | ✅ | Endpoints écriture + perms par rôle |
+| 4 — Next.js + PWA + déploiement | ✅ | Service systemd Next.js |
+| 5a — Pages publiques | ✅ | OG/Twitter cards, ISR, full-text search |
+| 5b — Back-office custom | ✅ | Markdown editor + upload images |
+| 6 — Déploiement prod final | 🟡 | Tout prêt, juste à lancer le script |
+| 7 — Polish | ⏳ | Lighthouse, doc rédactrice, sitemap |
+
+**Au-dessus du brief initial** :
+- Service systemd dès Sprint 1 (au lieu de tmux puis ÉTAPE 6).
+- Script de déploiement automatisé idempotent.
+- 4 articles seed avec covers générées (le brief en demandait 3-4).
+- Pattern letterbox + blur pour gérer toutes orientations photos.
 
 ---
 

@@ -64,8 +64,10 @@ export type ArticleListItem = {
   commune: string | null;
   article_type: ArticleType;
   is_featured: boolean;
+  status: ArticleStatus;
   author: Author;
   published_at: string | null;
+  updated_at: string;
 };
 
 export type ArticleDetail = {

@@ -117,7 +117,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
         fields = (
             "id", "title", "slug", "chapeau", "cover_image",
             "category", "commune", "article_type", "is_featured",
-            "author", "published_at",
+            "status", "author", "published_at", "updated_at",
         )
 
 
