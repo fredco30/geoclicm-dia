@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+:root {
+  --color-camargue: #1a4d6e;
+  --color-camargue-light: #2c6a93;
+  --color-camargue-dark: #133a55;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --color-camargue: var(--color-camargue);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Pour les éléments qui doivent dépasser le conteneur (hero plein écran, etc.) */
+.full-bleed {
+  width: 100vw;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}

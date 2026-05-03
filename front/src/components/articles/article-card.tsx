@@ -1,0 +1,56 @@
+import Link from "next/link";
+import type { ArticleListItem } from "@/types/api";
+import { CategoryBadge } from "./category-badge";
+import { formatDate } from "@/lib/utils";
+
+export function ArticleCard({ article }: { article: ArticleListItem }) {
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+      <Link href={`/articles/${article.slug}`} className="block">
+        <div className="relative aspect-[16/10] bg-slate-100">
+          {article.cover_image?.medium ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={article.cover_image.medium}
+              alt={article.title}
+              className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-100" />
+          )}
+        </div>
+      </Link>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-center gap-2 text-xs">
+          <CategoryBadge category={article.category} />
+          {article.commune ? (
+            <span className="text-slate-500">· {article.commune}</span>
+          ) : null}
+        </div>
+        <h3 className="text-lg font-semibold leading-snug text-slate-900">
+          <Link
+            href={`/articles/${article.slug}`}
+            className="after:absolute after:inset-0 hover:text-[#1a4d6e]"
+          >
+            {article.title}
+          </Link>
+        </h3>
+        {article.chapeau ? (
+          <p className="line-clamp-3 text-sm text-slate-600">{article.chapeau}</p>
+        ) : null}
+        <div className="mt-auto flex items-center gap-2 pt-2 text-xs text-slate-500">
+          <span>{article.author.full_name}</span>
+          {article.published_at ? (
+            <>
+              <span>·</span>
+              <time dateTime={article.published_at}>
+                {formatDate(article.published_at)}
+              </time>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
