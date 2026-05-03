@@ -7,12 +7,12 @@ ViewSets DRF pour l'API editorial.
 from __future__ import annotations
 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-from django.db.models import F, Q
+from django.db.models import F
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -44,9 +44,10 @@ class ArticleViewSet(viewsets.ModelViewSet):
     lookup_field = "slug"
     permission_classes = (IsEditorOrAdmin, IsAuthorOrReadOnly)
     filterset_class = ArticleFilter
-    filter_backends = (
-        filters.OrderingFilter,
-    )  # django-filter ajouté via DEFAULT_FILTER_BACKENDS, OrderingFilter explicite ici
+    # Override explicite : DjangoFilterBackend (pour ?category=, ?commune=, etc.) +
+    # OrderingFilter (pour ?ordering=). Les DEFAULT_FILTER_BACKENDS sont écrasés
+    # quand on définit filter_backends ici, donc on les liste tous.
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering_fields = ("published_at", "created_at", "view_count")
     ordering = ("-published_at",)
 
