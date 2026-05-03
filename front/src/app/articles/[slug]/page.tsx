@@ -114,16 +114,14 @@ export default async function ArticlePage({ params }: Props) {
         ) : null}
       </header>
 
-      {/* Cover */}
+      {/* Cover — orientation préservée, hauteur max 600px */}
       {article.cover_image?.large ? (
-        <div className="mb-10 aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={article.cover_image.large}
-            alt={article.title}
-            className="h-full w-full object-cover"
-          />
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={article.cover_image.large}
+          alt={article.title}
+          className="mx-auto mb-10 block max-h-[600px] w-auto max-w-full rounded-2xl shadow-sm"
+        />
       ) : null}
 
       {/* Corps */}
