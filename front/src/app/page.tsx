@@ -18,7 +18,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
-      {/* HERO À LA UNE */}
+      {/* HERO À LA UNE — pattern letterbox + blur (préserve toutes orientations) */}
       {featured ? (
         <Link
           href={`/articles/${featured.slug}`}
@@ -26,23 +26,35 @@ export default async function HomePage() {
         >
           <div className="relative aspect-[16/9] sm:aspect-[2/1]">
             {featured.cover_image?.large ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={featured.cover_image.large}
-                alt={featured.title}
-                className="absolute inset-0 h-full w-full object-cover opacity-80 transition group-hover:opacity-90"
-              />
+              <>
+                {/* Fond : image en cover + blur + dim → ambiance */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={featured.cover_image.large}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl brightness-50"
+                />
+                {/* Avant-plan : image entière en contain, jamais cropée */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={featured.cover_image.large}
+                  alt={featured.title}
+                  className="absolute inset-0 h-full w-full object-contain transition group-hover:opacity-95"
+                />
+              </>
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-[#1a4d6e] to-[#2c6a93]" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            {/* Gradient bas pour lisibilité du titre */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
               <CategoryBadge category={featured.category} className="mb-3" />
-              <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-4xl">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight drop-shadow-md sm:text-4xl">
                 {featured.title}
               </h1>
               {featured.chapeau ? (
-                <p className="mt-2 max-w-2xl text-sm text-slate-200 sm:text-base">
+                <p className="mt-2 max-w-2xl text-sm text-slate-100 drop-shadow sm:text-base">
                   {featured.chapeau}
                 </p>
               ) : null}
