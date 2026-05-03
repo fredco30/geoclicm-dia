@@ -21,16 +21,30 @@ from .models import Article, Category, Tag
 # ============================================================================
 
 class ImageVariantsField(serializers.Field):
-    """Renvoie un dict {thumbnail, medium, large, original} d'URLs."""
+    """Renvoie un dict {thumbnail, medium, large, original} d'URLs absolues.
+
+    Utilise request.build_absolute_uri pour préfixer le scheme + host (utile
+    quand le front et le back sont sur des origins différents — dev local,
+    cross-domain, etc.).
+    """
 
     def to_representation(self, value):
         if not value or not value.name:
             return None
+        request = self.context.get("request") if hasattr(self, "context") else None
+
+        def absolutize(url: str | None) -> str | None:
+            if not url:
+                return None
+            if request is not None:
+                return request.build_absolute_uri(url)
+            return url
+
         return {
-            "thumbnail": get_resized_url(value, "thumbnail"),
-            "medium": get_resized_url(value, "medium"),
-            "large": get_resized_url(value, "large"),
-            "original": value.url,
+            "thumbnail": absolutize(get_resized_url(value, "thumbnail")),
+            "medium": absolutize(get_resized_url(value, "medium")),
+            "large": absolutize(get_resized_url(value, "large")),
+            "original": absolutize(value.url),
         }
 
 
