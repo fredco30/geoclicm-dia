@@ -5,7 +5,7 @@ import { formatDate } from "@/lib/utils";
 
 export function ArticleCard({ article }: { article: ArticleListItem }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
       <Link href={`/articles/${article.slug}`} className="block">
         <div className="relative aspect-[16/10] bg-slate-100">
           {article.cover_image?.medium ? (
