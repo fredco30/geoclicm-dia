@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
+import { BusinessMiniMap } from "@/components/businesses/business-mini-map";
+import { BusinessNavActions } from "@/components/businesses/business-nav-actions";
 
 export const revalidate = 600;
 
@@ -175,6 +177,21 @@ export default async function BusinessDetailPage({ params }: Props) {
 
         {/* Contact + zones desservies */}
         <aside className="space-y-6">
+          {business.latitude !== null && business.longitude !== null ? (
+            <section className="space-y-3">
+              <BusinessMiniMap
+                latitude={business.latitude}
+                longitude={business.longitude}
+                label={business.name}
+              />
+              <BusinessNavActions
+                latitude={business.latitude}
+                longitude={business.longitude}
+                name={business.name}
+              />
+            </section>
+          ) : null}
+
           <section className="rounded-xl bg-slate-50 p-5 ring-1 ring-slate-200">
             <h2 className="mb-3 font-serif text-lg font-semibold text-slate-900">
               Contact
