@@ -23,7 +23,7 @@ Comment créer des comptes, attribuer des droits, et utiliser les rôles dans ge
 
 Tant qu'on n'a pas d'écran `/admin/users/` custom dans le front (Sprint futur), on passe par Django Admin :
 
-1. Ouvre **`http://135.125.159.142:8002/admin/core/user/add/`** (ou `https://media.geoclic.fr/admin/core/user/add/` en prod).
+1. Ouvre **`http://135.125.159.142:8002/django-admin/core/user/add/`** (ou `https://media.geoclic.fr/django-admin/core/user/add/` en prod).
 2. Connecte-toi avec ton compte superuser.
 3. Remplis :
    - **Nom d'utilisateur** : ex. `marie.dupont` (sera l'identifiant de connexion)
@@ -66,7 +66,7 @@ exit()
 
 ## 🔑 Modifier le rôle d'un utilisateur existant
 
-Via **Django Admin** → `/admin/core/user/` → clique sur le user → change le champ **Rôle** → **Enregistrer**.
+Via **Django Admin** → `/django-admin/core/user/` → clique sur le user → change le champ **Rôle** → **Enregistrer**.
 
 Effet immédiat : à sa prochaine connexion (ou `Ctrl+F5` du back-office custom), ses droits sont mis à jour.
 
@@ -74,7 +74,7 @@ Effet immédiat : à sa prochaine connexion (ou `Ctrl+F5` du back-office custom)
 
 ## 🔒 Désactiver un compte (sans supprimer)
 
-Via **Django Admin** → `/admin/core/user/<id>/` → décoche **« Actif »** (`is_active`) → Enregistrer.
+Via **Django Admin** → `/django-admin/core/user/<id>/` → décoche **« Actif »** (`is_active`) → Enregistrer.
 
 Le user ne peut plus se connecter mais ses articles et historique restent. Pour réactiver : recoche `is_active`.
 

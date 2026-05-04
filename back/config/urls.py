@@ -17,7 +17,8 @@ def healthcheck(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    # Django Admin déplacé sur /django-admin/ pour libérer /admin/* au back-office custom Next.js
+    path("django-admin/", admin.site.urls),
     path("healthz/", healthcheck, name="healthcheck"),
     # API
     path("api/", include("apps.core.urls")),

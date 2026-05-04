@@ -1,0 +1,6 @@
+URL	Ce que tu dois voir
+https://media.geoclic.fr/	Site public, cadenas vert
+https://media.geoclic.fr/admin/login	Back-office custom
+https://media.geoclic.fr/admin/	Django admin (debug only)
+https://media.geoclic.fr/api/articles/	JSON articles
+https://media.geoclic.fr/api/schema/swagger-ui/	Doc API Swagger
