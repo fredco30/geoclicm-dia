@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LogOut, FileText, Plus, Home } from "lucide-react";
+import { FileText, Plus, Home } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
+import { getRoleLabel } from "@/lib/roles";
 import { LogoutButton } from "@/components/admin/logout-button";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function AdminProtectedLayout({
         <div className="mt-auto pt-6">
           <div className="mb-2 text-xs text-slate-500">
             <div className="font-semibold text-slate-700">{user.full_name}</div>
-            <div className="text-slate-400">{user.role}</div>
+            <div className="text-slate-400">{getRoleLabel(user)}</div>
           </div>
           <LogoutButton />
         </div>
