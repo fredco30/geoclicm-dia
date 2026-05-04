@@ -261,26 +261,52 @@ sudo bash /var/www/geoclicmedia/deploy/deploy-prod.sh
 | 5a — Pages publiques | ✅ | OG/Twitter cards, ISR, full-text search |
 | 5b — Back-office custom | ✅ | Markdown editor + upload images |
 | 6 — Déploiement prod final | 🟡 | Tout prêt, juste à lancer le script |
-| 7 — Polish | ⏳ | Lighthouse, doc rédactrice, sitemap |
+| 7 — Polish | 🟡 en cours | Lighthouse, doc rédactrice, sitemap, monitoring |
 
 **Au-dessus du brief initial** :
 - Service systemd dès Sprint 1 (au lieu de tmux puis ÉTAPE 6).
 - Script de déploiement automatisé idempotent.
 - 4 articles seed avec covers générées (le brief en demandait 3-4).
 - Pattern letterbox + blur pour gérer toutes orientations photos.
+- Refonte route groups (site)/admin/ pour séparer layouts publics/admin.
+- Page gestion comptes utilisateurs custom (anticipation Sprint 2).
 
 ---
 
-### ⏳ ÉTAPES suivantes prévues
+### ✅ ÉTAPE 6 — Déploiement prod final (2026-05-04 matin)
 
-| # | Étape | Estimation | Statut |
-|---|---|---|---|
-| 3 | API REST DRF (lecture + écriture, auth, permissions) | 2 j | À faire |
-| 4 | Init Next.js + PWA + shadcn/ui | 1,5 j | À faire |
-| 5a | Pages publiques (accueil, article, catégorie, recherche, légales) | 2 j | À faire |
-| 5b | Back-office custom front (CRUD articles, login, éditeur, upload) | 2 j | À faire |
-| 6 | Déploiement prod (Nginx + gunicorn + systemd + Let's Encrypt + backup) | 1,5 j | À faire |
-| 7 | Polish (Lighthouse, PWA Android/iOS, doc rédactrice, sitemap) | 1 j | À faire |
+**Réalisations**
+- gunicorn 3 workers + 2 threads + hardening systemd installé en remplacement du `runserver` dev.
+- Services Celery worker + beat actifs (prêts pour Sprint 2 publication FB auto).
+- Vhost Nginx `media.geoclic.fr` : HTTPS + HSTS + security headers + reverse proxy.
+- **Let's Encrypt** : certificat émis et installé, auto-renew configuré (expire 2026-08-02).
+- DNS configuré chez **Hostinger** (registre du domaine `geoclic.fr`) — enregistrement A `media` → `135.125.159.142`.
+- Backup PostgreSQL quotidien (cron 3h00, rétention 14 jours).
+- Settings prod : SECURE_SSL_REDIRECT, HSTS 30j, CSRF_TRUSTED_ORIGINS = `https://media.geoclic.fr`.
+- Refonte route groups front : `(site)` pour pages publiques avec Header/Footer, `/admin/*` indépendant (pas de Header public parasite).
+- **Django Admin déplacé sur `/django-admin/`** pour libérer `/admin/*` au back-office custom.
+- Page gestion comptes `/admin/settings/users` (anticipation Sprint 2) : CRUD users avec rôles + désactivation + protection self-delete.
+- Affichage rôle "Administrateur" si is_superuser via helper `getRoleLabel`.
+
+**Blocages rencontrés et fixes**
+| Blocage | Cause | Fix |
+|---|---|---|
+| `deploy-prod.sh` collectstatic FileNotFoundError | LOGGING prod pointait sur sous-dossier inexistant | LOGGING via stdout → systemd journald |
+| Certbot timeout sur acme | DNS pas encore propagé (Hostinger registre, OVH host) | Configurer A record `media` chez Hostinger, attendre 5 min, retry |
+| HTTPS cassé après re-deploy nginx config | `cp deploy/nginx-*.conf` écrasait les `ssl_certificate` injectés par certbot | `sudo certbot --nginx --reinstall` + warning ajouté en tête du fichier deploy |
+| Conflit routes `/admin/*` Django vs Next.js custom | Vhost Nginx envoyait tout `/admin/*` à Django | Django Admin déplacé sur `/django-admin/`, vhost regex updated |
+| Front cherchait articles sur HTTP au lieu de HTTPS | `.env.local` avait gardé `http://135.125.159.142:8002` | Réécrire `.env.local` avec heredoc + rebuild Next |
+
+---
+
+### 🟡 ÉTAPE 7 — Polish (en cours, 2026-05-04)
+
+**À faire**
+- `sitemap.xml` dynamique via `app/sitemap.ts` (toutes URLs publiques + articles + catégories + communes).
+- `robots.txt` via `app/robots.ts` (allow public, disallow `/admin/` et `/django-admin/`).
+- Documentation rédactrice : "Comment publier un article" en markdown.
+- Améliorations Lighthouse / accessibilité (alt texts, focus visible, skip links).
+- UptimeRobot setup (URL de healthcheck).
 
 ---
 
