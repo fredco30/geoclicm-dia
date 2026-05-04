@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api";
 import { ArticleBody } from "@/components/articles/article-body";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { ShareButtons } from "@/components/articles/share-buttons";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { formatDate } from "@/lib/utils";
 import type { ArticleDetail } from "@/types/api";
 
@@ -151,6 +152,15 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Corps */}
       <ArticleBody content={article.body} />
+
+      {/* Encart pub fin d'article (ciblé sur la commune + catégorie de l'article) */}
+      <div className="mt-10">
+        <AdSlot
+          placement="article_inline"
+          communeSlug={article.commune?.slug}
+          categorySlug={article.category.slug}
+        />
+      </div>
 
       {/* Tags */}
       {article.tags.length > 0 ? (
