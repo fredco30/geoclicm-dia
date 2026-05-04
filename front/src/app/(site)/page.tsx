@@ -2,18 +2,23 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { ArticleCard } from "@/components/articles/article-card";
 import { CategoryBadge } from "@/components/articles/category-badge";
+import { BusinessFeaturedSection } from "@/components/businesses/business-featured-section";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [articlesData, categories] = await Promise.all([
+  const [articlesData, categories, featuredBusinessesData] = await Promise.all([
     api.articles.list({ ordering: "-published_at" }).catch(() => null),
     api.categories().catch(() => []),
+    api.businesses
+      .list({ is_featured: true, ordering: "name" })
+      .catch(() => null),
   ]);
 
   const articles = articlesData?.results ?? [];
   const featured = articles.find((a) => a.is_featured) ?? articles[0] ?? null;
   const rest = articles.filter((a) => a.id !== featured?.id);
+  const featuredBusinesses = (featuredBusinessesData?.results ?? []).slice(0, 4);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-4 sm:py-10">
@@ -52,6 +57,14 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
+
+      {/* COMMERCES PARTENAIRES (si fiches mises en avant publiées) */}
+      <BusinessFeaturedSection
+        title="Commerces partenaires"
+        subtitle="Les acteurs locaux mis en avant ce mois-ci sur le territoire camarguais."
+        businesses={featuredBusinesses}
+        seeAllHref="/commerces"
+      />
 
       {articles.length === 0 ? <EmptyState /> : null}
     </div>
