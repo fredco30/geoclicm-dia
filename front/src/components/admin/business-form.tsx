@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import {
+  OpeningHoursEditor,
+  type OpeningHoursValue,
+} from "@/components/admin/opening-hours-editor";
+import {
+  SeasonalClosuresEditor,
+  type ClosureValue,
+} from "@/components/admin/seasonal-closures-editor";
 import type { Commune } from "@/types/api";
 import type {
   AdminBusinessCategory,
@@ -24,7 +32,7 @@ type Props = {
   communes: Commune[];
 };
 
-const DEFAULT_OPENING_HOURS = {
+const DEFAULT_OPENING_HOURS: OpeningHoursValue = {
   monday: [],
   tuesday: [],
   wednesday: [],
@@ -90,16 +98,8 @@ export function BusinessForm({ business, categories, communes }: Props) {
     facebook_url: business?.facebook_url ?? "",
     instagram_url: business?.instagram_url ?? "",
     tiktok_url: business?.tiktok_url ?? "",
-    opening_hours_json: JSON.stringify(
-      business?.opening_hours ?? DEFAULT_OPENING_HOURS,
-      null,
-      2,
-    ),
-    seasonal_closures_json: JSON.stringify(
-      business?.seasonal_closures ?? [],
-      null,
-      2,
-    ),
+    opening_hours: (business?.opening_hours ?? DEFAULT_OPENING_HOURS) as OpeningHoursValue,
+    seasonal_closures: (business?.seasonal_closures ?? []) as ClosureValue[],
     plan: business?.plan ?? ("free" as BusinessPlan),
     plan_starts_at: isoToLocal(business?.plan_starts_at ?? null),
     plan_ends_at: isoToLocal(business?.plan_ends_at ?? null),
@@ -147,23 +147,6 @@ export function BusinessForm({ business, categories, communes }: Props) {
     e.preventDefault();
     setError(null);
 
-    // Parse JSON fields
-    let opening_hours: Record<string, unknown>;
-    let seasonal_closures: unknown[];
-    try {
-      opening_hours = JSON.parse(form.opening_hours_json);
-    } catch {
-      setError("Le JSON des horaires est invalide.");
-      return;
-    }
-    try {
-      seasonal_closures = JSON.parse(form.seasonal_closures_json);
-      if (!Array.isArray(seasonal_closures)) throw new Error();
-    } catch {
-      setError("Le JSON des fermetures saisonnières doit être un tableau.");
-      return;
-    }
-
     const specialties = form.specialties_text
       .split(",")
       .map((s) => s.trim())
@@ -193,8 +176,8 @@ export function BusinessForm({ business, categories, communes }: Props) {
       facebook_url: form.facebook_url,
       instagram_url: form.instagram_url,
       tiktok_url: form.tiktok_url,
-      opening_hours,
-      seasonal_closures,
+      opening_hours: form.opening_hours,
+      seasonal_closures: form.seasonal_closures,
       plan: form.plan,
       plan_starts_at: localToIso(form.plan_starts_at),
       plan_ends_at: localToIso(form.plan_ends_at),
@@ -648,36 +631,30 @@ export function BusinessForm({ business, categories, communes }: Props) {
         </fieldset>
 
         {/* HORAIRES */}
-        <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
+        <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Horaires &amp; fermetures (JSON)
+            Horaires &amp; fermetures
           </legend>
-          <div className="space-y-1">
-            <Label htmlFor="opening_hours_json">Horaires d&apos;ouverture</Label>
-            <textarea
-              id="opening_hours_json"
-              rows={10}
-              value={form.opening_hours_json}
-              onChange={(e) => update("opening_hours_json", e.target.value)}
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
-            />
+          <div className="space-y-2">
+            <Label>Horaires d&apos;ouverture</Label>
             <p className="text-xs text-slate-500">
-              Format : <code>{`{ "monday": [{"open": "09:00", "close": "12:30"}, ...], ... }`}</code>
-              . Tableau vide = fermé ce jour-là. (Éditeur visuel à venir.)
+              Plusieurs créneaux possibles par jour (ex: 9h-12h30 + 14h-19h pour
+              une coupure midi). Pas de créneau = fermé ce jour-là.
             </p>
+            <OpeningHoursEditor
+              value={form.opening_hours}
+              onChange={(v) => update("opening_hours", v)}
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="seasonal_closures_json">Fermetures saisonnières</Label>
-            <textarea
-              id="seasonal_closures_json"
-              rows={4}
-              value={form.seasonal_closures_json}
-              onChange={(e) => update("seasonal_closures_json", e.target.value)}
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
-            />
+          <div className="space-y-2 border-t border-slate-200 pt-4">
+            <Label>Fermetures saisonnières</Label>
             <p className="text-xs text-slate-500">
-              Format : <code>{`[{"from": "2026-01-05", "to": "2026-02-15", "reason": "Fermeture annuelle"}]`}</code>
+              Périodes de fermeture annoncées (vacances, congés annuels, travaux).
             </p>
+            <SeasonalClosuresEditor
+              value={form.seasonal_closures}
+              onChange={(v) => update("seasonal_closures", v)}
+            />
           </div>
         </fieldset>
 
