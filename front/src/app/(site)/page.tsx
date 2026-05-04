@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { ArticleCard } from "@/components/articles/article-card";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { BusinessFeaturedSection } from "@/components/businesses/business-featured-section";
+import { AdSlot } from "@/components/ads/ad-slot";
 
 export const revalidate = 60;
 
@@ -57,6 +58,11 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
+
+      {/* ENCART HOME — entre grille articles et commerces partenaires */}
+      <div className="mt-10 sm:mt-14">
+        <AdSlot placement="home_sidebar" />
+      </div>
 
       {/* COMMERCES PARTENAIRES (si fiches mises en avant publiées) */}
       <BusinessFeaturedSection

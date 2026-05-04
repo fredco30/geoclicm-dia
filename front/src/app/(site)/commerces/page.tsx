@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { BusinessCard } from "@/components/businesses/business-card";
 import { BusinessesMap } from "@/components/businesses/businesses-map";
 import { Pagination } from "@/components/ui/pagination";
+import { AdSlot } from "@/components/ads/ad-slot";
 
 export const revalidate = 600;
 
@@ -112,6 +113,15 @@ export default async function BusinessesPage({ searchParams }: Props) {
           </Link>
         </div>
       )}
+
+      {/* Encart top annuaire (ciblé selon les filtres actifs) */}
+      <div className="mb-6">
+        <AdSlot
+          placement="directory_top"
+          communeSlug={sp.commune}
+          categorySlug={sp.category}
+        />
+      </div>
 
       {/* Carte d'ensemble — affichée au-dessus de la liste si fiches géolocalisées */}
       {businesses.results.some((b) => b.latitude !== null && b.longitude !== null) ? (
