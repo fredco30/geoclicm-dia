@@ -85,12 +85,12 @@ export default async function ArticlePage({ params }: Props) {
           ) : null}
         </div>
 
-        <h1 className="font-serif text-balance text-3xl font-semibold leading-[1.15] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+        <h1 className="font-serif text-balance text-2xl font-semibold leading-[1.15] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
           {article.title}
         </h1>
 
         {article.chapeau ? (
-          <p className="mt-5 font-serif text-xl italic leading-relaxed text-slate-700">
+          <p className="mt-4 text-base leading-relaxed text-slate-700 sm:mt-5 sm:font-serif sm:text-xl sm:italic">
             {article.chapeau}
           </p>
         ) : null}

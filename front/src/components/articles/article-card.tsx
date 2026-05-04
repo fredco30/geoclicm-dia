@@ -21,14 +21,14 @@ export function ArticleCard({ article }: { article: ArticleListItem }) {
           )}
         </div>
       </Link>
-      <div className="flex flex-1 flex-col gap-3 p-5">
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <CategoryBadge category={article.category} />
           {article.commune ? (
             <span className="text-slate-500">· {article.commune}</span>
           ) : null}
         </div>
-        <h3 className="font-serif text-xl font-semibold leading-snug tracking-tight text-slate-900">
+        <h3 className="font-serif text-lg font-semibold leading-snug tracking-tight text-slate-900 sm:text-xl">
           <Link
             href={`/articles/${article.slug}`}
             className="after:absolute after:inset-0 hover:text-[#1a4d6e]"
