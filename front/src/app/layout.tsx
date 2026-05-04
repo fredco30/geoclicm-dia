@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -26,16 +24,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     siteName: "geoclicMédia",
-    title: "geoclicMédia — le littoral camarguais",
-    description:
-      "L'actualité, l'histoire et le patrimoine du littoral camarguais.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "geoclicMédia — le littoral camarguais",
-    description:
-      "L'actualité, l'histoire et le patrimoine du littoral camarguais.",
-  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
@@ -50,11 +40,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white text-slate-900">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </body>
+      <body className="min-h-full bg-white text-slate-900">{children}</body>
     </html>
   );
 }

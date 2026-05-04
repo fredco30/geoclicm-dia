@@ -1,8 +1,13 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
 from . import auth_views, views
+from .user_views import UserAdminViewSet
 
 app_name = "core"
+
+router = DefaultRouter()
+router.register("users", UserAdminViewSet, basename="user")
 
 urlpatterns = [
     path("", views.api_root, name="api-root"),
@@ -10,4 +15,5 @@ urlpatterns = [
     path("auth/login/", auth_views.LoginView.as_view(), name="auth-login"),
     path("auth/logout/", auth_views.LogoutView.as_view(), name="auth-logout"),
     path("auth/me/", auth_views.MeView.as_view(), name="auth-me"),
+    path("", include(router.urls)),
 ]

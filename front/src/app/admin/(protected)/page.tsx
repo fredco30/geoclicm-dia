@@ -31,15 +31,15 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Articles</h1>
-          <p className="text-sm text-slate-500">
-            {articles.length} article{articles.length > 1 ? "s" : ""} (tous statuts).
-          </p>
-        </div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-slate-900">
+          Articles{" "}
+          <span className="ml-1 text-sm font-normal text-slate-500">
+            ({articles.length})
+          </span>
+        </h1>
         <Link href="/admin/articles/new">
-          <Button>
+          <Button size="sm">
             <Plus className="h-4 w-4" /> Nouvel article
           </Button>
         </Link>
@@ -61,12 +61,12 @@ export default async function AdminDashboard() {
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr>
-                <th className="px-4 py-3">Titre</th>
-                <th className="px-4 py-3">Catégorie</th>
-                <th className="px-4 py-3">Commune</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Publié le</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-3 py-2">Titre</th>
+                <th className="px-3 py-2">Catégorie</th>
+                <th className="px-3 py-2">Commune</th>
+                <th className="px-3 py-2">Statut</th>
+                <th className="px-3 py-2">Publié le</th>
+                <th className="px-3 py-2 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
                 const s = STATUS_LABELS[a.status] ?? STATUS_LABELS.draft;
                 return (
                   <tr key={a.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <div className="flex items-center gap-3">
                         {a.cover_image?.thumbnail ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -89,23 +89,23 @@ export default async function AdminDashboard() {
                         <div className="font-medium text-slate-900">{a.title}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <CategoryBadge category={a.category} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-3 py-2 text-sm text-slate-600">
                       {a.commune || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${s.cls}`}
                       >
                         {s.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-3 py-2 text-sm text-slate-600">
                       {formatDate(a.published_at) || "—"}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 py-2 text-right">
                       <div className="inline-flex gap-1">
                         <Link
                           href={`/articles/${a.slug}`}
