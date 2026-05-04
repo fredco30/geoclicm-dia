@@ -8,6 +8,9 @@
 import type {
   ArticleDetail,
   ArticleListItem,
+  BusinessCategory,
+  BusinessDetail,
+  BusinessListItem,
   Category,
   Commune,
   CurrentUser,
@@ -123,6 +126,28 @@ export const api = {
 
   tags: () =>
     apiGet<Tag[]>("/api/tags/", { revalidate: 3600, tags: ["tags"] }),
+
+  // Commerçants
+  businesses: {
+    list: (params: Record<string, string | number | boolean | undefined> = {}) => {
+      const qs = buildQuery(params);
+      return apiGet<Paginated<BusinessListItem>>(`/api/businesses/${qs}`, {
+        revalidate: 600,
+        tags: ["businesses"],
+      });
+    },
+    detail: (slug: string) =>
+      apiGet<BusinessDetail>(`/api/businesses/${slug}/`, {
+        revalidate: 3600,
+        tags: ["businesses", `business:${slug}`],
+      }),
+  },
+
+  businessCategories: () =>
+    apiGet<BusinessCategory[]>("/api/business-categories/", {
+      revalidate: 3600,
+      tags: ["business-categories"],
+    }),
 
   // Recherche
   search: (q: string) =>

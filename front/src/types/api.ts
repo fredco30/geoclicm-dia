@@ -124,6 +124,83 @@ export type SearchResponse = {
   results: ArticleListItem[];
 };
 
+// ============================================================================
+// Directory (commerçants)
+// ============================================================================
+
+export type BusinessPlan = "free" | "basic" | "premium";
+
+export type CommuneMini = {
+  id: number;
+  name: string;
+  slug: string;
+  department: string;
+};
+
+export type BusinessCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  parent: number | null;
+  parent_name: string | null;
+  icon: string;
+  description: string;
+  schema_type: string;
+};
+
+export type BusinessListItem = {
+  id: number;
+  name: string;
+  slug: string;
+  city: string;
+  category: number;
+  category_name: string;
+  commune: number;
+  commune_name: string;
+  service_areas_count: number;
+  logo: ImageVariants | null;
+  plan: BusinessPlan;
+  is_published: boolean;
+  is_featured: boolean;
+};
+
+export type BusinessDetail = {
+  id: number;
+  name: string;
+  slug: string;
+  legal_name: string;
+  category: BusinessCategory;
+  secondary_categories: BusinessCategory[];
+  short_description: string;
+  description: string;
+  specialties: string[];
+  logo: ImageVariants | null;
+  cover_image: ImageVariants | null;
+  address: string;
+  address_complement: string;
+  postal_code: string;
+  city: string;
+  latitude: number | null;
+  longitude: number | null;
+  commune: number;
+  commune_name: string;
+  service_areas: CommuneMini[];
+  phone: string;
+  mobile: string;
+  email: string;
+  website: string;
+  facebook_url: string;
+  instagram_url: string;
+  tiktok_url: string;
+  opening_hours: Record<string, Array<{ open: string; close: string }>>;
+  seasonal_closures: Array<{ from: string; to: string; reason: string }>;
+  plan: BusinessPlan;
+  is_published: boolean;
+  is_featured: boolean;
+  meta_description: string;
+  view_count: number;
+};
+
 export type CurrentUser = {
   id: number;
   username: string;
