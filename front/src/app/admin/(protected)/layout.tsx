@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, Plus, Home, Settings } from "lucide-react";
+import { FileText, Plus, Home, Settings, Tags } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 import { getRoleLabel } from "@/lib/roles";
 import { LogoutButton } from "@/components/admin/logout-button";
@@ -40,6 +40,9 @@ export default async function AdminProtectedLayout({
           </NavLink>
           <NavLink href="/admin/articles/new" icon={<Plus className="h-4 w-4" />}>
             Nouvel article
+          </NavLink>
+          <NavLink href="/admin/directory/categories" icon={<Tags className="h-4 w-4" />}>
+            Catégories commerçants
           </NavLink>
           {canManageUsers ? (
             <NavLink
