@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Search, Menu } from "lucide-react";
+import { Search } from "lucide-react";
+import { MobileNav } from "./mobile-nav";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between gap-4 px-4">
         <Link
           href="/"
@@ -30,13 +31,7 @@ export function Header() {
           >
             <Search className="h-5 w-5" />
           </Link>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
-            aria-label="Menu"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <MobileNav />
         </div>
       </div>
     </header>
