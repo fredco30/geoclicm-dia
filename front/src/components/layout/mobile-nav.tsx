@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Menu, X, Search, Home, BookOpen, Landmark, User as UserIcon,
-  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail,
+  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail, Store,
 } from "lucide-react";
 
 type MenuLink = {
@@ -137,6 +137,25 @@ export function MobileNav() {
                   </Link>
                 </li>
               ))}
+            </ul>
+          </nav>
+
+          {/* Annuaire */}
+          <nav aria-label="Annuaire">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Annuaire
+            </h2>
+            <ul className="space-y-0.5">
+              <li>
+                <Link
+                  href="/commerces"
+                  onClick={close}
+                  className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-[#a8533a] hover:bg-[#a8533a]/10"
+                >
+                  <Store className="h-4 w-4" />
+                  Commerces du territoire
+                </Link>
+              </li>
             </ul>
           </nav>
 

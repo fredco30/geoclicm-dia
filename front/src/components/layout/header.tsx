@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Store } from "lucide-react";
 import { MobileNav } from "./mobile-nav";
 
 export function Header() {
@@ -21,6 +21,14 @@ export function Header() {
           <NavLink href="/categories/patrimoine">Patrimoine</NavLink>
           <NavLink href="/categories/portraits">Portraits</NavLink>
           <NavLink href="/categories/reportages">Reportages</NavLink>
+          <span className="mx-1 h-4 w-px bg-slate-200" aria-hidden />
+          <Link
+            href="/commerces"
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-[#a8533a] hover:bg-[#a8533a]/10"
+          >
+            <Store className="h-4 w-4" />
+            Commerces
+          </Link>
         </nav>
 
         <div className="flex items-center gap-1">
