@@ -82,6 +82,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
     latitude: business?.latitude ?? null,
     longitude: business?.longitude ?? null,
     commune: (business?.commune ?? communes[0]?.id ?? null) as number | null,
+    service_areas: business?.service_areas.map((c) => c.id) ?? [],
     phone: business?.phone ?? "",
     mobile: business?.mobile ?? "",
     email: business?.email ?? "",
@@ -184,6 +185,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
       latitude: form.latitude,
       longitude: form.longitude,
       commune: form.commune,
+      service_areas: form.service_areas,
       phone: form.phone,
       mobile: form.mobile,
       email: form.email,
@@ -471,7 +473,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
             </div>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="commune">Commune (territoire couvert) *</Label>
+            <Label htmlFor="commune">Commune (siège) *</Label>
             <Select
               id="commune"
               required
@@ -488,8 +490,35 @@ export function BusinessForm({ business, categories, communes }: Props) {
               ))}
             </Select>
             <p className="text-xs text-slate-500">
-              Distinct de la « ville » qui peut être hors-territoire (ex: commerce de
-              Lunel rattaché à la commune Camargue).
+              Commune où le commerce est physiquement implanté (utilisée pour la carte
+              et la fiche). Doit correspondre à une commune couverte par le média.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="service_areas">Zones desservies (multi-sélection)</Label>
+            <select
+              id="service_areas"
+              multiple
+              size={Math.min(communes.length, 7)}
+              value={form.service_areas.map(String)}
+              onChange={(e) =>
+                update(
+                  "service_areas",
+                  Array.from(e.target.selectedOptions, (o) => Number(o.value)),
+                )
+              }
+              className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+            >
+              {communes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({c.department})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500">
+              Communes supplémentaires où le commerçant intervient (artisans
+              multi-communes, services à domicile…). Cmd/Ctrl + clic pour
+              sélectionner plusieurs. Vide = uniquement la commune siège.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">

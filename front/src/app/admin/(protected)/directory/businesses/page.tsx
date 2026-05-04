@@ -100,7 +100,15 @@ export default async function BusinessesPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 text-slate-600">{b.category_name}</td>
-                    <td className="px-3 py-2 text-slate-600">{b.commune_name}</td>
+                    <td className="px-3 py-2 text-slate-600">
+                      {b.commune_name}
+                      {b.service_areas_count > 0 ? (
+                        <span className="ml-1 text-xs text-slate-400">
+                          + {b.service_areas_count}{" "}
+                          {b.service_areas_count > 1 ? "zones" : "zone"}
+                        </span>
+                      ) : null}
+                    </td>
                     <td className="px-3 py-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${plan.className}`}

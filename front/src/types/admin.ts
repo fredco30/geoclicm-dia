@@ -57,6 +57,13 @@ export type AdminBusinessCategoryPayload = {
 
 export type BusinessPlan = "free" | "basic" | "premium";
 
+export type CommuneMini = {
+  id: number;
+  name: string;
+  slug: string;
+  department: string;
+};
+
 export type AdminBusinessListItem = {
   id: number;
   name: string;
@@ -66,6 +73,7 @@ export type AdminBusinessListItem = {
   category_name: string;
   commune: number;
   commune_name: string;
+  service_areas_count: number;
   owner: number | null;
   owner_username: string | null;
   logo: ImageVariants | null;
@@ -90,6 +98,7 @@ export type AdminBusinessDetail = AdminBusinessListItem & {
   postal_code: string;
   latitude: number | null;
   longitude: number | null;
+  service_areas: CommuneMini[];
   phone: string;
   mobile: string;
   email: string;
@@ -121,6 +130,7 @@ export type AdminBusinessPayload = {
   latitude: number | null;
   longitude: number | null;
   commune: number | null;
+  service_areas: number[];
   phone: string;
   mobile: string;
   email: string;
