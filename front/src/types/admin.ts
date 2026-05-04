@@ -30,4 +30,29 @@ export type AdminUserPayload = {
   password?: string;
 };
 
+export type AdminBusinessCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  parent: number | null;
+  parent_name: string | null;
+  icon: string;
+  description: string;
+  schema_type: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminBusinessCategoryPayload = {
+  name: string;
+  parent: number | null;
+  icon: string;
+  description: string;
+  schema_type: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
 export type { ArticleStatus };
