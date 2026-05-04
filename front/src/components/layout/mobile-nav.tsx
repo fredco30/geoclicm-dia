@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, X, Search, Home, BookOpen, Landmark, User as UserIcon, Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail } from "lucide-react";
+import { createPortal } from "react-dom";
+import {
+  Menu, X, Search, Home, BookOpen, Landmark, User as UserIcon,
+  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail,
+} from "lucide-react";
 
 type MenuLink = {
   href: string;
@@ -34,8 +38,14 @@ const TERRITOIRE: MenuLink[] = [
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Bloquer le scroll du body quand le menu est ouvert
+  // createPortal nécessite document → on attend le client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Bloquer le scroll du body quand ouvert
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -58,23 +68,14 @@ export function MobileNav() {
 
   const close = () => setOpen(false);
 
-  return (
+  // Drawer + backdrop rendus dans <body> via createPortal pour échapper aux
+  // stacking contexts créés par les parents (header avec backdrop-blur, etc.).
+  const drawer = (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
-        aria-label="Ouvrir le menu"
-        aria-expanded={open}
-        aria-controls="mobile-nav-panel"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
       {/* Backdrop */}
       <div
         onClick={close}
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-[100] bg-black/50 transition-opacity md:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden
@@ -83,7 +84,7 @@ export function MobileNav() {
       {/* Drawer */}
       <aside
         id="mobile-nav-panel"
-        className={`fixed bottom-0 right-0 top-0 z-50 w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 md:hidden ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!open}
@@ -185,6 +186,22 @@ export function MobileNav() {
           </div>
         </div>
       </aside>
+    </>
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
+        aria-label="Ouvrir le menu"
+        aria-expanded={open}
+        aria-controls="mobile-nav-panel"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+      {mounted ? createPortal(drawer, document.body) : null}
     </>
   );
 }
