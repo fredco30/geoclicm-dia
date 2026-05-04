@@ -216,6 +216,31 @@ export type BusinessDetail = {
   view_count: number;
 };
 
+// ============================================================================
+// Ads (régie publicitaire)
+// ============================================================================
+
+export type AdPlacement =
+  | "home_hero"
+  | "home_sidebar"
+  | "article_inline"
+  | "article_sidebar"
+  | "directory_top"
+  | "directory_inline"
+  | "agenda_top"
+  | "newsletter";
+
+export type AdServeResponse = {
+  id: number;
+  placement: AdPlacement;
+  image: ImageVariants | null;
+  headline: string;
+  cta_text: string;
+  click_url: string;
+  business_slug: string;
+  business_name: string;
+};
+
 export type CurrentUser = {
   id: number;
   username: string;
