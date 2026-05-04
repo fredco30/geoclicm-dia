@@ -63,17 +63,17 @@ export default async function ArticlePage({ params }: Props) {
   const articleUrl = `${siteUrl}/articles/${article.slug}`;
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-6 sm:py-10">
+    <article className="mx-auto max-w-[68ch] px-4 py-6 sm:py-12">
       {/* Breadcrumb */}
-      <nav className="mb-4 text-sm text-slate-600" aria-label="Fil d'Ariane">
+      <nav className="mb-6 text-sm text-slate-600" aria-label="Fil d'Ariane">
         <Link href="/" className="inline-flex items-center gap-1 hover:text-[#1a4d6e]">
           <ArrowLeft className="h-4 w-4" /> Accueil
         </Link>
       </nav>
 
       {/* En-tête */}
-      <header className="mb-8">
-        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+      <header className="mb-10">
+        <div className="mb-4 flex flex-wrap items-center gap-3 text-xs">
           <CategoryBadge category={article.category} />
           {article.commune ? (
             <Link
@@ -85,12 +85,12 @@ export default async function ArticlePage({ params }: Props) {
           ) : null}
         </div>
 
-        <h1 className="text-balance text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="font-serif text-balance text-3xl font-semibold leading-[1.15] tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
           {article.title}
         </h1>
 
         {article.chapeau ? (
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">
+          <p className="mt-5 font-serif text-xl italic leading-relaxed text-slate-700">
             {article.chapeau}
           </p>
         ) : null}

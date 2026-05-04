@@ -6,9 +6,9 @@ export function Footer() {
       <div className="mx-auto max-w-screen-xl px-4 py-10 text-sm text-slate-600">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div>
-            <div className="mb-3 flex items-center gap-2 font-semibold text-[#1a4d6e]">
+            <div className="mb-3 flex items-center gap-2 text-[#1a4d6e]">
               <span className="inline-block h-6 w-6 rounded-full bg-[#1a4d6e]" aria-hidden />
-              geoclicMédia
+              <span className="font-serif text-lg font-semibold">geoclicMédia</span>
             </div>
             <p className="text-slate-600">
               Le média local indépendant du littoral camarguais.

@@ -53,7 +53,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             style={{ backgroundColor: category.color }}
             aria-hidden
           />
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
             {category.name}
           </h1>
         </div>

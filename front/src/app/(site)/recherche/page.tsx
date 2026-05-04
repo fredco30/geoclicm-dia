@@ -28,7 +28,7 @@ export default async function SearchPage({ searchParams }: Props) {
         <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
           ← Accueil
         </Link>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
           Rechercher
         </h1>
 

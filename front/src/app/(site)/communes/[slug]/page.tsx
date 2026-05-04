@@ -50,7 +50,7 @@ export default async function CommunePage({ params, searchParams }: Props) {
         <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
           ← Accueil
         </Link>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
           {commune.name}
         </h1>
         <p className="mt-1 text-sm text-slate-500">

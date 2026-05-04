@@ -50,11 +50,11 @@ export default async function HomePage() {
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
               <CategoryBadge category={featured.category} className="mb-3" />
-              <h1 className="text-2xl font-bold leading-tight tracking-tight drop-shadow-md sm:text-4xl">
+              <h1 className="font-serif text-3xl font-semibold leading-[1.1] tracking-tight drop-shadow-md sm:text-5xl md:text-6xl">
                 {featured.title}
               </h1>
               {featured.chapeau ? (
-                <p className="mt-2 max-w-2xl text-sm text-slate-100 drop-shadow sm:text-base">
+                <p className="mt-3 max-w-2xl font-serif text-base italic text-slate-100 drop-shadow sm:text-lg">
                   {featured.chapeau}
                 </p>
               ) : null}
@@ -86,8 +86,8 @@ export default async function HomePage() {
 
       {/* GRILLE DES DERNIERS ARTICLES */}
       {rest.length > 0 ? (
-        <section className="mt-10" aria-label="Derniers articles">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">
+        <section className="mt-12" aria-label="Derniers articles">
+          <h2 className="mb-6 font-serif text-2xl font-semibold tracking-tight text-slate-900">
             Derniers articles
           </h2>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

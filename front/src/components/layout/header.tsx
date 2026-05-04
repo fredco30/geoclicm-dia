@@ -12,7 +12,7 @@ export function Header() {
           aria-label="Accueil geoclicMédia"
         >
           <span className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]" aria-hidden />
-          <span className="text-base sm:text-lg">geoclicMédia</span>
+          <span className="font-serif text-lg font-semibold tracking-tight sm:text-xl">geoclicMédia</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Principale">

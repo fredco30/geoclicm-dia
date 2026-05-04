@@ -5,30 +5,30 @@ import { formatDate } from "@/lib/utils";
 
 export function ArticleCard({ article }: { article: ArticleListItem }) {
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-xl">
       <Link href={`/articles/${article.slug}`} className="block">
-        <div className="relative aspect-[16/10] bg-slate-100">
+        <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
           {article.cover_image?.medium ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={article.cover_image.medium}
               alt={article.title}
-              className="absolute inset-0 h-full w-full object-cover transition group-hover:scale-105"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
               loading="lazy"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-100" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2c6a93] to-[#1a4d6e]" />
           )}
         </div>
       </Link>
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-center gap-2 text-xs">
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <CategoryBadge category={article.category} />
           {article.commune ? (
             <span className="text-slate-500">· {article.commune}</span>
           ) : null}
         </div>
-        <h3 className="text-lg font-semibold leading-snug text-slate-900">
+        <h3 className="font-serif text-xl font-semibold leading-snug tracking-tight text-slate-900">
           <Link
             href={`/articles/${article.slug}`}
             className="after:absolute after:inset-0 hover:text-[#1a4d6e]"
@@ -37,7 +37,9 @@ export function ArticleCard({ article }: { article: ArticleListItem }) {
           </Link>
         </h3>
         {article.chapeau ? (
-          <p className="line-clamp-3 text-sm text-slate-600">{article.chapeau}</p>
+          <p className="line-clamp-3 text-sm leading-relaxed text-slate-600">
+            {article.chapeau}
+          </p>
         ) : null}
         <div className="mt-auto flex items-center gap-2 pt-2 text-xs text-slate-500">
           <span>{article.author.full_name}</span>
