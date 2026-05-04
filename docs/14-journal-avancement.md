@@ -299,14 +299,73 @@ sudo bash /var/www/geoclicmedia/deploy/deploy-prod.sh
 
 ---
 
-### 🟡 ÉTAPE 7 — Polish (en cours, 2026-05-04)
+### ✅ ÉTAPE 7 — Polish + direction artistique (2026-05-04)
 
-**À faire**
-- `sitemap.xml` dynamique via `app/sitemap.ts` (toutes URLs publiques + articles + catégories + communes).
-- `robots.txt` via `app/robots.ts` (allow public, disallow `/admin/` et `/django-admin/`).
-- Documentation rédactrice : "Comment publier un article" en markdown.
-- Améliorations Lighthouse / accessibilité (alt texts, focus visible, skip links).
-- UptimeRobot setup (URL de healthcheck).
+**Réalisations SEO / accessibilité**
+- `app/sitemap.ts` : sitemap dynamique avec toutes URLs publiques + articles + catégories + communes, ISR 1h, priorités cohérentes (1.0 home, 0.9 featured, 0.7 articles).
+- `app/robots.ts` : disallow `/admin/`, `/django-admin/`, `/api/`.
+- Skip link "Aller au contenu" pour navigation clavier (a11y).
+
+**Documentation utilisateur**
+- `docs/15-administration-utilisateurs.md` : 4 rôles, création comptes Django+CLI, désactivation RGPD, sécurité, roadmap.
+- `docs/16-guide-redactrice.md` : tutoriel complet pour la rédactrice (login, markdown, cover image, catégorisation, SEO, bonnes pratiques).
+- `docs/17-monitoring.md` : UptimeRobot setup, logs systemd/nginx, diagnostic panne, backup PG, renouvellement HTTPS, checklist hebdo.
+
+**Phase 1 design — direction "magazine littéraire ancré local"**
+- Polices : **Fraunces** (serif éditorial pour titres + chapeaux italiques) + **Inter** (sans-serif UI).
+- Palette enrichie : `#fbf9f5` (sel, fond pages publiques), `#e8dfd1` (sable, future section secondaire), `#a8533a` (terre cuite, accent rare réservé à la pub commerçants).
+- CategoryBadge "tampon discret" : bordure 1.5px + texte couleur + fond off-white.
+- Page article : `max-w-[68ch]` (optimum lecture Bringhurst), titre Fraunces semibold, chapeau italique serif desktop.
+- **Lettrine** sur 1er paragraphe du corps article (4.5rem Fraunces, couleur camargue, float-left).
+- ArticleCard premium : hover -translate-y-0.5 + shadow-xl + scale image 1.04 (transitions 300-500ms).
+- Hero accueil : titre serif 6xl drop-shadow.
+- Header/Footer/h2 "Derniers articles" : font-serif pour cohérence de marque.
+- Sélection texte (`::selection`) aux couleurs marque.
+
+**Adaptation mobile-first**
+- Hero **2 layouts** : mobile = image edge-to-edge + texte sur fond slate-900 dessous (lisibilité max), desktop = letterbox+blur+surimpression (effet magazine).
+- Chips catégories : **scroll horizontal** mobile (overflow-x-auto edge-to-edge), wrap classique desktop.
+- Typo réduite mobile : titre h1 article 2xl (vs 3xl desktop), chapeau text-base sans italique (vs serif italic xl desktop).
+- ArticleCard : padding 4 mobile / 5 desktop, titre text-lg / text-xl.
+- **Drawer mobile** fonctionnel avec 9 rubriques + 7 communes + recherche + légal, fermeture Échap/clic backdrop/clic lien, scroll body bloqué.
+  - Bug fix `createPortal(drawer, document.body)` pour échapper au stacking context du header (backdrop-blur créait un nouveau context qui contraignait le z-index du drawer).
+
+**Restant à faire manuellement par Fred (one-time)**
+- Soumettre `https://media.geoclic.fr/sitemap.xml` à Google Search Console.
+- Configurer 2 monitors UptimeRobot (`/` et `/healthz/` keyword "ok").
+- Partager le guide rédactrice à sa partenaire.
+- Tester PWA installation Android Chrome + iOS Safari sur vrais devices.
+
+---
+
+## 🎉 Sprint 1 = LIVRÉ — production live sur https://media.geoclic.fr
+
+**Bilan vs brief initial** :
+- ✅ PWA installable
+- ✅ Back-office utilisable (custom Next.js, pas Django Admin)
+- ✅ Site déployé en production (HTTPS Let's Encrypt)
+- ✅ Pipeline `git push → prod` opérationnel
+- ✅ 5 articles publiés (1 manuel + 4 seed) avec covers
+- ✅ Monitoring + backups quotidiens + doc
+
+**Anticipations Sprint 2-4 déjà en place** :
+- Champs `facebook_*` (publication auto FB sprint 2)
+- Champs `sponsor_data` + `sponsor_disclosure` (régie pub sprint 3-4)
+- Page gestion comptes utilisateurs custom (était sprint 2 dans le brief)
+- Couleur terre cuite `#a8533a` réservée comme accent commercial
+
+---
+
+## ➡️ Prochaine discussion : Sprint 3 — Régie publicitaire
+
+**Choix Fred** : skip Sprint 2 (diffusion Facebook) pour attaquer directement la **monétisation** (régie pub commerçants).
+
+**Pré-requis à lire en début de session suivante** :
+- `docs/02-modele-economique.md` — formules tarifaires Basic 79€/Premium 149€
+- `docs/10-espace-annonceurs.md` — UX espace annonceur self-service
+- `docs/04-modeles-donnees.md` — modèles Business à créer
+- `docs/05-roadmap-sprints.md` — découpage sprints prévus
+- `docs/14-journal-avancement.md` (ce fichier) — état projet
 
 ---
 
