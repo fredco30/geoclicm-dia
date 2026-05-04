@@ -51,17 +51,19 @@ if SENTRY_DSN:
         environment="production",
     )
 
-# --- Logging fichier ---
+# --- Logging ---
+# stdout/stderr → systemd journal (consultable via `journalctl -u geoclicmedia-django`).
+# Pas de fichier custom (gunicorn écrit déjà ses access/error logs séparément).
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "/var/log/geoclicmedia/django.log",
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
     "loggers": {
-        "django": {"handlers": ["file"], "level": "INFO"},
+        "django": {"handlers": ["console"], "level": "INFO"},
+        "django.request": {"handlers": ["console"], "level": "WARNING"},
     },
 }
