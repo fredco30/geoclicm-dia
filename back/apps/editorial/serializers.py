@@ -189,7 +189,7 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
             "commune", "location",
             "status", "is_featured", "published_at",
             "auto_publish_to_facebook",
-            "sponsor_data", "sponsor_disclosure",
+            "sponsor", "sponsor_disclosure",
             "meta_title", "meta_description",
         )
         read_only_fields = ("id",)

@@ -12,12 +12,18 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "./markdown-editor";
 import { ImageUploader } from "./image-uploader";
-import type { ArticleDetail, Category, Commune } from "@/types/api";
+import type {
+  ArticleDetail,
+  BusinessListItem,
+  Category,
+  Commune,
+} from "@/types/api";
 
 type Props = {
   article?: ArticleDetail; // undefined → mode création
   categories: Category[];
   communes: Commune[];
+  businesses: BusinessListItem[];
 };
 
 type FormState = {
@@ -34,6 +40,7 @@ type FormState = {
   is_featured: boolean;
   meta_title: string;
   meta_description: string;
+  sponsor: string; // id Business en string ou ""
   sponsor_disclosure: string;
 };
 
@@ -58,7 +65,7 @@ function readCsrfToken(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function ArticleForm({ article, categories, communes }: Props) {
+export function ArticleForm({ article, categories, communes, businesses }: Props) {
   const router = useRouter();
   const isEdit = !!article;
 
@@ -76,6 +83,7 @@ export function ArticleForm({ article, categories, communes }: Props) {
     is_featured: article?.is_featured ?? false,
     meta_title: article?.meta_title ?? "",
     meta_description: article?.meta_description ?? "",
+    sponsor: article?.sponsor ? String(article.sponsor.id) : "",
     sponsor_disclosure: article?.sponsor_disclosure ?? "",
   });
 
@@ -109,6 +117,8 @@ export function ArticleForm({ article, categories, communes }: Props) {
     fd.append("is_featured", String(form.is_featured));
     fd.append("meta_title", form.meta_title);
     fd.append("meta_description", form.meta_description);
+    // sponsor : "" pour clear, sinon ID en string. DRF traite "" comme null sur FK.
+    fd.append("sponsor", form.sponsor);
     fd.append("sponsor_disclosure", form.sponsor_disclosure);
     if (coverFile) fd.append("cover_image", coverFile);
 
@@ -386,6 +396,26 @@ export function ArticleForm({ article, categories, communes }: Props) {
               Sponsoring (article sponsorisé)
             </legend>
             <div className="space-y-2">
+              <Label htmlFor="sponsor">Commerçant sponsor</Label>
+              <Select
+                id="sponsor"
+                value={form.sponsor}
+                onChange={(e) => update("sponsor", e.target.value)}
+              >
+                <option value="">— Aucun (article éditorial classique) —</option>
+                {businesses.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.commune_name})
+                  </option>
+                ))}
+              </Select>
+              <p className="text-xs text-slate-500">
+                Lie cet article à une fiche commerçant : badge « Sponsorisé »
+                affiché sur la card + encart « En partenariat avec » en fin
+                d&apos;article avec CTA vers la fiche.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="sponsor_disclosure">Mention sponsor</Label>
               <Input
                 id="sponsor_disclosure"
@@ -394,7 +424,8 @@ export function ArticleForm({ article, categories, communes }: Props) {
                 onChange={(e) => update("sponsor_disclosure", e.target.value)}
               />
               <p className="text-xs text-slate-500">
-                Laisser vide pour un article éditorial classique.
+                Texte affiché dans le bandeau sponsor (laisse vide pour
+                « Contenu en partenariat » par défaut).
               </p>
             </div>
           </fieldset>
