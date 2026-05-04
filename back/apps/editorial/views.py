@@ -53,7 +53,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = (
-            Article.objects.select_related("category", "commune", "author")
+            Article.objects.select_related("category", "commune", "author", "sponsor")
             .prefetch_related("tags", "gallery")
         )
         # Lecture anonyme : seulement publiés et avec date passée

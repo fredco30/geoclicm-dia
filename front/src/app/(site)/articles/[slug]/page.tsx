@@ -107,10 +107,35 @@ export default async function ArticlePage({ params }: Props) {
           <span>{article.view_count} lectures</span>
         </div>
 
-        {article.sponsor_disclosure ? (
-          <p className="mt-4 rounded-md bg-amber-50 px-4 py-2 text-sm text-amber-900 ring-1 ring-amber-200">
-            <strong>Mention sponsorisée :</strong> {article.sponsor_disclosure}
-          </p>
+        {article.sponsor || article.sponsor_disclosure ? (
+          <div className="mt-4 flex items-center gap-3 rounded-md bg-[#a8533a]/10 px-4 py-3 ring-1 ring-[#a8533a]/30">
+            {article.sponsor?.logo?.thumbnail ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={article.sponsor.logo.thumbnail}
+                alt=""
+                className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-[#a8533a]/20"
+              />
+            ) : (
+              <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-[#a8533a] px-2 text-xs font-medium uppercase tracking-wider text-white">
+                Sponsorisé
+              </span>
+            )}
+            <p className="text-sm text-[#7a3a26]">
+              {article.sponsor_disclosure || "Contenu en partenariat"}
+              {article.sponsor ? (
+                <>
+                  {" — "}
+                  <Link
+                    href={`/commerces/${article.sponsor.slug}`}
+                    className="font-medium underline hover:text-[#a8533a]"
+                  >
+                    {article.sponsor.name}
+                  </Link>
+                </>
+              ) : null}
+            </p>
+          </div>
         ) : null}
       </header>
 
@@ -140,6 +165,41 @@ export default async function ArticlePage({ params }: Props) {
             </Link>
           ))}
         </div>
+      ) : null}
+
+      {/* Encart sponsor (fin d'article, avant le partage) */}
+      {article.sponsor ? (
+        <aside className="mt-12 overflow-hidden rounded-xl bg-[#fbf9f5] ring-1 ring-[#a8533a]/30">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+            {article.sponsor.logo?.medium ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={article.sponsor.logo.medium}
+                alt={article.sponsor.name}
+                className="h-20 w-20 shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+              />
+            ) : null}
+            <div className="flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#a8533a]">
+                En partenariat avec
+              </p>
+              <h2 className="mt-1 font-serif text-xl font-semibold text-slate-900">
+                {article.sponsor.name}
+              </h2>
+              {article.sponsor.short_description ? (
+                <p className="mt-1 text-sm text-slate-600">
+                  {article.sponsor.short_description}
+                </p>
+              ) : null}
+            </div>
+            <Link
+              href={`/commerces/${article.sponsor.slug}`}
+              className="shrink-0 rounded-md bg-[#a8533a] px-4 py-2 text-sm font-medium text-white hover:bg-[#8e4530]"
+            >
+              Découvrir
+            </Link>
+          </div>
+        </aside>
       ) : null}
 
       {/* Partage */}

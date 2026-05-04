@@ -19,6 +19,11 @@ export function ArticleCard({ article }: { article: ArticleListItem }) {
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-[#2c6a93] to-[#1a4d6e]" />
           )}
+          {article.sponsor ? (
+            <span className="absolute right-2 top-2 rounded-full bg-[#a8533a] px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+              Sponsorisé
+            </span>
+          ) : null}
         </div>
       </Link>
       <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
