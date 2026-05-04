@@ -143,15 +143,25 @@ class Article(models.Model):
     facebook_post_id = models.CharField(max_length=100, blank=True)
     facebook_published_at = models.DateTimeField(null=True, blank=True)
 
-    # --- Anticipation Sprint 3-4 (sponsoring) ---
-    # FK Business pas encore défini en sprint 1, on garde un slot via JSON
-    sponsor_data = models.JSONField(
-        default=dict, blank=True, help_text="Champ sponsor anticipé sprint 3-4 (FK Business à créer)"
+    # --- Sponsoring (Sprint 3) ---
+    sponsor = models.ForeignKey(
+        "directory.Business",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="sponsored_articles",
+        help_text="Commerçant sponsor de l'article (badge + CTA fiche)",
     )
     sponsor_disclosure = models.CharField(
         max_length=200,
         blank=True,
         help_text="Mention obligatoire si sponsorisé (ex: 'En partenariat avec X')",
+    )
+    # Champ legacy Sprint 1 — sera supprimé après migration des données existantes
+    sponsor_data = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="DEPRECATED — données legacy à migrer vers FK sponsor",
     )
 
     # --- SEO ---
