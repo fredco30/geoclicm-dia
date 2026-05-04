@@ -10,6 +10,8 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from apps.ads.views import ad_redirect
+
 
 def healthcheck(request):
     """Endpoint de healthcheck pour monitoring (UptimeRobot, k8s, etc.)."""
@@ -20,10 +22,13 @@ urlpatterns = [
     # Django Admin déplacé sur /django-admin/ pour libérer /admin/* au back-office custom Next.js
     path("django-admin/", admin.site.urls),
     path("healthz/", healthcheck, name="healthcheck"),
+    # Redirect tracker pour les clicks d'encarts publicitaires
+    path("r/<int:pk>/", ad_redirect, name="ad-redirect"),
     # API
     path("api/", include("apps.core.urls")),
     path("api/", include("apps.editorial.urls")),
     path("api/", include("apps.directory.urls")),
+    path("api/", include("apps.ads.urls")),
     # OpenAPI / Swagger
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
