@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { BusinessCard } from "@/components/businesses/business-card";
+import { BusinessesMap } from "@/components/businesses/businesses-map";
 import { Pagination } from "@/components/ui/pagination";
 
 export const revalidate = 600;
@@ -111,6 +112,13 @@ export default async function BusinessesPage({ searchParams }: Props) {
           </Link>
         </div>
       )}
+
+      {/* Carte d'ensemble — affichée au-dessus de la liste si fiches géolocalisées */}
+      {businesses.results.some((b) => b.latitude !== null && b.longitude !== null) ? (
+        <div className="mb-8">
+          <BusinessesMap businesses={businesses.results} />
+        </div>
+      ) : null}
 
       {businesses.results.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center">

@@ -54,6 +54,8 @@ class BusinessListSerializer(serializers.ModelSerializer):
     service_areas_count = serializers.IntegerField(
         source="service_areas.count", read_only=True
     )
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
@@ -62,11 +64,18 @@ class BusinessListSerializer(serializers.ModelSerializer):
             "category", "category_name",
             "commune", "commune_name",
             "service_areas_count",
+            "latitude", "longitude",
             "owner", "owner_username",
             "logo", "plan",
             "is_published", "is_featured", "is_claimed",
             "created_at", "updated_at",
         )
+
+    def get_latitude(self, obj: Business) -> float | None:
+        return obj.location.y if obj.location else None
+
+    def get_longitude(self, obj: Business) -> float | None:
+        return obj.location.x if obj.location else None
 
 
 # ============================================================================

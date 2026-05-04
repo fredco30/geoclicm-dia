@@ -171,6 +171,8 @@ export type BusinessListItem = {
   commune: number;
   commune_name: string;
   service_areas_count: number;
+  latitude: number | null;
+  longitude: number | null;
   logo: ImageVariants | null;
   plan: BusinessPlan;
   is_published: boolean;
