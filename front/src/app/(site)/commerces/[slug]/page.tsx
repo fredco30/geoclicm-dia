@@ -5,6 +5,7 @@ import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { BusinessMiniMap } from "@/components/businesses/business-mini-map";
 import { BusinessNavActions } from "@/components/businesses/business-nav-actions";
+import type { BusinessDetail } from "@/types/api";
 
 export const revalidate = 600;
 
@@ -33,6 +34,101 @@ const DAYS_FR: Record<string, string> = {
   sunday: "Dimanche",
 };
 
+const DAYS_SCHEMA: Record<string, string> = {
+  monday: "Monday",
+  tuesday: "Tuesday",
+  wednesday: "Wednesday",
+  thursday: "Thursday",
+  friday: "Friday",
+  saturday: "Saturday",
+  sunday: "Sunday",
+};
+
+/**
+ * Construit un objet JSON-LD schema.org pour le balisage SEO de la fiche.
+ *
+ * Type schema.org dérivé de la catégorie commerçant (Restaurant, Hotel,
+ * BarOrPub, etc.). Permet à Google d'afficher des résultats riches
+ * (knowledge panel, étoiles, horaires) en SERP locales.
+ *
+ * Référence : https://schema.org/LocalBusiness
+ */
+function buildBusinessJsonLd(
+  business: BusinessDetail,
+  siteUrl: string,
+): Record<string, unknown> {
+  const fullStreet = [business.address, business.address_complement]
+    .filter(Boolean)
+    .join(", ");
+
+  const openingHoursSpec: Array<Record<string, string>> = [];
+  for (const [dayKey, slots] of Object.entries(business.opening_hours)) {
+    const dayOfWeek = DAYS_SCHEMA[dayKey];
+    if (!dayOfWeek) continue;
+    for (const s of slots) {
+      openingHoursSpec.push({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek,
+        opens: s.open,
+        closes: s.close,
+      });
+    }
+  }
+
+  const sameAs = [
+    business.website,
+    business.facebook_url,
+    business.instagram_url,
+    business.tiktok_url,
+  ].filter(Boolean);
+
+  const url = `${siteUrl}/commerces/${business.slug}`;
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": business.category.schema_type || "LocalBusiness",
+    "@id": url,
+    name: business.name,
+    description: business.short_description || business.description,
+    url,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: fullStreet,
+      postalCode: business.postal_code,
+      addressLocality: business.city,
+      addressRegion: business.commune_name,
+      addressCountry: "FR",
+    },
+  };
+
+  if (business.legal_name) jsonLd.legalName = business.legal_name;
+  if (business.latitude !== null && business.longitude !== null) {
+    jsonLd.geo = {
+      "@type": "GeoCoordinates",
+      latitude: business.latitude,
+      longitude: business.longitude,
+    };
+  }
+  if (business.phone) jsonLd.telephone = business.phone;
+  if (business.email) jsonLd.email = business.email;
+  if (business.logo?.large) jsonLd.logo = business.logo.large;
+  if (business.cover_image?.large) jsonLd.image = business.cover_image.large;
+  if (openingHoursSpec.length > 0) {
+    jsonLd.openingHoursSpecification = openingHoursSpec;
+  }
+  if (sameAs.length > 0) jsonLd.sameAs = sameAs;
+  if (business.specialties.length > 0) {
+    // Pertinent pour Restaurant (servesCuisine) et autres commerces
+    if (business.category.schema_type === "Restaurant") {
+      jsonLd.servesCuisine = business.specialties;
+    } else {
+      jsonLd.knowsAbout = business.specialties;
+    }
+  }
+
+  return jsonLd;
+}
+
 export default async function BusinessDetailPage({ params }: Props) {
   const { slug } = await params;
 
@@ -53,8 +149,17 @@ export default async function BusinessDetailPage({ params }: Props) {
     .filter(Boolean)
     .join(", ");
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://media.geoclic.fr";
+  const jsonLd = buildBusinessJsonLd(business, siteUrl);
+
   return (
     <div className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
+      {/* JSON-LD schema.org pour SEO local Google (Knowledge Panel, résultats riches) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <header className="mb-8">
         <Link
           href="/commerces"
