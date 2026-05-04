@@ -10,9 +10,18 @@ from __future__ import annotations
 from django.contrib.gis.geos import Point
 from rest_framework import serializers
 
+from apps.core.models import Commune
 from apps.editorial.serializers import ImageVariantsField
 
 from .models import Business, BusinessCategory
+
+
+class CommuneMiniSerializer(serializers.ModelSerializer):
+    """Représentation légère d'une commune (id+name+slug+department)."""
+
+    class Meta:
+        model = Commune
+        fields = ("id", "name", "slug", "department")
 
 
 # ============================================================================
@@ -42,6 +51,9 @@ class BusinessListSerializer(serializers.ModelSerializer):
     commune_name = serializers.CharField(source="commune.name", read_only=True)
     owner_username = serializers.CharField(source="owner.username", read_only=True, default=None)
     logo = ImageVariantsField(read_only=True)
+    service_areas_count = serializers.IntegerField(
+        source="service_areas.count", read_only=True
+    )
 
     class Meta:
         model = Business
@@ -49,6 +61,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
             "id", "name", "slug", "city",
             "category", "category_name",
             "commune", "commune_name",
+            "service_areas_count",
             "owner", "owner_username",
             "logo", "plan",
             "is_published", "is_featured", "is_claimed",
@@ -64,6 +77,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
     secondary_categories = BusinessCategorySerializer(many=True, read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)
+    service_areas = CommuneMiniSerializer(many=True, read_only=True)
     logo = ImageVariantsField(read_only=True)
     cover_image = ImageVariantsField(read_only=True)
     latitude = serializers.SerializerMethodField()
@@ -77,7 +91,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             "short_description", "description", "specialties",
             "logo", "cover_image",
             "address", "address_complement", "postal_code", "city",
-            "latitude", "longitude", "commune", "commune_name",
+            "latitude", "longitude", "commune", "commune_name", "service_areas",
             "phone", "mobile", "email", "website",
             "facebook_url", "instagram_url", "tiktok_url",
             "opening_hours", "seasonal_closures",
@@ -117,7 +131,7 @@ class BusinessWriteSerializer(serializers.ModelSerializer):
             "short_description", "description", "specialties",
             "logo", "cover_image",
             "address", "address_complement", "postal_code", "city",
-            "latitude", "longitude", "commune",
+            "latitude", "longitude", "commune", "service_areas",
             "phone", "mobile", "email", "website",
             "facebook_url", "instagram_url", "tiktok_url",
             "opening_hours", "seasonal_closures",

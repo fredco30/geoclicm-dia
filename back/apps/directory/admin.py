@@ -38,7 +38,7 @@ class BusinessAdmin(GISModelAdmin):
     search_fields = ("name", "legal_name", "siret", "short_description", "description")
     prepopulated_fields = {"slug": ("name",)}
     raw_id_fields = ("commune", "owner", "category")
-    filter_horizontal = ("secondary_categories", "photos")
+    filter_horizontal = ("secondary_categories", "photos", "service_areas")
     readonly_fields = ("view_count", "created_at", "updated_at")
 
     fieldsets = (
@@ -56,7 +56,7 @@ class BusinessAdmin(GISModelAdmin):
         }),
         ("Localisation", {
             "fields": ("address", "address_complement", "postal_code", "city",
-                       "commune", "location"),
+                       "commune", "service_areas", "location"),
         }),
         ("Contact", {
             "fields": ("phone", "mobile", "email", "website"),

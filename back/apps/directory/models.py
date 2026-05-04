@@ -106,6 +106,13 @@ class Business(models.Model):
         Commune,
         on_delete=models.PROTECT,
         related_name="businesses",
+        help_text="Commune où est physiquement implanté le commerce (géoloc).",
+    )
+    service_areas = models.ManyToManyField(
+        Commune,
+        related_name="serving_businesses",
+        blank=True,
+        help_text="Zones supplémentaires desservies (artisans multi-communes, services à domicile…).",
     )
 
     # --- Contact ---
