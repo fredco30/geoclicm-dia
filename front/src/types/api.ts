@@ -54,6 +54,17 @@ export type ArticleType = "reportage" | "portrait" | "breve" | "tribune" | "doss
 
 export type ArticleStatus = "draft" | "scheduled" | "published" | "archived";
 
+export type SponsorMini = {
+  id: number;
+  name: string;
+  slug: string;
+  logo: ImageVariants | null;
+};
+
+export type SponsorDetail = SponsorMini & {
+  short_description: string;
+};
+
 export type ArticleListItem = {
   id: number;
   title: string;
@@ -68,6 +79,7 @@ export type ArticleListItem = {
   author: Author;
   published_at: string | null;
   updated_at: string;
+  sponsor: SponsorMini | null;
 };
 
 export type ArticleDetail = {
@@ -87,6 +99,7 @@ export type ArticleDetail = {
   is_featured: boolean;
   author: Author;
   published_at: string | null;
+  sponsor: SponsorDetail | null;
   sponsor_disclosure: string;
   meta_title: string;
   meta_description: string;

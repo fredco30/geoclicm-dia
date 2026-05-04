@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { ArticleCard } from "@/components/articles/article-card";
 import { Pagination } from "@/components/ui/pagination";
+import { BusinessFeaturedSection } from "@/components/businesses/business-featured-section";
 
 export const revalidate = 600;
 
@@ -33,16 +34,20 @@ export default async function CommunePage({ params, searchParams }: Props) {
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
-  let commune, articles;
+  let commune, articles, businessesData;
   try {
-    [commune, articles] = await Promise.all([
+    [commune, articles, businessesData] = await Promise.all([
       api.commune(slug),
       api.articles.list({ commune: slug, page }),
+      api.businesses
+        .list({ area: slug, ordering: "-is_featured,name" })
+        .catch(() => null),
     ]);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
+  const territoryBusinesses = (businessesData?.results ?? []).slice(0, 8);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
@@ -81,6 +86,15 @@ export default async function CommunePage({ params, searchParams }: Props) {
           />
         </>
       )}
+
+      {/* Encart commerçants du territoire (siège ou zone desservie) */}
+      <BusinessFeaturedSection
+        title={`Commerces de ${commune.name}`}
+        subtitle="Acteurs locaux installés ou intervenant sur ce territoire."
+        businesses={territoryBusinesses}
+        seeAllHref={`/commerces?commune=${slug}`}
+        seeAllLabel={`Voir tous les commerces de ${commune.name}`}
+      />
     </div>
   );
 }

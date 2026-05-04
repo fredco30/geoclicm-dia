@@ -104,6 +104,15 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug")
 
 
+class SponsorMiniSerializer(serializers.Serializer):
+    """Représentation légère d'un Business sponsor d'article (lecture seule)."""
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    slug = serializers.CharField(read_only=True)
+    logo = ImageVariantsField(read_only=True)
+
+
 class ArticleListSerializer(serializers.ModelSerializer):
     """Listing — payload léger."""
 
@@ -111,6 +120,7 @@ class ArticleListSerializer(serializers.ModelSerializer):
     commune = serializers.StringRelatedField(read_only=True)
     cover_image = ImageVariantsField(read_only=True)
     author = AuthorSerializer(read_only=True)
+    sponsor = SponsorMiniSerializer(read_only=True)
 
     class Meta:
         model = Article
@@ -118,7 +128,18 @@ class ArticleListSerializer(serializers.ModelSerializer):
             "id", "title", "slug", "chapeau", "cover_image",
             "category", "commune", "article_type", "is_featured",
             "status", "author", "published_at", "updated_at",
+            "sponsor",
         )
+
+
+class SponsorDetailSerializer(serializers.Serializer):
+    """Représentation détaillée d'un Business sponsor pour la fiche article."""
+
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+    slug = serializers.CharField(read_only=True)
+    short_description = serializers.CharField(read_only=True)
+    logo = ImageVariantsField(read_only=True)
 
 
 class ArticleDetailSerializer(serializers.ModelSerializer):
@@ -130,6 +151,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     cover_image = ImageVariantsField(read_only=True)
     gallery = MediaSerializer(many=True, read_only=True)
     author = AuthorSerializer(read_only=True)
+    sponsor = SponsorDetailSerializer(read_only=True)
 
     class Meta:
         model = Article
@@ -139,7 +161,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             "category", "tags", "article_type",
             "commune", "location",
             "status", "is_featured", "author", "published_at",
-            "sponsor_disclosure",
+            "sponsor", "sponsor_disclosure",
             "meta_title", "meta_description",
             "view_count",
             "created_at", "updated_at",
