@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { ImageUploader } from "@/components/admin/image-uploader";
 import {
   OpeningHoursEditor,
   type OpeningHoursValue,
@@ -109,6 +110,11 @@ export function BusinessForm({ business, categories, communes }: Props) {
     meta_description: business?.meta_description ?? "",
   });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [removeCover, setRemoveCover] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -200,6 +206,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
 
     startTransition(async () => {
       try {
+        // 1. POST/PATCH JSON pour tous les champs hors images
         const res = await apiFetch(url, {
           method,
           body: JSON.stringify(payload),
@@ -211,6 +218,31 @@ export function BusinessForm({ business, categories, communes }: Props) {
           return;
         }
         const saved = (await res.json()) as { slug: string };
+
+        // 2. Si fichier(s) sélectionné(s) ou suppression demandée, PATCH multipart
+        const hasImageChanges =
+          logoFile || coverFile || removeLogo || removeCover;
+        if (hasImageChanges) {
+          const fd = new FormData();
+          if (logoFile) fd.append("logo", logoFile);
+          else if (removeLogo) fd.append("logo", "");
+          if (coverFile) fd.append("cover_image", coverFile);
+          else if (removeCover) fd.append("cover_image", "");
+
+          const imgRes = await apiFetch(`/api/businesses/${saved.slug}/`, {
+            method: "PATCH",
+            body: fd,
+            headers: csrf ? { "X-CSRFToken": csrf } : {},
+          });
+          if (!imgRes.ok) {
+            const data = await imgRes.json().catch(() => ({}));
+            setError(
+              `Fiche sauvée, mais erreur upload image : ${JSON.stringify(data, null, 2)}`,
+            );
+            return;
+          }
+        }
+
         router.push(`/admin/directory/businesses/${saved.slug}/edit`);
         router.refresh();
       } catch {
@@ -284,6 +316,64 @@ export function BusinessForm({ business, categories, communes }: Props) {
       ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* MÉDIAS */}
+        <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Médias
+          </legend>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Logo</Label>
+              <p className="text-xs text-slate-500">
+                Format carré recommandé (ex: 600×600 px). Affiché en vignette
+                dans les listings et en petit sur la fiche.
+              </p>
+              <ImageUploader
+                currentUrl={
+                  removeLogo
+                    ? null
+                    : (logoFile ? null : business?.logo?.medium ?? null)
+                }
+                onFileSelected={(file) => {
+                  setLogoFile(file);
+                  if (file) setRemoveLogo(false);
+                  else if (business?.logo) setRemoveLogo(true);
+                }}
+              />
+              {logoFile ? (
+                <p className="text-xs text-green-700">
+                  ✓ Nouveau fichier prêt : {logoFile.name}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Photo de couverture</Label>
+              <p className="text-xs text-slate-500">
+                Bandeau 16:9 affiché en haut de la fiche (ex: 1600×900 px).
+                Visuel principal du commerce.
+              </p>
+              <ImageUploader
+                currentUrl={
+                  removeCover
+                    ? null
+                    : (coverFile ? null : business?.cover_image?.large ?? null)
+                }
+                onFileSelected={(file) => {
+                  setCoverFile(file);
+                  if (file) setRemoveCover(false);
+                  else if (business?.cover_image) setRemoveCover(true);
+                }}
+              />
+              {coverFile ? (
+                <p className="text-xs text-green-700">
+                  ✓ Nouveau fichier prêt : {coverFile.name}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </fieldset>
+
         {/* IDENTITÉ */}
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -754,11 +844,6 @@ export function BusinessForm({ business, categories, communes }: Props) {
         </fieldset>
       </div>
 
-      <p className="text-xs text-slate-500">
-        Les uploads logo/cover/photos seront ajoutés dans une prochaine PR (A4.5).
-        Pour l&apos;instant, créer la fiche sans images puis éditer pour ajouter les
-        visuels via Django admin (<code>/django-admin/directory/business/</code>).
-      </p>
     </form>
   );
 }
