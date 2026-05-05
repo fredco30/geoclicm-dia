@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Store } from "lucide-react";
+import { CloudSun, Search, Store } from "lucide-react";
 import { MobileNav } from "./mobile-nav";
 
 export function Header() {
@@ -21,6 +21,13 @@ export function Header() {
           <NavLink href="/categories/patrimoine">Patrimoine</NavLink>
           <NavLink href="/categories/portraits">Portraits</NavLink>
           <NavLink href="/categories/reportages">Reportages</NavLink>
+          <Link
+            href="/meteo"
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+          >
+            <CloudSun className="h-4 w-4" />
+            Météo
+          </Link>
           <span className="mx-1 h-4 w-px bg-slate-200" aria-hidden />
           <Link
             href="/commerces"
