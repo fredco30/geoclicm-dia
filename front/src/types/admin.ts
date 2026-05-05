@@ -85,7 +85,10 @@ export type AdminBusinessListItem = {
   updated_at: string;
 };
 
-export type AdminBusinessDetail = AdminBusinessListItem & {
+export type AdminBusinessDetail = Omit<AdminBusinessListItem, "category"> & {
+  // Le serializer detail renvoie l'objet complet (BusinessCategorySerializer),
+  // pas seulement l'id comme dans le list serializer.
+  category: AdminBusinessCategory;
   legal_name: string;
   siret: string;
   secondary_categories: AdminBusinessCategory[];
