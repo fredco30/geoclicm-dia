@@ -102,7 +102,7 @@ export function BusinessForm({
     name: business?.name ?? "",
     legal_name: business?.legal_name ?? "",
     siret: business?.siret ?? "",
-    category: (business?.category ?? categories[0]?.id ?? null) as number | null,
+    category: (business?.category?.id ?? categories[0]?.id ?? null) as number | null,
     secondary_categories: business?.secondary_categories.map((c) => c.id) ?? [],
     short_description: business?.short_description ?? "",
     description: business?.description ?? "",
