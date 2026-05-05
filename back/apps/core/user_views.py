@@ -5,6 +5,7 @@ Restreint aux superusers ou rôle admin (pas de promotion auto-permise).
 """
 from __future__ import annotations
 
+from django.db.models import Count
 from rest_framework import permissions, serializers, viewsets
 
 from .models import User
@@ -26,6 +27,11 @@ class UserAdminSerializer(serializers.ModelSerializer):
         write_only=True, required=False, style={"input_type": "password"}
     )
     full_name = serializers.SerializerMethodField()
+    # Nombre de fiches Business dont ce user est owner. Permet à l'admin de
+    # voir d'un coup d'œil dans la liste les comptes annonceurs sans fiche
+    # rattachée vs ceux qui gèrent une ou plusieurs fiches. Annoté via
+    # Count("businesses") dans UserAdminViewSet.get_queryset.
+    business_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
         model = User
@@ -35,9 +41,12 @@ class UserAdminSerializer(serializers.ModelSerializer):
             "is_active", "is_staff", "is_superuser",
             "is_email_verified",
             "password",
+            "business_count",
             "date_joined", "last_login",
         )
-        read_only_fields = ("id", "full_name", "date_joined", "last_login")
+        read_only_fields = (
+            "id", "full_name", "business_count", "date_joined", "last_login",
+        )
 
     def get_full_name(self, obj: User) -> str:
         return obj.get_full_name() or obj.username
@@ -69,7 +78,11 @@ class UserAdminViewSet(viewsets.ModelViewSet):
     /api/users/<id>/   — retrieve/update/delete
     """
 
-    queryset = User.objects.all().order_by("-date_joined")
+    queryset = (
+        User.objects.all()
+        .annotate(business_count=Count("businesses"))
+        .order_by("-date_joined")
+    )
     serializer_class = UserAdminSerializer
     permission_classes = (IsSuperuserOrAdmin,)
     pagination_class = None  # liste courte typiquement (< 100 users sprint 1)
