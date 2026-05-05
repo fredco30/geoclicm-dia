@@ -229,6 +229,8 @@ export type AdPlacement =
   | "directory_top"
   | "directory_inline"
   | "agenda_top"
+  | "weather_top"
+  | "weather_sidebar"
   | "newsletter";
 
 export type AdServeResponse = {

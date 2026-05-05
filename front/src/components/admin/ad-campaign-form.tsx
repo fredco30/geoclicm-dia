@@ -35,6 +35,8 @@ const PLACEMENTS: { value: string; label: string; help: string }[] = [
   { value: "directory_top", label: "Annuaire — Top", help: "Encart en haut de /commerces (sous filtres)." },
   { value: "directory_inline", label: "Annuaire — Inline", help: "Encart entre les fiches commerçants." },
   { value: "agenda_top", label: "Agenda — Top", help: "Encart en haut de l'agenda événements (futur)." },
+  { value: "weather_top", label: "Météo — Top", help: "Encart en haut de /meteo, au-dessus du bloc météo actuelle. Très haut trafic récurrent (locaux + touristes)." },
+  { value: "weather_sidebar", label: "Météo — Sidebar", help: "Sidebar de /meteo (desktop) / fin de page mobile. Visibilité prolongée pendant la lecture des prévisions 7 jours." },
   { value: "newsletter", label: "Newsletter", help: "Encart inclus dans la newsletter mensuelle." },
 ];
 

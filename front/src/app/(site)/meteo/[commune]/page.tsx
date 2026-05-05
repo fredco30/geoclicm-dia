@@ -5,6 +5,7 @@ import { CloudSun } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
 import { formatTimeShort } from "@/lib/weather";
+import { AdSlot } from "@/components/ads/ad-slot";
 import { CommuneSelector } from "@/components/weather/commune-selector";
 import { WeatherNow } from "@/components/weather/weather-now";
 import { WeatherHourly } from "@/components/weather/weather-hourly";
@@ -85,19 +86,31 @@ export default async function MeteoCommunePage({ params }: Props) {
         <CommuneSelector communes={sortedCommunes} activeSlug={commune.slug} />
       </div>
 
-      <div className="space-y-6">
-        <WeatherNow current={weather.forecast.current} />
+      {/* Bandeau publicitaire en haut (au-dessus du bloc Maintenant). */}
+      <div className="mb-6">
+        <AdSlot placement="weather_top" communeSlug={commune.slug} />
+      </div>
 
-        {weather.marine ? (
-          <WeatherMarinePanel marine={weather.marine} communeName={commune.name} />
-        ) : null}
+      <div className="lg:grid lg:grid-cols-[2fr_1fr] lg:items-start lg:gap-6">
+        <div className="space-y-6">
+          <WeatherNow current={weather.forecast.current} />
 
-        <WeatherHourly
-          hourly={weather.forecast.hourly}
-          isDay={weather.forecast.current.is_day}
-        />
+          {weather.marine ? (
+            <WeatherMarinePanel marine={weather.marine} communeName={commune.name} />
+          ) : null}
 
-        <WeatherDaily daily={weather.forecast.daily} />
+          <WeatherHourly
+            hourly={weather.forecast.hourly}
+            isDay={weather.forecast.current.is_day}
+          />
+
+          <WeatherDaily daily={weather.forecast.daily} />
+        </div>
+
+        {/* Sidebar publicitaire — sticky desktop, en bas sur mobile. */}
+        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-20">
+          <AdSlot placement="weather_sidebar" communeSlug={commune.slug} />
+        </aside>
       </div>
 
       <p className="mt-10 text-xs text-slate-400">

@@ -26,6 +26,8 @@ class AdCampaign(models.Model):
         DIRECTORY_TOP = "directory_top", "Annuaire — Top"
         DIRECTORY_INLINE = "directory_inline", "Annuaire — Inline"
         AGENDA_TOP = "agenda_top", "Agenda — Top"
+        WEATHER_TOP = "weather_top", "Météo — Top"
+        WEATHER_SIDEBAR = "weather_sidebar", "Météo — Sidebar"
         NEWSLETTER = "newsletter", "Newsletter"
 
     business = models.ForeignKey(
