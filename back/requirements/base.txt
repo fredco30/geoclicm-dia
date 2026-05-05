@@ -32,3 +32,9 @@ qrcode[pil]>=7.4,<8.0              # affichage QR code 2FA dans admin
 # --- Utils ---
 python-slugify>=8.0,<9.0           # slugs propres avec translittération unicode
 markdown>=3.7,<4.0                 # rendu corps article (preview admin)
+
+# --- Paiement / abonnements (Sprint 3 Lot E) ---
+# dj-stripe : sync Stripe ↔ DB Django (subscriptions, invoices, customers)
+# Mode TEST en phase pilote 2026, bascule LIVE au lancement commercial Pâques 2027
+dj-stripe>=2.9,<3.0
+stripe>=10.0,<13.0                 # SDK officiel (peer dep de dj-stripe)

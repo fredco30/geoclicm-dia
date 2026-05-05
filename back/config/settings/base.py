@@ -43,6 +43,7 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "django_otp",
     "django_otp.plugins.otp_totp",
+    "djstripe",  # synchronisation Stripe ↔ DB (Sprint 3 Lot E)
 ]
 
 LOCAL_APPS = [
@@ -50,6 +51,7 @@ LOCAL_APPS = [
     "apps.editorial",
     "apps.directory",
     "apps.ads",
+    "apps.advertisers",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -177,3 +179,34 @@ CACHES = {
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+
+# --- Stripe / dj-stripe (Sprint 3 Lot E) ---
+# Mode TEST en phase pilote 2026 (cartes 4242 4242 4242 4242 acceptées),
+# bascule LIVE au lancement commercial Pâques 2027 via STRIPE_LIVE_MODE=True
+# + clés sk_live_*** / pk_live_***.
+#
+# Récupère les clés depuis https://dashboard.stripe.com/test/apikeys
+# Webhook secret : généré quand on crée le webhook endpoint dans Stripe
+# (https://dashboard.stripe.com/test/webhooks → endpoint /stripe/webhook/)
+STRIPE_TEST_PUBLIC_KEY = env("STRIPE_TEST_PUBLIC_KEY", default="")
+STRIPE_TEST_SECRET_KEY = env("STRIPE_TEST_SECRET_KEY", default="")
+STRIPE_LIVE_PUBLIC_KEY = env("STRIPE_LIVE_PUBLIC_KEY", default="")
+STRIPE_LIVE_SECRET_KEY = env("STRIPE_LIVE_SECRET_KEY", default="")
+STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE", default=False)
+
+# Webhook secret — différent en TEST et LIVE (un endpoint webhook chacun)
+DJSTRIPE_WEBHOOK_SECRET = env("DJSTRIPE_WEBHOOK_SECRET", default="")
+
+# UUID au lieu de l'ID Stripe brut comme PK des modèles djstripe
+# (recommandé par dj-stripe pour stabilité multi-environnement)
+DJSTRIPE_USE_NATIVE_JSONFIELD = True
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+
+# IDs des prix Stripe (Price IDs) — créés dans le dashboard Stripe :
+# https://dashboard.stripe.com/test/products
+# Format attendu : price_xxxxxxxxxxxxxxxxx
+STRIPE_PRICE_BASIC = env("STRIPE_PRICE_BASIC", default="")     # 79€/an
+STRIPE_PRICE_PREMIUM = env("STRIPE_PRICE_PREMIUM", default="")  # 149€/an
+
+# URL publique du site (pour les success/cancel URLs Stripe Checkout)
+SITE_URL = env("SITE_URL", default="https://media.geoclic.fr")

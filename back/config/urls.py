@@ -24,11 +24,14 @@ urlpatterns = [
     path("healthz/", healthcheck, name="healthcheck"),
     # Redirect tracker pour les clicks d'encarts publicitaires
     path("r/<int:pk>/", ad_redirect, name="ad-redirect"),
+    # Webhook Stripe (dj-stripe) — endpoint à enregistrer dans le dashboard Stripe
+    path("stripe/", include("djstripe.urls", namespace="djstripe")),
     # API
     path("api/", include("apps.core.urls")),
     path("api/", include("apps.editorial.urls")),
     path("api/", include("apps.directory.urls")),
     path("api/", include("apps.ads.urls")),
+    path("api/", include("apps.advertisers.urls")),
     # OpenAPI / Swagger
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
