@@ -76,7 +76,7 @@ export function AdCampaignForm({
     : "/api/ad-campaigns";
   const listHref = isAdvertiser
     ? "/advertiser/campagnes"
-    : "/admin/ads/campaigns";
+    : "/admin/regie/campagnes";
   const editHrefPrefix = listHref;
 
   const [form, setForm] = useState({

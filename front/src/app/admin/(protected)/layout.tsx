@@ -51,8 +51,8 @@ export default async function AdminProtectedLayout({
           <NavLink href="/admin/directory/categories" icon={<Tags className="h-4 w-4" />}>
             Catégories commerçants
           </NavLink>
-          <NavLink href="/admin/ads/campaigns" icon={<Megaphone className="h-4 w-4" />}>
-            Campagnes pub
+          <NavLink href="/admin/regie/campagnes" icon={<Megaphone className="h-4 w-4" />}>
+            Régie publicitaire
           </NavLink>
           {canManageUsers ? (
             <NavLink
