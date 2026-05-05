@@ -72,7 +72,7 @@ export default async function AdvertiserProtectedLayout({
           </NavLink>
         </nav>
         <div className="mt-auto pt-4">
-          <LogoutButton />
+          <LogoutButton redirectTo="/advertiser/login" />
         </div>
       </aside>
       <main className="min-h-screen flex-1 bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
