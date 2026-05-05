@@ -13,6 +13,8 @@ Endpoints :
 from __future__ import annotations
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
@@ -97,3 +99,71 @@ class MeView(APIView):
 
     def get(self, request):
         return Response(UserMeSerializer(request.user).data)
+
+
+class AdvertiserRegisterSerializer(serializers.Serializer):
+    """Inscription self-service annonceur — email comme identifiant."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(
+        write_only=True, style={"input_type": "password"}, min_length=8
+    )
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+
+    def validate_email(self, value: str) -> str:
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError(
+                "Un compte existe déjà avec cet email."
+            )
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError(
+                "Cet identifiant est déjà pris."
+            )
+        return value.lower()
+
+    def validate_password(self, value: str) -> str:
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
+
+
+class AdvertiserRegisterView(APIView):
+    """
+    POST /api/auth/register-advertiser/
+
+    Inscription self-service pour un commerçant. Crée un User avec
+    username=email, role='advertiser', et connecte automatiquement.
+
+    Pour la phase pilote : pas de validation email obligatoire (Fred
+    et la partenaire vérifient manuellement). À durcir au lancement
+    commercial Pâques 2027 si besoin (envoi mail Brevo + token).
+    """
+
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = AdvertiserRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = User.objects.create_user(
+            username=data["email"],
+            email=data["email"],
+            password=data["password"],
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            role=User.Role.ADVERTISER,
+        )
+        if data.get("phone"):
+            user.phone = data["phone"]
+            user.save(update_fields=["phone"])
+
+        # Login auto pour passer directement au wizard
+        login(request, user)
+        return Response(
+            UserMeSerializer(user).data, status=status.HTTP_201_CREATED
+        )

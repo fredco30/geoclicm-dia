@@ -181,6 +181,21 @@ export const auth = {
       headers: csrf ? { "X-CSRFToken": csrf } : {},
     });
   },
+  registerAdvertiser: async (data: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    phone?: string;
+  }) => {
+    await apiFetch("/api/auth/csrf/");
+    const csrf = readCookie("csrftoken");
+    return apiFetch("/api/auth/register-advertiser/", {
+      method: "POST",
+      headers: csrf ? { "X-CSRFToken": csrf } : {},
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 function readCookie(name: string): string | null {
