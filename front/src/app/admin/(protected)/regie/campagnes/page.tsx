@@ -39,7 +39,7 @@ export default async function AdsCampaignsPage() {
             ({campaigns.length})
           </span>
         </h1>
-        <Link href="/admin/ads/campaigns/new">
+        <Link href="/admin/regie/campagnes/new">
           <Button size="sm">
             <Plus className="h-4 w-4" /> Nouvelle campagne
           </Button>
@@ -138,7 +138,7 @@ export default async function AdsCampaignsPage() {
                     </td>
                     <td className="px-3 py-2 text-right">
                       <Link
-                        href={`/admin/ads/campaigns/${c.id}/edit`}
+                        href={`/admin/regie/campagnes/${c.id}/edit`}
                         className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
                         aria-label="Éditer"
                       >
