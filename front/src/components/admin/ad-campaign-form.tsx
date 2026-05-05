@@ -23,6 +23,8 @@ type Props = {
   businesses: AdminBusinessListItem[];
   communes: Commune[];
   categories: AdminBusinessCategory[];
+  /** "admin" : tous les champs. "advertiser" : ciblage / budget / statut masqués. */
+  mode?: "admin" | "advertiser";
 };
 
 const PLACEMENTS: { value: string; label: string; help: string }[] = [
@@ -61,9 +63,19 @@ export function AdCampaignForm({
   businesses,
   communes,
   categories,
+  mode = "admin",
 }: Props) {
   const router = useRouter();
   const isEdit = !!campaign;
+  const isAdvertiser = mode === "advertiser";
+
+  const apiBase = isAdvertiser
+    ? "/api/advertiser/ad-campaigns"
+    : "/api/ad-campaigns";
+  const listHref = isAdvertiser
+    ? "/advertiser/campagnes"
+    : "/admin/ads/campaigns";
+  const editHrefPrefix = listHref;
 
   const [form, setForm] = useState({
     name: campaign?.name ?? "",
@@ -127,8 +139,8 @@ export function AdCampaignForm({
     }
 
     const url = isEdit
-      ? `/api/ad-campaigns/${campaign!.id}/`
-      : `/api/ad-campaigns/`;
+      ? `${apiBase}/${campaign!.id}/`
+      : `${apiBase}/`;
     const method = isEdit ? "PATCH" : "POST";
 
     startTransition(async () => {
@@ -151,7 +163,7 @@ export function AdCampaignForm({
           const fd = new FormData();
           if (imageFile) fd.append("image", imageFile);
           else if (removeImage) fd.append("image", "");
-          const imgRes = await apiFetch(`/api/ad-campaigns/${saved.id}/`, {
+          const imgRes = await apiFetch(`${apiBase}/${saved.id}/`, {
             method: "PATCH",
             body: fd,
             headers: csrf ? { "X-CSRFToken": csrf } : {},
@@ -165,7 +177,7 @@ export function AdCampaignForm({
           }
         }
 
-        router.push(`/admin/ads/campaigns/${saved.id}/edit`);
+        router.push(`${editHrefPrefix}/${saved.id}/edit`);
         router.refresh();
       } catch {
         setError("Erreur réseau, réessaie.");
@@ -185,12 +197,12 @@ export function AdCampaignForm({
     }
 
     startTransition(async () => {
-      const res = await apiFetch(`/api/ad-campaigns/${campaign!.id}/`, {
+      const res = await apiFetch(`${apiBase}/${campaign!.id}/`, {
         method: "DELETE",
         headers: csrf ? { "X-CSRFToken": csrf } : {},
       });
       if (res.ok || res.status === 204) {
-        router.push("/admin/ads/campaigns");
+        router.push(listHref);
         router.refresh();
       } else {
         setError("Suppression impossible.");
@@ -203,7 +215,7 @@ export function AdCampaignForm({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link
-            href="/admin/ads/campaigns"
+            href={listHref}
             className="text-sm text-slate-600 hover:text-[#1a4d6e]"
           >
             ← Campagnes
@@ -375,7 +387,8 @@ export function AdCampaignForm({
           </div>
         </fieldset>
 
-        {/* CIBLAGE */}
+        {/* CIBLAGE — admin uniquement */}
+        {!isAdvertiser ? (
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Ciblage (optionnel)
@@ -436,6 +449,7 @@ export function AdCampaignForm({
             </div>
           </div>
         </fieldset>
+        ) : null}
 
         {/* PÉRIODE */}
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
@@ -466,7 +480,8 @@ export function AdCampaignForm({
           </div>
         </fieldset>
 
-        {/* BUDGET + WORKFLOW */}
+        {/* BUDGET + WORKFLOW — admin uniquement */}
+        {!isAdvertiser ? (
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Budget &amp; statut
@@ -501,6 +516,18 @@ export function AdCampaignForm({
             Campagne active (peut être servie)
           </label>
         </fieldset>
+        ) : (
+          <fieldset className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Validation
+            </legend>
+            <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+              ℹ️ Ta campagne est créée en attente de validation par
+              l&apos;équipe geoclicMédia. Une fois validée et le paiement
+              reçu, elle commencera à diffuser sur les pages ciblées.
+            </p>
+          </fieldset>
+        )}
       </div>
 
       {/* STATS (édition seulement) */}

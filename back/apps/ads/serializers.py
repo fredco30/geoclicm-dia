@@ -87,6 +87,31 @@ class AdCampaignWriteSerializer(serializers.ModelSerializer):
         return data
 
 
+class AdCampaignAdvertiserWriteSerializer(AdCampaignWriteSerializer):
+    """
+    Sérialiseur d'écriture pour l'espace annonceur self-service.
+
+    Différences vs AdCampaignWriteSerializer (admin) :
+    - Pas de is_paid (workflow paiement géré par admin / Stripe)
+    - Pas de is_active (équipe geoclicMédia valide la campagne avant
+      diffusion publique)
+    - Pas de target_communes / target_categories (ciblage sensible —
+      admin valide ; en v1 phase pilote tous les commerçants ciblent
+      tout, raffinement plus tard)
+    - Pas de price_paid (calculé selon plan + emplacement, pas saisi
+      directement par l'annonceur)
+    - business : forcé par la vue à un Business dont owner=user
+    """
+
+    class Meta(AdCampaignWriteSerializer.Meta):
+        fields = (
+            "id", "name", "business",
+            "placement",
+            "image", "headline", "cta_text", "target_url",
+            "starts_at", "ends_at",
+        )
+
+
 class AdServeSerializer(serializers.ModelSerializer):
     """
     Payload public minimal pour rendu d'un encart publicitaire.

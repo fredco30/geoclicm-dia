@@ -1,13 +1,22 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import BusinessCategoryViewSet, BusinessViewSet
+from .views import (
+    AdvertiserBusinessViewSet,
+    BusinessCategoryViewSet,
+    BusinessViewSet,
+)
 
 app_name = "directory"
 
 router = DefaultRouter()
 router.register("businesses", BusinessViewSet, basename="business")
 router.register("business-categories", BusinessCategoryViewSet, basename="business-category")
+router.register(
+    "advertiser/businesses",
+    AdvertiserBusinessViewSet,
+    basename="advertiser-business",
+)
 
 urlpatterns = [
     path("", include(router.urls)),

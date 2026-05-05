@@ -22,11 +22,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.models import User
 from apps.editorial.permissions import IsEditorOrAdmin
 
 from .filters import AdCampaignFilter
 from .models import AdCampaign
+from .permissions import IsAdvertiserOrTeam, IsCampaignOwnerOrTeam
 from .serializers import (
+    AdCampaignAdvertiserWriteSerializer,
     AdCampaignDetailSerializer,
     AdCampaignListSerializer,
     AdCampaignWriteSerializer,
@@ -57,6 +60,56 @@ class AdCampaignViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return AdCampaignListSerializer
         return AdCampaignDetailSerializer
+
+
+class AdvertiserAdCampaignViewSet(viewsets.ModelViewSet):
+    """
+    /api/advertiser/ad-campaigns/        — list (limité aux campagnes des
+                                            businesses du user)
+    /api/advertiser/ad-campaigns/<pk>/   — detail
+    POST/PATCH/DELETE                    — gestion par l'annonceur de SES
+                                            campagnes
+
+    À la création : is_active=False, is_paid=False (validation par
+    l'équipe avant diffusion). Le ciblage (target_communes / categories)
+    n'est pas exposé en self-service v1 — phase pilote, chaque
+    commerçant cible "tout le territoire" par défaut.
+    """
+
+    permission_classes = (IsAdvertiserOrTeam, IsCampaignOwnerOrTeam)
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    ordering_fields = ("starts_at", "ends_at", "impression_count", "click_count")
+    ordering = ("-starts_at",)
+
+    def get_queryset(self):
+        qs = AdCampaign.objects.select_related("business")
+        user = self.request.user
+        if user.is_superuser or user.role in {User.Role.EDITOR, User.Role.ADMIN}:
+            return qs
+        # Advertiser : uniquement les campagnes de SES businesses
+        return qs.filter(business__owner=user)
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return AdCampaignAdvertiserWriteSerializer
+        if self.action == "list":
+            return AdCampaignListSerializer
+        return AdCampaignDetailSerializer
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.role == User.Role.ADVERTISER:
+            # Sécurité : on ne fait pas confiance au champ business reçu —
+            # on vérifie qu'il appartient bien à l'utilisateur
+            business = serializer.validated_data.get("business")
+            if business and business.owner_id != user.id:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied(
+                    "Tu ne peux créer une campagne que pour une de tes fiches."
+                )
+            serializer.save(is_active=False, is_paid=False)
+        else:
+            serializer.save()
 
 
 class AdServeView(APIView):

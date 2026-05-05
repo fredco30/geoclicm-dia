@@ -18,32 +18,42 @@ export default async function AdvertiserDashboardPage() {
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
+        <Link
+          href="/advertiser/fiches"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+        >
           <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
             <Store className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold">Ma fiche commerce</h2>
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+              Ma fiche commerce
+            </h2>
           </div>
           <p className="text-sm text-slate-600">
             Crée une fiche détaillée (description, horaires, photos) pour
             apparaître dans l&apos;annuaire et sur la carte du territoire.
           </p>
-          <p className="mt-3 text-xs text-slate-400">
-            Wizard de création disponible prochainement (Lot D.3).
+          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+            Gérer mes fiches →
           </p>
-        </div>
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5">
+        </Link>
+        <Link
+          href="/advertiser/campagnes"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+        >
           <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
             <Megaphone className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold">Mes campagnes pub</h2>
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+              Mes campagnes pub
+            </h2>
           </div>
           <p className="text-sm text-slate-600">
-            Diffuse des encarts publicitaires ciblés (commune, catégorie) sur
-            les pages clés du média : home, articles, annuaire.
+            Diffuse des encarts publicitaires sur les pages clés du média :
+            home, articles, annuaire.
           </p>
-          <p className="mt-3 text-xs text-slate-400">
-            Espace self-service disponible prochainement (Lot D.5).
+          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+            Gérer mes campagnes →
           </p>
-        </div>
+        </Link>
       </div>
 
       <div className="mt-8 rounded-xl bg-[#fbf9f5] p-5 ring-1 ring-[#a8533a]/30">
@@ -51,8 +61,9 @@ export default async function AdvertiserDashboardPage() {
           Besoin d&apos;aide ?
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Pendant la phase pilote été 2026, l&apos;équipe geoclicMédia gère
-          la saisie de ta fiche et de tes campagnes pour toi.
+          Pendant la phase pilote été 2026, l&apos;inscription et la
+          diffusion des campagnes sont gratuites. L&apos;équipe geoclicMédia
+          valide chaque fiche et campagne sous 24h ouvrées.
         </p>
         <Link
           href="/contact"
