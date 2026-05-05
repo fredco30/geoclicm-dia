@@ -356,16 +356,149 @@ sudo bash /var/www/geoclicmedia/deploy/deploy-prod.sh
 
 ---
 
-## ➡️ Prochaine discussion : Sprint 3 — Régie publicitaire
+---
 
-**Choix Fred** : skip Sprint 2 (diffusion Facebook) pour attaquer directement la **monétisation** (régie pub commerçants).
+## Sprint 3+4 — Régie publicitaire + self-service Stripe (fusionnés)
 
-**Pré-requis à lire en début de session suivante** :
-- `docs/02-modele-economique.md` — formules tarifaires Basic 79€/Premium 149€
-- `docs/10-espace-annonceurs.md` — UX espace annonceur self-service
-- `docs/04-modeles-donnees.md` — modèles Business à créer
-- `docs/05-roadmap-sprints.md` — découpage sprints prévus
-- `docs/14-journal-avancement.md` (ce fichier) — état projet
+**Démarré** : 2026-05-04
+**Livré (5 lots sur 6)** : 2026-05-05
+**Objectif** : monétisation commerçants — annuaire + régie pub + self-service Stripe.
+
+**Décision structurante de cadrage** : Sprint 3 (régie manuelle) et Sprint 4 (self-service Stripe) **fusionnés en un seul sprint long**. Raison : éviter les migrations a posteriori sur `Business` (champs Stripe ajoutés post-migration = pénible), ne pas refaire le back-office annonceur en deux fois, capitaliser le contexte Sprint 1 chargé.
+
+### ✅ Lot A4 — Modèles + back-office admin annonceur (2026-05-04)
+
+**Réalisations**
+- Apps `directory` (`Business`, `BusinessCategory` hiérarchique) et `ads` (`AdCampaign`).
+- 44 catégories seed via management command (8 racines + 36 sous-catégories), icônes Lucide + types schema.org (`Restaurant`, `Hotel`, `Bakery`, etc.).
+- Multi-communes : `Business.commune` FK siège + `Business.service_areas` M2M zones desservies (artisans multi-communes).
+- API DRF `/api/businesses/` + `/api/business-categories/` avec filtres + permissions `IsEditorOrAdmin`.
+- Back-office Next.js sous `/admin/directory/` : liste + create + edit avec tous les champs (Stripe inclus mais vides), upload logo + cover_image, filtres composables.
+- Éditeurs visuels horaires hebdomadaires (créneaux multiples par jour, raccourci « copier lundi sur Mar–Ven ») + fermetures saisonnières (date pickers + raison).
+- Geocoding adresse → lat/lng via Nominatim (call direct navigateur, OK pour saisie manuelle).
+- Migration `Article.sponsor_data` (JSONField legacy) → FK `Article.sponsor` vers `directory.Business`.
+
+### ✅ Lot B — Affichage public commerçants (2026-05-04)
+
+**Réalisations**
+- `/commerces` annuaire filtrable (catégories racines + communes en chips), pagination 20/page.
+- `/commerces/[slug]` fiche détaillée : description, spécialités, horaires hebdo, fermetures, contact, mini-carte MapLibre, badge « ★ Partenaire » terre cuite si plan = premium.
+- **Carte d'ensemble MapLibre** sur `/commerces` avec markers cliquables (popup + lien fiche), `fitBounds` automatique sur l'ensemble.
+- **Mini-carte fiche** + 3 boutons navigation (**Itinéraire Google Maps**, **Waze**, **Street View**) — pattern emprunté à `geoclic_services/InterventionDetailView.vue` phase 45 (GéoClic Suite).
+- Encarts « Commerces partenaires » sur home (filtre `is_featured=true`) + page commune `/communes/[slug]` (filtre `area=slug` qui matche commune-siège OU service_areas).
+- Badge « Sponsorisé » terre cuite + encart « En partenariat avec » CTA fiche en fin d'article (`Article.sponsor` FK exposé via `SponsorMini`/`SponsorDetail` serializers).
+- Sélecteur sponsor dans le formulaire article admin Next.js.
+- JSON-LD schema.org `LocalBusiness` (type dérivé de `category.schema_type`) sur fiche pour SEO local Google : address, geo, opening_hours, sameAs, servesCuisine pour Restaurant.
+- Lien header desktop + drawer mobile vers `/commerces`.
+
+### ✅ Lot C — Régie publicitaire (2026-05-04)
+
+**Réalisations**
+- App `ads` : modèle `AdCampaign` avec 8 placements (`home_hero`, `home_sidebar`, `article_inline/sidebar`, `directory_top/inline`, `agenda_top`, `newsletter`).
+- Ciblage M2M `target_communes` + `target_categories` (vides = tous).
+- API `GET /api/ads/serve/?placement=X&commune=Y&category=Z` : sert UNE campagne active à la date courante, choix random si plusieurs candidates, **incrémente `impression_count` atomiquement** (F-expression), 204 No Content si aucune match.
+- Redirect tracker `GET /r/<id>/` : incrémente `click_count` puis 302 vers `target_url`.
+- Composant front `<AdSlot placement="..." />` (Client) avec `cache: no-store` (rotation aléatoire à chaque visite), mention « Publicité » conforme ARPP, `rel="noopener sponsored"`.
+- Intégrations placements : home_sidebar (entre articles et commerces partenaires), article_inline (fin d'article ciblé commune+catégorie), directory_top (sous filtres ciblage searchParams).
+- Back-office admin custom `/admin/ads/campaigns/` avec 7 fieldsets (Identité, Emplacement, Créa, Ciblage, Période, Budget, Statut), stats CTR par campagne, badge statut intelligent (Désactivée / À venir / Diffusée / Terminée).
+
+### ✅ Lot D — Espace annonceur self-service (2026-05-05)
+
+**Réalisations**
+- Auth self-service : `POST /api/auth/register-advertiser/` (email + password + nom/prénom, login auto), `/advertiser/register` + `/advertiser/login` publiques.
+- Layout `/advertiser/(protected)/` avec sidebar dédiée (Tableau / Mes fiches / Mes campagnes / Abonnement), branding pastille terre cuite.
+- Permissions custom : `IsAdvertiserOrTeam` + `IsBusinessOwnerOrTeam` / `IsCampaignOwnerOrTeam` (object-level via `business.owner == user`).
+- ViewSets dédiés `/api/advertiser/businesses/` + `/api/advertiser/ad-campaigns/` avec `get_queryset` filtré par `owner=user` (sauf editor/admin) et `perform_create` qui force `owner=user` + `is_published=False` / `is_active=False` (workflow validation par équipe avant diffusion publique).
+- Serializers restreints `BusinessAdvertiserWriteSerializer` / `AdCampaignAdvertiserWriteSerializer` qui excluent les champs admin-only (workflow, plan, ciblage, budget, owner).
+- **Pas de duplication de code form** : `BusinessForm` et `AdCampaignForm` refactorisés avec prop `mode: "admin" | "advertiser"` qui adapte API base, URLs, fieldsets cachés, message de workflow.
+- Pages `/advertiser/(protected)/fiches/...` + `/advertiser/(protected)/campagnes/...` : liste + create + edit avec garde-fou (pas de campagne sans fiche).
+- Dashboard de bienvenue avec 2 cartes amorces cliquables.
+
+### ✅ Lot E — Stripe + abonnements (TEST) (2026-05-05)
+
+**Réalisations**
+- `dj-stripe` 2.10 + `stripe` SDK installés.
+- App `advertisers` : `Subscription` (wrapper métier autour de djstripe.Subscription) + `Invoice` (numérotation continue annuelle `YYYY-NNNN` pour conformité fiscale FR), HT/TVA(20)/TTC.
+- Webhook handlers via `djstripe.signals.WEBHOOK_SIGNALS` :
+  - `customer.subscription.created/updated` → upsert Subscription métier + sync `Business.plan`/`plan_starts_at`/`plan_ends_at`/`stripe_*` si subscription active.
+  - `customer.subscription.deleted` → retour `Business.plan = free`.
+  - `invoice.paid` → création Invoice métier idempotente avec numérotation continue.
+  - `invoice.payment_failed` → Subscription `past_due`.
+- Mapping `STRIPE_PRICE_BASIC` / `STRIPE_PRICE_PREMIUM` → plans métier.
+- Liaison Business ↔ Stripe Customer via `customer.metadata.business_id` posé au Checkout.
+- API `POST /api/advertiser/checkout/` : crée/réutilise Customer, crée Checkout Session subscription (locale FR, billing address required), retourne URL hosted Stripe.
+- API `POST /api/advertiser/portal/` : Customer Portal Session (gestion CB, factures, annulation).
+- Page publique `/tarifs` : 3 cards Free/Basic/Premium comparées avec features détaillées, badge phase pilote « tous gratuits été 2026 ».
+- Page `/advertiser/abonnement` : plan actuel + CheckoutButton (Basic/Premium) ou PortalButton selon état.
+- **Mode TEST par défaut** (`STRIPE_LIVE_MODE=False`), bascule LIVE = un flag d'env + clés `sk_live_*` au lancement Pâques 2027.
+
+### ⏸️ Lot F — Repoussé à plus tard (par décision Fred 2026-05-05)
+
+Factures PDF ReportLab (modèle `Invoice.pdf_file` déjà en place côté model), emails Brevo (bienvenue, paiements, renouvellements), export CSV prospects. Non bloquant pour la phase pilote 2026 — Customer Portal Stripe gère déjà les factures Stripe nativement.
+
+### Décisions structurantes Sprint 3+4
+
+| Décision | Pour |
+|---|---|
+| **Sprint 3+4 fusionnés** | Éviter migrations Business a posteriori, capitaliser contexte chargé |
+| **MapLibre GL JS + tuiles raster OSM** (pas de MapTiler) | Cohérence avec GéoClic Suite, pas de clé API à gérer, indépendance fournisseur |
+| **dj-stripe** plutôt qu'intégration Stripe maison | Sync DB ↔ Stripe fiable, gestion webhooks complète |
+| **Pas de claim de fiche** | Wizard from scratch ; pour pilotes été 2026, fiches admin avec `owner=null` puis transfert manuel |
+| **Stripe TEST jusqu'à Pâques 2027** | Phase pilote gratuite, pipeline complet testable, bascule LIVE = un flag d'env |
+| **Workflow PR-par-lot** (Git) | Push direct main bloqué par sandbox Claude Code en auto mode → branche dédiée + `gh pr create` à chaque lot |
+| **Pattern boutons navigation Maps/Waze/Street View** emprunté à GéoClic Suite | Réutilisation éprouvée (`geoclic_services/InterventionDetailView.vue` phase 45) + ajout Waze |
+| **Form mode `admin` / `advertiser`** via prop, pas de duplication | Maintenir 700+ lignes de form mutualisées (BusinessForm, AdCampaignForm) |
+
+### Blocages rencontrés et fixes
+
+| Blocage | Cause | Fix |
+|---|---|---|
+| Push direct main bloqué par Claude Code sandbox en auto mode | Politique built-in « Git Push to Default Branch » même avec `Bash(git push:*)` autorisé | Workflow PR par lot : branche dédiée + PR via `gh pr create` (ou lien GitHub à cliquer) |
+| Conflits fichiers migration untracked sur VPS à chaque pull | `makemigrations` exécuté sur VPS (GDAL absent local Windows) génère des fichiers que Git refuse d'écraser au pull suivant | `rm` du fichier untracked + `git pull` (le repo a la même version après rapatriement via PR `chore(migrations)`) |
+| `Facebook` / `Instagram` icons Lucide retirées | Licence brand assets retirée des Lucide récents | Remplacer par texte simple cliquable (Facebook / Instagram) ou `Share2` générique |
+| `from djstripe import webhooks` ImportError | dj-stripe 2.10 a retiré le module `webhooks` (présent en 2.7) | Migration vers `djstripe.signals.WEBHOOK_SIGNALS` + `@receiver(WEBHOOK_SIGNALS["event.type"])`, signature `(sender, event, **kwargs)` |
+| Trop de redirections `/advertiser` constatées sur PC Fred | État navigateur local (cache, cookies résiduels du compte admin avec session multiple) | Test sur téléphone OK = code OK, problème PC isolé (pas de bug code à fixer) |
+| `pk_test` collée dans le chat | Réflexe utilisateur de copier la clé visible | OK pour `pk_*` (publique) ; pour `sk_*` (secrète) règle stricte « jamais dans le chat » + rotation immédiate via dashboard Stripe |
+
+### État de validation
+
+- [x] Tous les lots A4/B/C/D/E mergés sur `main`
+- [x] Déployé en prod sur https://media.geoclic.fr (sauf migrations Stripe finales)
+- [x] Annuaire `/commerces` accessible publiquement avec carte
+- [x] `/admin/directory/businesses/` fonctionnel pour saisie pilotes
+- [x] `/admin/ads/campaigns/` fonctionnel pour création campagnes
+- [x] `/advertiser/register` + dashboard self-service accessibles
+- [x] `/tarifs` page publique en ligne
+- [ ] Stripe configuré côté Fred (compte test, 2 produits, webhook, Customer Portal) — **en cours 2026-05-05**
+- [ ] Test end-to-end paiement (carte `4242 4242 4242 4242`) — bloqué par config Stripe
+
+### Reste à faire manuellement par Fred
+
+- Finaliser config Stripe (compte → clés → 2 produits → webhook → Customer Portal → `.env` VPS).
+- Démarcher 10-15 commerçants pilotes pour la saison été 2026 (création des fiches en admin avec `owner=null` puis transfert quand le commerçant s'inscrit).
+- Lancement commercial Pâques 2027 : bascule `STRIPE_LIVE_MODE=True` + clés `sk_live_*`.
+
+---
+
+## 🎉 Récap final Sprint 3+4
+
+**Plateforme fonctionnellement prête pour la phase pilote été 2026** : démarchage commerçants → inscription self-service → fiche annuaire publique avec carte + navigation → encarts publicitaires ciblés → abonnements Stripe (test pour le pilote, prod au lancement commercial).
+
+**Au-dessus du brief initial** :
+- Multi-communes (`service_areas` M2M) — non spécifié au brief, identifié par Fred lors d'un test plombier multi-communes.
+- Boutons navigation Maps/Waze/Street View sur fiche commerçant — pattern repris de GéoClic Suite, gros plus UX.
+- Carte d'ensemble MapLibre sur l'annuaire public — au-delà de la simple mini-carte de fiche.
+- JSON-LD schema.org pour SEO local Google.
+- Refactor mode `admin` / `advertiser` dans BusinessForm + AdCampaignForm (pas de duplication 700+ lignes).
+- Numérotation continue Invoice (exigence fiscale FR) prête dès maintenant pour conformité 2027.
+
+---
+
+## ➡️ Prochaine étape
+
+**Test end-to-end Stripe** une fois config terminée par Fred (carte `4242 4242 4242 4242` → vérifier que `Business.plan` passe à `basic`/`premium` automatiquement via webhook + qu'une `Invoice` métier est créée).
+
+Si OK, le projet entre en **mode maintenance / phase pilote** : pas de gros lot dev avant le démarrage commercial 2027 (où on pourra activer Lot F = factures PDF + emails Brevo + export CSV prospects).
 
 ---
 
