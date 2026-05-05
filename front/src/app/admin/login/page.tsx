@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-server";
+import { getRoleLabel } from "@/lib/roles";
 import { LoginForm } from "@/components/admin/login-form";
+import { LoginForbiddenBanner } from "@/components/admin/login-forbidden-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +17,11 @@ export default async function LoginPage({ searchParams }: Props) {
     redirect(sp.next || "/admin");
   }
 
+  // Reader ou advertiser connecté : on l'aide à comprendre + se déconnecter.
+  const isForbiddenUser = user !== null && !user.can_publish;
+
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 inline-block h-12 w-12 rounded-full bg-[#1a4d6e]" />
@@ -28,11 +33,11 @@ export default async function LoginPage({ searchParams }: Props) {
           </p>
         </div>
 
-        {sp.error === "forbidden" ? (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
-            Ton compte n&apos;a pas le rôle requis pour publier.
-            Contacte un administrateur.
-          </div>
+        {isForbiddenUser ? (
+          <LoginForbiddenBanner
+            email={user.email}
+            currentRoleLabel={getRoleLabel(user)}
+          />
         ) : null}
 
         <LoginForm />
