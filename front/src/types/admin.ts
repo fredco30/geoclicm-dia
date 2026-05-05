@@ -149,4 +149,54 @@ export type AdminBusinessPayload = {
   meta_description: string;
 };
 
+// ============================================================================
+// Ads (régie publicitaire — back-office)
+// ============================================================================
+
+import type { AdPlacement, ImageVariants as IV } from "./api";
+
+export type AdminAdCampaignListItem = {
+  id: number;
+  name: string;
+  business: number;
+  business_name: string;
+  placement: AdPlacement;
+  placement_label: string;
+  image: IV | null;
+  starts_at: string;
+  ends_at: string;
+  is_active: boolean;
+  is_paid: boolean;
+  impression_count: number;
+  click_count: number;
+  click_through_rate: number;
+  created_at: string;
+};
+
+export type AdminAdCampaignDetail = AdminAdCampaignListItem & {
+  headline: string;
+  cta_text: string;
+  target_url: string;
+  target_communes: number[];
+  target_categories: number[];
+  price_paid: string;
+  updated_at: string;
+};
+
+export type AdminAdCampaignPayload = {
+  name: string;
+  business: number | null;
+  placement: AdPlacement;
+  headline: string;
+  cta_text: string;
+  target_url: string;
+  target_communes: number[];
+  target_categories: number[];
+  starts_at: string;
+  ends_at: string;
+  price_paid: string;
+  is_active: boolean;
+  is_paid: boolean;
+};
+
 export type { ArticleStatus };
