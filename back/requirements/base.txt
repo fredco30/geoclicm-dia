@@ -32,6 +32,7 @@ qrcode[pil]>=7.4,<8.0              # affichage QR code 2FA dans admin
 # --- Utils ---
 python-slugify>=8.0,<9.0           # slugs propres avec translittération unicode
 markdown>=3.7,<4.0                 # rendu corps article (preview admin)
+requests>=2.32,<3.0                # HTTP client (Open-Meteo pour app weather)
 
 # --- Paiement / abonnements (Sprint 3 Lot E) ---
 # dj-stripe : sync Stripe ↔ DB Django (subscriptions, invoices, customers)

@@ -11,6 +11,7 @@
       "intercommunalite": "Communauté de Communes Terre de Camargue",
       "short_description": "Station balnéaire et port de pêche du littoral camarguais.",
       "is_active": true,
+      "is_coastal": true,
       "sort_order": 10,
       "created_at": "2026-05-03T20:00:00Z",
       "updated_at": "2026-05-03T20:00:00Z"
@@ -28,6 +29,7 @@
       "intercommunalite": "Communauté de Communes Terre de Camargue",
       "short_description": "Cité médiévale fortifiée, salins et port fluvial.",
       "is_active": true,
+      "is_coastal": true,
       "sort_order": 20,
       "created_at": "2026-05-03T20:00:00Z",
       "updated_at": "2026-05-03T20:00:00Z"
@@ -45,6 +47,7 @@
       "intercommunalite": "Communauté d'Agglomération du Pays de l'Or",
       "short_description": "Architecture pyramidale, station balnéaire emblématique des années 70.",
       "is_active": true,
+      "is_coastal": true,
       "sort_order": 30,
       "created_at": "2026-05-03T20:00:00Z",
       "updated_at": "2026-05-03T20:00:00Z"

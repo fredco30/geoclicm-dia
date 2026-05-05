@@ -65,6 +65,10 @@ class Commune(models.Model):
 
     intercommunalite = models.CharField(max_length=200, blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
+    is_coastal = models.BooleanField(
+        default=False,
+        help_text="Commune avec accès direct à la mer (active le bloc météo marine).",
+    )
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
