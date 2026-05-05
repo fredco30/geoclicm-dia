@@ -60,7 +60,7 @@ class CommuneSerializer(serializers.ModelSerializer):
         fields = (
             "id", "name", "slug", "insee_code", "postal_codes", "department",
             "intercommunalite", "short_description", "description",
-            "cover_image", "is_active", "sort_order",
+            "cover_image", "is_active", "is_coastal", "sort_order",
         )
 
 

@@ -47,6 +47,7 @@ export type Commune = {
   description: string;
   cover_image: ImageVariants | null;
   is_active: boolean;
+  is_coastal: boolean;
   sort_order: number;
 };
 
@@ -239,6 +240,92 @@ export type AdServeResponse = {
   click_url: string;
   business_slug: string;
   business_name: string;
+};
+
+// ============================================================================
+// Weather (Open-Meteo proxy via /api/weather/<slug>/)
+// ============================================================================
+
+export type WeatherCurrent = {
+  temperature: number | null;
+  apparent_temperature: number | null;
+  humidity: number | null;
+  precipitation: number | null;
+  weather_code: number | null;
+  wind_speed: number | null;
+  wind_direction: number | null;
+  wind_gusts: number | null;
+  is_day: boolean;
+  uv_index: number | null;
+};
+
+export type WeatherHourlyEntry = {
+  time: string;
+  temperature: number | null;
+  precipitation_probability: number | null;
+  precipitation: number | null;
+  weather_code: number | null;
+  wind_speed: number | null;
+};
+
+export type WeatherDailyEntry = {
+  date: string;
+  weather_code: number | null;
+  temperature_min: number | null;
+  temperature_max: number | null;
+  sunrise: string | null;
+  sunset: string | null;
+  uv_index_max: number | null;
+  precipitation_sum: number | null;
+  precipitation_probability_max: number | null;
+  wind_speed_max: number | null;
+  wind_gusts_max: number | null;
+  wind_direction_dominant: number | null;
+};
+
+export type WeatherForecast = {
+  current: WeatherCurrent;
+  hourly: WeatherHourlyEntry[];
+  daily: WeatherDailyEntry[];
+};
+
+export type MarineCurrent = {
+  wave_height: number | null;
+  wave_direction: number | null;
+  wave_period: number | null;
+  wind_wave_height: number | null;
+  swell_wave_height: number | null;
+  swell_wave_period: number | null;
+};
+
+export type MarineDailyEntry = {
+  date: string;
+  wave_height_max: number | null;
+  wave_direction_dominant: number | null;
+  wave_period_max: number | null;
+};
+
+export type SwimmingIndicator = "green" | "orange" | "red";
+
+export type WeatherMarine = {
+  current: MarineCurrent;
+  sea_surface_temperature: number | null;
+  swimming_indicator: SwimmingIndicator | null;
+  swimming_disclaimer: string;
+  daily: MarineDailyEntry[];
+};
+
+export type WeatherResponse = {
+  commune: {
+    slug: string;
+    name: string;
+    is_coastal: boolean;
+    latitude: number;
+    longitude: number;
+  };
+  fetched_at: string;
+  forecast: WeatherForecast;
+  marine: WeatherMarine | null;
 };
 
 export type CurrentUser = {

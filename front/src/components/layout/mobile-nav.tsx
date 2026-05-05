@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Menu, X, Search, Home, BookOpen, Landmark, User as UserIcon,
-  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail, Store,
+  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail, Store, CloudSun,
 } from "lucide-react";
 
 type MenuLink = {
@@ -117,6 +117,16 @@ export function MobileNav() {
           >
             <Search className="h-4 w-4" />
             Rechercher un article…
+          </Link>
+
+          {/* Météo — accès direct */}
+          <Link
+            href="/meteo"
+            onClick={close}
+            className="flex items-center gap-2 rounded-md border border-[#1a4d6e]/30 bg-[#1a4d6e]/5 px-3 py-2 text-sm font-medium text-[#1a4d6e] hover:bg-[#1a4d6e]/10"
+          >
+            <CloudSun className="h-4 w-4" />
+            Météo et état de la mer
           </Link>
 
           {/* Rubriques */}

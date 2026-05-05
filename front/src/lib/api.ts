@@ -17,6 +17,7 @@ import type {
   Paginated,
   SearchResponse,
   Tag,
+  WeatherResponse,
 } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
@@ -153,6 +154,13 @@ export const api = {
   search: (q: string) =>
     apiGet<SearchResponse>(`/api/search/?q=${encodeURIComponent(q)}`, {
       revalidate: 60,
+    }),
+
+  // Météo (proxy Open-Meteo, cache Redis 15 min côté Django)
+  weather: (slug: string) =>
+    apiGet<WeatherResponse>(`/api/weather/${slug}/`, {
+      revalidate: 600,
+      tags: ["weather", `weather:${slug}`],
     }),
 };
 
