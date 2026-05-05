@@ -3,6 +3,7 @@ ViewSets DRF pour l'API directory.
 
 - Lecture publique sur Business publiés uniquement (is_published=True).
 - Le back-office (editor/admin) voit tous les états + tous les champs Stripe/owner.
+- L'espace annonceur (advertiser) voit/édite ses propres Business uniquement.
 - BusinessCategory : read public, write admin.
 """
 from __future__ import annotations
@@ -10,11 +11,14 @@ from __future__ import annotations
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
 
+from apps.core.models import User
 from apps.editorial.permissions import IsEditorOrAdmin
 
 from .filters import BusinessFilter
 from .models import Business, BusinessCategory
+from .permissions import IsAdvertiserOrTeam, IsBusinessOwnerOrTeam
 from .serializers import (
+    BusinessAdvertiserWriteSerializer,
     BusinessCategorySerializer,
     BusinessDetailSerializer,
     BusinessListSerializer,
@@ -72,3 +76,53 @@ class BusinessViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return BusinessListSerializer
         return BusinessDetailSerializer
+
+
+class AdvertiserBusinessViewSet(viewsets.ModelViewSet):
+    """
+    /api/advertiser/businesses/         — list (limité aux fiches du user)
+    /api/advertiser/businesses/<slug>/  — detail
+    POST/PATCH/DELETE                   — gestion par l'annonceur de SES fiches
+
+    Différences vs BusinessViewSet (admin) :
+    - Filtre auto sur owner = user courant (advertiser)
+    - À la création : owner = user, is_claimed = True, is_published = False
+      (validation manuelle par l'équipe avant publication)
+    - WriteSerializer restreint : pas de champs workflow / commerciaux
+    """
+
+    lookup_field = "slug"
+    permission_classes = (IsAdvertiserOrTeam, IsBusinessOwnerOrTeam)
+
+    def get_queryset(self):
+        qs = (
+            Business.objects.select_related("category", "commune", "owner")
+            .prefetch_related("secondary_categories", "service_areas")
+        )
+        user = self.request.user
+        # Editor / admin / superuser : voit tout (peut éditer pour le compte
+        # d'un commerçant)
+        if user.is_superuser or user.role in {User.Role.EDITOR, User.Role.ADMIN}:
+            return qs
+        # Advertiser : uniquement ses fiches
+        return qs.filter(owner=user)
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return BusinessAdvertiserWriteSerializer
+        if self.action == "list":
+            return BusinessListSerializer
+        return BusinessDetailSerializer
+
+    def perform_create(self, serializer):
+        # Force owner = user courant (sauf si admin crée pour qqn d'autre,
+        # auquel cas il devrait passer par /api/businesses/ admin)
+        user = self.request.user
+        if user.role == User.Role.ADVERTISER:
+            serializer.save(
+                owner=user,
+                is_claimed=True,
+                is_published=False,  # validation par l'équipe
+            )
+        else:
+            serializer.save()

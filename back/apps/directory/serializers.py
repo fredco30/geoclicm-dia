@@ -182,3 +182,30 @@ class BusinessWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         self._set_location(validated_data)
         return super().update(instance, validated_data)
+
+
+class BusinessAdvertiserWriteSerializer(BusinessWriteSerializer):
+    """
+    Sérialiseur d'écriture pour l'espace annonceur self-service.
+
+    Différences vs BusinessWriteSerializer (admin) :
+    - Pas de champs workflow (is_published / is_featured) : la publication
+      est validée par l'équipe geoclicMédia après vérification de la fiche
+    - Pas de champs commerciaux (plan / plan_dates) : gérés par admin/Stripe
+    - Pas de champs annonceur internes (owner / is_claimed) : forcés par
+      la vue (owner = user courant, is_claimed=True dès création)
+    """
+
+    class Meta(BusinessWriteSerializer.Meta):
+        fields = (
+            "id", "name", "slug", "legal_name", "siret",
+            "category", "secondary_categories",
+            "short_description", "description", "specialties",
+            "logo", "cover_image",
+            "address", "address_complement", "postal_code", "city",
+            "latitude", "longitude", "commune", "service_areas",
+            "phone", "mobile", "email", "website",
+            "facebook_url", "instagram_url", "tiktok_url",
+            "opening_hours", "seasonal_closures",
+            "meta_description",
+        )

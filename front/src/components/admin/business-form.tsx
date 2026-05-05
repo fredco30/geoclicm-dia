@@ -31,6 +31,14 @@ type Props = {
   business?: AdminBusinessDetail;
   categories: AdminBusinessCategory[]; // toutes (racines + enfants), pour select
   communes: Commune[];
+  /**
+   * "admin" : tous les champs (admin/editor — back-office /admin/...).
+   * "advertiser" : champs auto-gérés par l'équipe masqués (Plan commercial,
+   *  is_published, is_featured, is_claimed). Endpoint /api/advertiser/businesses/.
+   */
+  mode?: "admin" | "advertiser";
+  /** Chemin de retour après suppression / annulation. */
+  backHref?: string;
 };
 
 const DEFAULT_OPENING_HOURS: OpeningHoursValue = {
@@ -71,9 +79,24 @@ function isoToLocal(value: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function BusinessForm({ business, categories, communes }: Props) {
+export function BusinessForm({
+  business,
+  categories,
+  communes,
+  mode = "admin",
+  backHref,
+}: Props) {
   const router = useRouter();
   const isEdit = !!business;
+  const isAdvertiser = mode === "advertiser";
+
+  // Endpoints + URLs de redirection diffèrent selon le mode
+  const apiBase = isAdvertiser ? "/api/advertiser/businesses" : "/api/businesses";
+  const listHref = isAdvertiser ? "/advertiser/fiches" : "/admin/directory/businesses";
+  const editHrefPrefix = isAdvertiser
+    ? "/advertiser/fiches"
+    : "/admin/directory/businesses";
+  const backLinkHref = backHref ?? listHref;
 
   const [form, setForm] = useState({
     name: business?.name ?? "",
@@ -158,7 +181,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const payload: AdminBusinessPayload = {
+    const basePayload = {
       name: form.name,
       legal_name: form.legal_name,
       siret: form.siret,
@@ -184,14 +207,22 @@ export function BusinessForm({ business, categories, communes }: Props) {
       tiktok_url: form.tiktok_url,
       opening_hours: form.opening_hours,
       seasonal_closures: form.seasonal_closures,
-      plan: form.plan,
-      plan_starts_at: localToIso(form.plan_starts_at),
-      plan_ends_at: localToIso(form.plan_ends_at),
-      is_claimed: form.is_claimed,
-      is_published: form.is_published,
-      is_featured: form.is_featured,
       meta_description: form.meta_description,
     };
+
+    // Champs admin-only — exclus du payload en mode advertiser (le serializer
+    // backend les ignorerait de toute façon, mais on évite d'envoyer du bruit)
+    const payload: AdminBusinessPayload | typeof basePayload = isAdvertiser
+      ? basePayload
+      : {
+          ...basePayload,
+          plan: form.plan,
+          plan_starts_at: localToIso(form.plan_starts_at),
+          plan_ends_at: localToIso(form.plan_ends_at),
+          is_claimed: form.is_claimed,
+          is_published: form.is_published,
+          is_featured: form.is_featured,
+        };
 
     let csrf = readCsrfToken();
     if (!csrf) {
@@ -200,8 +231,8 @@ export function BusinessForm({ business, categories, communes }: Props) {
     }
 
     const url = isEdit
-      ? `/api/businesses/${business!.slug}/`
-      : `/api/businesses/`;
+      ? `${apiBase}/${business!.slug}/`
+      : `${apiBase}/`;
     const method = isEdit ? "PATCH" : "POST";
 
     startTransition(async () => {
@@ -229,7 +260,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
           if (coverFile) fd.append("cover_image", coverFile);
           else if (removeCover) fd.append("cover_image", "");
 
-          const imgRes = await apiFetch(`/api/businesses/${saved.slug}/`, {
+          const imgRes = await apiFetch(`${apiBase}/${saved.slug}/`, {
             method: "PATCH",
             body: fd,
             headers: csrf ? { "X-CSRFToken": csrf } : {},
@@ -243,7 +274,7 @@ export function BusinessForm({ business, categories, communes }: Props) {
           }
         }
 
-        router.push(`/admin/directory/businesses/${saved.slug}/edit`);
+        router.push(`${editHrefPrefix}/${saved.slug}/edit`);
         router.refresh();
       } catch {
         setError("Erreur réseau, réessaie.");
@@ -262,12 +293,12 @@ export function BusinessForm({ business, categories, communes }: Props) {
     }
 
     startTransition(async () => {
-      const res = await apiFetch(`/api/businesses/${business!.slug}/`, {
+      const res = await apiFetch(`${apiBase}/${business!.slug}/`, {
         method: "DELETE",
         headers: csrf ? { "X-CSRFToken": csrf } : {},
       });
       if (res.ok || res.status === 204) {
-        router.push("/admin/directory/businesses");
+        router.push(listHref);
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
@@ -281,10 +312,10 @@ export function BusinessForm({ business, categories, communes }: Props) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link
-            href="/admin/directory/businesses"
+            href={backLinkHref}
             className="text-sm text-slate-600 hover:text-[#1a4d6e]"
           >
-            ← Commerçants
+            ← {isAdvertiser ? "Mes fiches" : "Commerçants"}
           </Link>
           <h1 className="text-xl font-bold text-slate-900">
             {isEdit ? `Éditer ${business!.name}` : "Nouveau commerçant"}
@@ -748,7 +779,8 @@ export function BusinessForm({ business, categories, communes }: Props) {
           </div>
         </fieldset>
 
-        {/* PLAN COMMERCIAL */}
+        {/* PLAN COMMERCIAL — admin uniquement */}
+        {!isAdvertiser ? (
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Plan commercial
@@ -797,39 +829,51 @@ export function BusinessForm({ business, categories, communes }: Props) {
             </p>
           ) : null}
         </fieldset>
+        ) : null}
 
-        {/* WORKFLOW */}
+        {/* WORKFLOW & SEO */}
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Workflow &amp; SEO
+            {isAdvertiser ? "SEO" : "Workflow & SEO"}
           </legend>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={form.is_published}
-              onChange={(e) => update("is_published", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            Fiche publiée (visible côté public)
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={form.is_featured}
-              onChange={(e) => update("is_featured", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            Mise en avant (homepage, listings)
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={form.is_claimed}
-              onChange={(e) => update("is_claimed", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            Fiche revendiquée par un commerçant (Lot D)
-          </label>
+          {!isAdvertiser ? (
+            <>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.is_published}
+                  onChange={(e) => update("is_published", e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Fiche publiée (visible côté public)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.is_featured}
+                  onChange={(e) => update("is_featured", e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Mise en avant (homepage, listings)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.is_claimed}
+                  onChange={(e) => update("is_claimed", e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Fiche revendiquée par un commerçant
+              </label>
+            </>
+          ) : (
+            <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+              ℹ️ La publication de ta fiche est validée par l&apos;équipe
+              geoclicMédia après vérification (généralement sous 24h ouvrées).
+              Tu peux modifier ta fiche à tout moment, les changements seront
+              visibles publiquement après validation.
+            </p>
+          )}
           <div className="space-y-1">
             <Label htmlFor="meta_description">
               Meta description SEO ({form.meta_description.length}/160)
