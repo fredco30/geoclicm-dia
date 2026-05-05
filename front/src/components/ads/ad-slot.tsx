@@ -16,7 +16,13 @@ type Props = {
 };
 
 /**
- * Encart publicitaire servi dynamiquement depuis /api/ads/serve/.
+ * Encart publicitaire servi dynamiquement depuis /api/sponsors/serve/.
+ *
+ * URL côté API volontairement neutre (préfixe "sponsors" plutôt qu'"ads")
+ * pour ne pas être bloquée par uBlock/AdBlock côté navigateur des
+ * visiteurs. Le pattern /ads/ déclenche le filtrage par défaut de la
+ * plupart des bloqueurs (30-40 % du trafic FR), ce qui rendrait les
+ * encarts invisibles et casserait la promesse commerciale de la régie.
  *
  * Composant client : fetch au mount avec cache: no-store pour avoir une
  * rotation aléatoire à chaque visite (vs ISR qui figerait la même
@@ -45,7 +51,7 @@ export function AdSlot({
     if (categorySlug) params.set("category", categorySlug);
 
     let cancelled = false;
-    fetch(`${API_URL}/api/ads/serve/?${params.toString()}`, {
+    fetch(`${API_URL}/api/sponsors/serve/?${params.toString()}`, {
       cache: "no-store",
       credentials: "omit",
     })
