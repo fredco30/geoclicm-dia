@@ -4,6 +4,9 @@ import { FileText, Plus, Home, Settings, Tags, Store, Megaphone } from "lucide-r
 import { getCurrentUser } from "@/lib/auth-server";
 import { getRoleLabel } from "@/lib/roles";
 import { LogoutButton } from "@/components/admin/logout-button";
+import { HelpProvider } from "@/components/help/help-context";
+import { HelpButton } from "@/components/help/help-button";
+import { HelpDrawer } from "@/components/help/help-drawer";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +27,7 @@ export default async function AdminProtectedLayout({
   const canManageUsers = user.is_superuser || user.role === "admin";
 
   return (
+    <HelpProvider>
     <div className="flex">
       {/* Sidebar — full height, fixe à gauche, sans bord externe (admin remplit toute la viewport) */}
       <aside className="sticky top-0 hidden h-screen w-52 shrink-0 border-r border-slate-200 bg-white p-3 sm:flex sm:flex-col">
@@ -75,7 +79,10 @@ export default async function AdminProtectedLayout({
       <main className="min-h-screen flex-1 bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
         {children}
       </main>
+      <HelpButton />
+      <HelpDrawer />
     </div>
+    </HelpProvider>
   );
 }
 

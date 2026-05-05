@@ -3,6 +3,9 @@ import Link from "next/link";
 import { LayoutDashboard, Store, Megaphone, BarChart3, CreditCard } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 import { LogoutButton } from "@/components/admin/logout-button";
+import { HelpProvider } from "@/components/help/help-context";
+import { HelpButton } from "@/components/help/help-button";
+import { HelpDrawer } from "@/components/help/help-drawer";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +25,7 @@ export default async function AdvertiserProtectedLayout({
   }
 
   return (
+    <HelpProvider>
     <div className="flex">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 border-r border-slate-200 bg-white p-3 sm:flex sm:flex-col">
         <div className="mb-5 px-2">
@@ -74,7 +78,10 @@ export default async function AdvertiserProtectedLayout({
       <main className="min-h-screen flex-1 bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
         {children}
       </main>
+      <HelpButton />
+      <HelpDrawer />
     </div>
+    </HelpProvider>
   );
 }
 
