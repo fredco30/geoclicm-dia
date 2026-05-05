@@ -14,6 +14,11 @@ export type AdminUser = {
   is_staff: boolean;
   is_superuser: boolean;
   is_email_verified: boolean;
+  // Nombre de fiches commerce (Business) dont ce user est owner. Annoté côté
+  // serializer Django (Count("businesses") sur User). Permet de voir d'un
+  // coup d'œil dans la liste les annonceurs sans fiche rattachée vs ceux
+  // qui en gèrent une ou plusieurs.
+  business_count: number;
   date_joined: string;
   last_login: string | null;
 };
@@ -84,6 +89,9 @@ export type AdminBusinessListItem = {
   created_at: string;
   updated_at: string;
 };
+
+// Liste des comptes — vue admin /admin/settings/users.
+// business_count est annoté côté serializer (Count("businesses") sur User).
 
 export type AdminBusinessDetail = Omit<AdminBusinessListItem, "category"> & {
   // Le serializer detail renvoie l'objet complet (BusinessCategorySerializer),

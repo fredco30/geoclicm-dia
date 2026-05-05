@@ -29,6 +29,38 @@ const ROUTES: Route[] = [
     stepId: "edit",
   },
 
+  // ─────── Admin — Comptes & Commerçants ───────
+  {
+    pattern: /^\/admin\/settings\/users\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "verify",
+  },
+  {
+    pattern: /^\/admin\/settings\/users\/new\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "roles",
+  },
+  {
+    pattern: /^\/admin\/settings\/users\/[^/]+\/edit\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "roles",
+  },
+  {
+    pattern: /^\/admin\/directory\/businesses\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "verify",
+  },
+  {
+    pattern: /^\/admin\/directory\/businesses\/new\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "businesses",
+  },
+  {
+    pattern: /^\/admin\/directory\/businesses\/[^/]+\/edit\/?$/,
+    workflowId: "accounts-vs-businesses",
+    stepId: "claim",
+  },
+
   // ─────── Advertiser — Onboarding ───────
   {
     pattern: /^\/advertiser\/?$/,

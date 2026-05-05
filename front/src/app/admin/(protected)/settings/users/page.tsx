@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, Edit, Trash2, ShieldCheck, Shield } from "lucide-react";
+import { Plus, Edit, ShieldCheck, Shield, Store } from "lucide-react";
 import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
 import { getRoleLabel } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ export default async function UsersPage() {
               <th className="px-3 py-2">Utilisateur</th>
               <th className="px-3 py-2">Email</th>
               <th className="px-3 py-2">Rôle</th>
+              <th className="px-3 py-2">Fiches</th>
               <th className="px-3 py-2">Statut</th>
               <th className="px-3 py-2">Inscrit le</th>
               <th className="px-3 py-2">Dernière connexion</th>
@@ -72,6 +73,9 @@ export default async function UsersPage() {
                     )}
                     {getRoleLabel(u)}
                   </span>
+                </td>
+                <td className="px-3 py-2">
+                  <BusinessesCell userId={u.id} count={u.business_count} />
                 </td>
                 <td className="px-3 py-2">
                   {u.is_active ? (
@@ -105,5 +109,25 @@ export default async function UsersPage() {
         </table>
       </div>
     </div>
+  );
+}
+
+function BusinessesCell({ userId, count }: { userId: number; count: number }) {
+  // Pas de fiche → tiret discret. Permet de repérer immédiatement les
+  // annonceurs qui se sont inscrits sans avoir encore créé/réclamé une
+  // fiche commerce.
+  if (count === 0) {
+    return <span className="text-xs text-slate-400">— aucune</span>;
+  }
+  // Au moins une fiche → badge cliquable vers la liste filtrée par owner.
+  return (
+    <Link
+      href={`/admin/directory/businesses?owner=${userId}`}
+      className="inline-flex items-center gap-1.5 rounded-full bg-[#1a4d6e]/10 px-2 py-0.5 text-xs font-medium text-[#1a4d6e] hover:bg-[#1a4d6e]/15"
+      title="Voir les fiches commerce de ce compte"
+    >
+      <Store className="h-3 w-3" aria-hidden />
+      {count} {count > 1 ? "fiches" : "fiche"}
+    </Link>
   );
 }
