@@ -9,20 +9,19 @@
  * /admin/* et /advertiser/*. La PWA ayant zéro valeur pour un back-office,
  * on l'a complètement désactivée dans next.config.ts (`disable: true`).
  *
- * Mais sans ce fichier, les SW déjà installés chez les utilisateurs
- * resteraient actifs indéfiniment (next-pwa désactivé ne génère plus rien
- * de neuf, donc le navigateur n'a pas de nouvelle version à comparer et
- * garde l'ancien). Ce killer prend le relais : le navigateur le détecte
- * comme une nouvelle version (bytes différents de l'ancien sw.js workbox),
- * l'installe, et il se désinscrit lui-même au moment de l'activation.
+ * Ce killer prend le relais : le navigateur le détecte comme une nouvelle
+ * version (bytes différents de l'ancien sw.js workbox), l'installe, et il
+ * se désinscrit lui-même au moment de l'activation.
  *
- * Effet net : au prochain reload de chaque utilisateur, l'ancien SW est
- * remplacé, ses caches sont vidés, et le SW courant se supprime. Plus
- * jamais de SW sur le site.
+ * VERSION SIMPLIFIÉE (2026-05-06 v2) — la 1re itération faisait
+ * `client.navigate(client.url)` pour forcer le reload des onglets, mais
+ * Chrome dégradait parfois le scheme HTTPS → HTTP et créait des états
+ * incohérents (badge "Non sécurisé" en barre d'adresse). Ici on se
+ * contente de 2 étapes simples : purge des caches + unregister. Le
+ * navigateur reload naturellement quand l'utilisateur le décide.
  *
- * À supprimer une fois que tous les utilisateurs auront rechargé au moins
- * une fois (≈ 1 mois après déploiement). Garder en place ne nuit pas, mais
- * sert à rien dès que la base est nettoyée.
+ * À supprimer dans ~1 mois quand tous les utilisateurs auront rechargé
+ * au moins une fois. Garder en place ne nuit pas mais devient inutile.
  */
 
 self.addEventListener("install", () => {
@@ -39,8 +38,7 @@ self.addEventListener("activate", (event) => {
         const names = await caches.keys();
         await Promise.all(names.map((n) => caches.delete(n)));
       } catch (e) {
-        // Pas critique : si le navigateur refuse pour une raison X, on
-        // continue quand même vers l'unregister.
+        // Pas critique : on continue vers l'unregister.
       }
 
       // 2. Désinscrit ce SW. Comme next-pwa est désactivé côté serveur,
@@ -50,22 +48,19 @@ self.addEventListener("activate", (event) => {
       } catch (e) {
         /* idem, non critique */
       }
-
-      // 3. Force-reload chaque fenêtre cliente pour que la prochaine
-      //    requête parte sans intermédiaire SW (l'ancien SW reste actif
-      //    dans les onglets jusqu'au refresh tant qu'on ne navigate pas).
-      try {
-        const clients = await self.clients.matchAll({ type: "window" });
-        for (const client of clients) {
-          client.navigate(client.url);
-        }
-      } catch (e) {
-        /* idem */
-      }
     })(),
   );
 });
 
-// Pas de fetch handler : si jamais une requête nous arrive avant
-// l'activation, le navigateur fait passe-plat vers le réseau (comportement
-// par défaut quand pas de listener fetch).
+// Fetch handler explicite qui force le passe-plat réseau, sans interception.
+// Sans ça, Chrome peut continuer à router certaines requêtes via ce SW
+// avant qu'il soit unregistered (entre install et activate), et si on n'a
+// pas de fetch handler du tout, certains navigateurs servent un état
+// incohérent pour les requêtes en cours. Avec un handler explicite qui
+// fait juste fetch(event.request), on garantit le comportement réseau pur.
+self.addEventListener("fetch", (event) => {
+  // Ne pas intercepter — laisser le navigateur faire la requête réseau
+  // standard (équivalent à pas de SW). On ne fait `respondWith` que pour
+  // être explicite et empêcher Chrome de bloquer la requête.
+  return;
+});

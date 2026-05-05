@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
+import { SwCleanup } from "@/components/sw-cleanup";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -49,7 +50,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#fbf9f5] text-slate-900">{children}</body>
+      <body className="min-h-full bg-[#fbf9f5] text-slate-900">
+        <SwCleanup />
+        {children}
+      </body>
     </html>
   );
 }
