@@ -207,3 +207,6 @@ DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 # Format attendu : price_xxxxxxxxxxxxxxxxx
 STRIPE_PRICE_BASIC = env("STRIPE_PRICE_BASIC", default="")     # 79€/an
 STRIPE_PRICE_PREMIUM = env("STRIPE_PRICE_PREMIUM", default="")  # 149€/an
+
+# URL publique du site (pour les success/cancel URLs Stripe Checkout)
+SITE_URL = env("SITE_URL", default="https://media.geoclic.fr")

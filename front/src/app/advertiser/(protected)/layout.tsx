@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Store, Megaphone, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Store, Megaphone, BarChart3, CreditCard } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 import { LogoutButton } from "@/components/admin/logout-button";
 
@@ -51,6 +51,12 @@ export default async function AdvertiserProtectedLayout({
             icon={<Megaphone className="h-4 w-4" />}
           >
             Mes campagnes
+          </NavLink>
+          <NavLink
+            href="/advertiser/abonnement"
+            icon={<CreditCard className="h-4 w-4" />}
+          >
+            Abonnement
           </NavLink>
           <NavLink
             href="/advertiser/stats"
