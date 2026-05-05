@@ -49,10 +49,8 @@ export default async function AdvertiserProtectedLayout({
           <NavLink
             href="/advertiser/campagnes"
             icon={<Megaphone className="h-4 w-4" />}
-            disabled
           >
             Mes campagnes
-            <span className="ml-auto text-[10px] text-slate-400">bientôt</span>
           </NavLink>
           <NavLink
             href="/advertiser/stats"
