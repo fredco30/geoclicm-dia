@@ -19,8 +19,9 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.conf import settings
+from django.dispatch import receiver
 from django.utils import timezone
-from djstripe import webhooks
+from djstripe.signals import WEBHOOK_SIGNALS
 
 from apps.directory.models import Business
 
@@ -90,8 +91,9 @@ def _decimal_from_cents(cents: int | None) -> Decimal:
 # Webhook handlers
 # ============================================================================
 
-@webhooks.handler("customer.subscription.created", "customer.subscription.updated")
-def handle_subscription_upsert(event: Event, **kwargs) -> None:
+@receiver(WEBHOOK_SIGNALS["customer.subscription.created"])
+@receiver(WEBHOOK_SIGNALS["customer.subscription.updated"])
+def handle_subscription_upsert(sender, event: Event, **kwargs) -> None:
     """
     Stripe → notre Subscription métier + Business.plan.
 
@@ -149,8 +151,8 @@ def handle_subscription_upsert(event: Event, **kwargs) -> None:
         )
 
 
-@webhooks.handler("customer.subscription.deleted")
-def handle_subscription_cancel(event: Event, **kwargs) -> None:
+@receiver(WEBHOOK_SIGNALS["customer.subscription.deleted"])
+def handle_subscription_cancel(sender, event: Event, **kwargs) -> None:
     """
     Stripe Subscription supprimée → notre Subscription cancelled +
     retour Business.plan = free.
@@ -174,8 +176,8 @@ def handle_subscription_cancel(event: Event, **kwargs) -> None:
     )
 
 
-@webhooks.handler("invoice.paid")
-def handle_invoice_paid(event: Event, **kwargs) -> None:
+@receiver(WEBHOOK_SIGNALS["invoice.paid"])
+def handle_invoice_paid(sender, event: Event, **kwargs) -> None:
     """
     Facture Stripe payée → création d'une Invoice métier avec numérotation
     continue annuelle. Idempotent (vérif via stripe_invoice_id).
@@ -220,8 +222,8 @@ def handle_invoice_paid(event: Event, **kwargs) -> None:
     # Note : génération PDF asynchrone via Celery viendra au Lot F
 
 
-@webhooks.handler("invoice.payment_failed")
-def handle_invoice_payment_failed(event: Event, **kwargs) -> None:
+@receiver(WEBHOOK_SIGNALS["invoice.payment_failed"])
+def handle_invoice_payment_failed(sender, event: Event, **kwargs) -> None:
     """
     Échec paiement → Subscription métier en past_due. Stripe retentera
     automatiquement (Smart Retries) avant de canceller la subscription.
