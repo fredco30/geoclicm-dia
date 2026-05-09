@@ -20,12 +20,11 @@ type Props = {
  * Selon `kind` :
  *  - internal_route → <Link href={internal_path}>
  *  - external_url   → <a href target="_blank"> + icône ExternalLink
- *  - module         → <Link href={path module câblé>
+ *  - module         → <Link href={path module câblé}>
  *
  * Si la tuile a des `children` (sous-tuiles) ET pas d'URL cible directe,
- * elle pointe vers `/tiles/<id>` (page intermédiaire — implémentée en PR 4).
- * Tant que PR 4 n'est pas mergée, ces tuiles redirigent vers l'URL cible
- * du parent si renseignée, sinon affichent un fallback inactif.
+ * elle pointe vers `/tiles/<id>` (page intermédiaire qui affiche la grille
+ * des sous-tuiles).
  */
 export function TileItem({ tile, pathPrefix = "", className = "" }: Props) {
   const preset = TILE_COLOR_PRESETS[tile.color] ?? TILE_COLOR_PRESETS.camargue;
@@ -99,27 +98,19 @@ export function TileItem({ tile, pathPrefix = "", className = "" }: Props) {
     );
   }
 
-  // Tuile racine avec sous-tuiles → page intermédiaire (PR 4 à venir).
-  // Pour V1 PR 2 : on tente le target_url s'il existe (cas modules),
-  // sinon on désactive visuellement.
-  if (hasChildren && !targetUrl) {
-    return (
-      <div
-        className={`${baseClasses} ${colorClasses} cursor-not-allowed opacity-60 ${className}`}
-        aria-disabled="true"
-        title="Sous-tuiles bientôt accessibles"
-      >
-        {content}
-      </div>
-    );
-  }
+  // Si la tuile a des sous-tuiles mais pas d'URL cible directe, on pointe
+  // vers la page intermédiaire `/tiles/<id>` qui affiche la grille des
+  // sous-tuiles. Si elle a un target_url ET des children, on privilégie
+  // le target_url (cas plus rare : un admin a configuré explicitement
+  // une route et un set de sous-tuiles complémentaires).
+  const fallbackHref = hasChildren ? `/tiles/${tile.id}` : null;
 
   // Lien interne ou module câblé
   const href = targetUrl
     ? pathPrefix && targetUrl.startsWith("/")
       ? `${pathPrefix}${targetUrl}`
       : targetUrl
-    : "/";
+    : fallbackHref ?? "/";
 
   return (
     <Link

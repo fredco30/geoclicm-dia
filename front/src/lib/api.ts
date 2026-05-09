@@ -176,6 +176,11 @@ export const api = {
         tags: ["tiles"],
       });
     },
+    detail: (id: number) =>
+      apiGet<Tile>(`/api/tiles/${id}/`, {
+        revalidate: 300,
+        tags: ["tiles", `tile:${id}`],
+      }),
   },
 };
 
