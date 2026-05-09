@@ -425,6 +425,34 @@ export type WeatherResponse = {
   marine: WeatherMarine | null;
 };
 
+// ============================================================================
+// Utility (numéros utiles + démarches administratives)
+// ============================================================================
+
+export type UsefulContactKind = "useful_number" | "procedure";
+
+export type UsefulContactType =
+  | "phone"
+  | "url"
+  | "email"
+  | "address"
+  | "info";
+
+export type UsefulContactPublic = {
+  id: number;
+  kind: UsefulContactKind;
+  kind_label: string;
+  label: string;
+  contact_type: UsefulContactType;
+  contact_type_label: string;
+  value: string;
+  description: string;
+  category_label: string;
+  commune_slug: string | null;
+  commune_name: string | null;
+  sort_order: number;
+};
+
 export type CurrentUser = {
   id: number;
   username: string;

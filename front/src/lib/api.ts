@@ -20,6 +20,8 @@ import type {
   SearchResponse,
   Tag,
   Tile,
+  UsefulContactKind,
+  UsefulContactPublic,
   WeatherResponse,
 } from "@/types/api";
 
@@ -183,6 +185,19 @@ export const api = {
         revalidate: 300,
         tags: ["tiles", `tile:${id}`],
       }),
+  },
+
+  // Pratique — numéros utiles + démarches administratives
+  utility: {
+    list: (params: { kind: UsefulContactKind; commune?: string }) => {
+      const sp: Record<string, string> = { kind: params.kind };
+      if (params.commune) sp.commune = params.commune;
+      const qs = buildQuery(sp);
+      return apiGet<UsefulContactPublic[]>(`/api/utility/contacts/${qs}`, {
+        revalidate: 600,
+        tags: ["utility", `utility:${params.kind}`],
+      });
+    },
   },
 
   // Assistant IA — Mistral + RAG

@@ -1,5 +1,10 @@
 /** Types côté admin (back-office). */
-import type { ArticleStatus, ImageVariants } from "./api";
+import type {
+  ArticleStatus,
+  ImageVariants,
+  UsefulContactKind,
+  UsefulContactType,
+} from "./api";
 
 // ============================================================================
 // Assistant IA — sources à crawler (admin only)
@@ -329,6 +334,40 @@ export type AdminAdCampaignPayload = {
   price_paid: string;
   is_active: boolean;
   is_paid: boolean;
+};
+
+// ============================================================================
+// Utility (numéros utiles + démarches)
+// ============================================================================
+
+export type AdminUsefulContact = {
+  id: number;
+  kind: UsefulContactKind;
+  kind_label: string;
+  label: string;
+  contact_type: UsefulContactType;
+  contact_type_label: string;
+  value: string;
+  description: string;
+  category_label: string;
+  commune: number | null;
+  commune_name: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminUsefulContactPayload = {
+  kind: UsefulContactKind;
+  label: string;
+  contact_type: UsefulContactType;
+  value: string;
+  description: string;
+  category_label: string;
+  commune: number | null;
+  sort_order: number;
+  is_active: boolean;
 };
 
 export type { ArticleStatus };
