@@ -16,7 +16,10 @@
   touristes.
 - **Stade** : Sprint 1 livré le 2026-05-04. Sprints 3+4 (régie pub +
   Stripe self-service) livrés le 2026-05-05. Refonte v2 « pattern city »
-  (tuiles + assistant IA Mistral) livrée le 2026-05-07.
+  (tuiles + assistant IA Mistral) livrée le 2026-05-07. Itérations
+  2026-05-09 : deep-links Maps/Waze sur citations IA, fix aspect ratio
+  tuiles span_2x, rubrique Pratique (numéros utiles + démarches), CRUD
+  catégories d'articles dans le back-office Next.
 - **URL prod** : <https://media.geoclic.fr>
 - **VPS** : OVH Ubuntu, IP 135.125.159.142, sous-domaine de geoclic.fr
   (Fred a un autre projet GéoClic Suite déjà sur ce VPS).
@@ -29,10 +32,11 @@
 Django 5.1 + DRF + PostgreSQL 17 + PostGIS 3 + pgvector + Redis +
 Celery + django-celery-beat + dj-stripe.
 
-Apps métier : `core` (User+Commune+Media), `editorial` (Article),
+Apps métier : `core` (User+Commune+Media), `editorial` (Article+Category),
 `directory` (Business+Category), `ads` (AdCampaign), `advertisers`
 (Subscription+Invoice), `weather` (Open-Meteo), `tiles` (grille
-d'accueil configurable), `assistant` (RAG Mistral + indexers).
+d'accueil configurable), `assistant` (RAG Mistral + indexers),
+`utility` (numéros utiles + démarches admin).
 
 ### Frontend (`front/`)
 Next.js 16.2 (App Router, webpack forcé) + React 19 + TypeScript +
@@ -105,6 +109,9 @@ serveur.
 - **Back-office custom plutôt que Django Admin** pour le travail
   quotidien. Django Admin reste utile en debug/seed, mais l'interface
   principale est custom Next.js (pour sa partenaire qui n'est pas tech).
+  Couvert côté Next : articles, commerçants, catégories commerçants,
+  régie pub, tuiles d'accueil, Pratique (numéros + démarches),
+  catégories d'articles, sources IA, comptes & droits.
 
 ---
 
@@ -166,6 +173,27 @@ seul, Next seul, Celery, etc.).
   écriture. Toujours faire `python manage.py makemigrations <app> --check
   --dry-run` après ajout d'app, et ne jamais commiter une app dans
   INSTALLED_APPS sans sa migration `0001_initial`.
+
+### Cache Next non invalidé après modification admin
+
+- L'API publique `/api/tiles/` (et autres endpoints similaires) est
+  servie par Next.js avec `revalidate: 300` côté data cache. Quand un
+  admin modifie une tuile (ou tout objet exposé via cette stratégie),
+  le cache n'est PAS invalidé automatiquement — la home continue
+  d'afficher l'ancienne version pendant jusqu'à 5 min. Workaround
+  immédiat : `sudo systemctl restart geoclicmedia-next` après save admin.
+  Fix propre futur : Server Action ou endpoint Next qui appelle
+  `revalidateTag("tiles")` après le PATCH/POST côté client.
+
+### Tailwind 4 + arbitrary classes dynamiques
+
+- En Tailwind 4, les classes Tailwind composées dynamiquement à partir
+  de strings (ex: `\`${preset.bg} ${preset.text}\``) restent OK tant
+  que les sources sont des littéraux statiques quelque part dans le
+  code scanné (`tile-presets.ts`). Mais une couleur `bg-[#fbf9f5]`
+  (preset « Sel ») devient quasi-invisible sur fond blanc — rendre la
+  délimitation explicite avec une bordure légère plutôt que compter
+  sur le fond seul.
 
 ---
 
