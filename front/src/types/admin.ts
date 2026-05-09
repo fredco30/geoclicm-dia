@@ -132,6 +132,18 @@ export type AdminUser = {
   last_login: string | null;
 };
 
+/**
+ * Compteurs pour les tabs de la page /admin/settings/users.
+ * Endpoint : GET /api/users/counts/
+ */
+export type AdminUserCounts = {
+  all: number;
+  team: number;
+  advertiser: number;
+  reader: number;
+  inactive: number;
+};
+
 export type AdminUserPayload = {
   username: string;
   email: string;
