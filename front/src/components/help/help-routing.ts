@@ -61,6 +61,23 @@ const ROUTES: Route[] = [
     stepId: "claim",
   },
 
+  // ─────── Admin — Configurer les tuiles d'accueil ───────
+  {
+    pattern: /^\/admin\/tiles\/?$/,
+    workflowId: "configure-tiles",
+    stepId: "ordering",
+  },
+  {
+    pattern: /^\/admin\/tiles\/new\/?$/,
+    workflowId: "configure-tiles",
+    stepId: "create",
+  },
+  {
+    pattern: /^\/admin\/tiles\/[^/]+\/edit\/?$/,
+    workflowId: "configure-tiles",
+    stepId: "create",
+  },
+
   // ─────── Advertiser — Onboarding ───────
   {
     pattern: /^\/advertiser\/?$/,
