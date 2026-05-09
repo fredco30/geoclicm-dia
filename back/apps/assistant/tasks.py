@@ -84,6 +84,21 @@ def crawl_external_sources() -> dict[str, int]:
     return crawl_all_active_sources()
 
 
+@shared_task(name="assistant.crawl_source_now", ignore_result=True)
+def crawl_external_source_now(source_id: int) -> dict[str, int]:
+    """Crawl manuel d'UNE source précise. Déclenchée par bouton admin."""
+    from .indexers.web_crawler import crawl_source
+    from .models import CrawlSource
+
+    try:
+        source = CrawlSource.objects.get(pk=source_id)
+    except CrawlSource.DoesNotExist:
+        logger.warning("crawl_external_source_now: source %s introuvable", source_id)
+        return {"created": 0, "updated": 0, "unchanged": 0, "deactivated": 0, "embedded": 0}
+
+    return crawl_source(source)
+
+
 @shared_task(name="assistant.crawl_business_websites", ignore_result=True)
 def crawl_business_websites_task() -> dict[str, int]:
     """Crawle les sites web déclarés par les commerçants publiés. Mensuel."""

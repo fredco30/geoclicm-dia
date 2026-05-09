@@ -61,6 +61,23 @@ const ROUTES: Route[] = [
     stepId: "claim",
   },
 
+  // ─────── Admin — Sources crawl (assistant IA) ───────
+  {
+    pattern: /^\/admin\/assistant\/sources\/?$/,
+    workflowId: "configure-crawl-sources",
+    stepId: "monitor",
+  },
+  {
+    pattern: /^\/admin\/assistant\/sources\/new\/?$/,
+    workflowId: "configure-crawl-sources",
+    stepId: "add",
+  },
+  {
+    pattern: /^\/admin\/assistant\/sources\/[^/]+\/edit\/?$/,
+    workflowId: "configure-crawl-sources",
+    stepId: "force-run",
+  },
+
   // ─────── Admin — Configurer les tuiles d'accueil ───────
   {
     pattern: /^\/admin\/tiles\/?$/,

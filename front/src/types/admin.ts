@@ -2,6 +2,51 @@
 import type { ArticleStatus, ImageVariants } from "./api";
 
 // ============================================================================
+// Assistant IA — sources à crawler (admin only)
+// ============================================================================
+
+export type CrawlSourceKind =
+  | "business"
+  | "article"
+  | "mairie"
+  | "ot"
+  | "wikipedia"
+  | "datatourisme"
+  | "osm"
+  | "tile";
+
+export type CrawlSourceStatus = "" | "ok" | "error" | "partial";
+
+export type AdminCrawlSource = {
+  id: number;
+  label: string;
+  kind: CrawlSourceKind;
+  kind_label: string;
+  seed_url: string;
+  max_depth: number;
+  is_active: boolean;
+  commune: number | null;
+  commune_name: string | null;
+  commune_slug: string | null;
+  last_crawled_at: string | null;
+  last_status: CrawlSourceStatus;
+  last_error: string;
+  chunk_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminCrawlSourcePayload = {
+  label: string;
+  kind: CrawlSourceKind;
+  seed_url: string;
+  max_depth: number;
+  is_active: boolean;
+  commune: number | null;
+};
+
+
+// ============================================================================
 // Tiles (grille d'accueil)
 // ============================================================================
 
