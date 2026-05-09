@@ -8,6 +8,8 @@
 import type {
   ArticleDetail,
   ArticleListItem,
+  AssistantAskRequest,
+  AssistantAskResponse,
   BusinessCategory,
   BusinessDetail,
   BusinessListItem,
@@ -181,6 +183,25 @@ export const api = {
         revalidate: 300,
         tags: ["tiles", `tile:${id}`],
       }),
+  },
+
+  // Assistant IA — Mistral + RAG
+  assistant: {
+    ask: async (body: AssistantAskRequest): Promise<AssistantAskResponse> => {
+      const res = await fetch(`${API_URL}/api/assistant/ask/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+        credentials: "omit",
+      });
+      if (!res.ok) {
+        let payload: unknown = null;
+        try { payload = await res.json(); } catch { /* not json */ }
+        throw new ApiError(`Assistant ${res.status}`, res.status, payload);
+      }
+      return res.json() as Promise<AssistantAskResponse>;
+    },
   },
 };
 

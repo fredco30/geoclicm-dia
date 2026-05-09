@@ -139,6 +139,44 @@ export type SearchResponse = {
 };
 
 // ============================================================================
+// Assistant IA (Mistral + RAG via /api/assistant/ask/)
+// ============================================================================
+
+export type AssistantLanguage = "fr" | "en" | "de" | "it" | "es" | "nl";
+
+export type AssistantSourceKind =
+  | "business"
+  | "article"
+  | "mairie"
+  | "ot"
+  | "wikipedia"
+  | "datatourisme"
+  | "osm"
+  | "tile";
+
+export type AssistantCitation = {
+  chunk_id: number;
+  title: string;
+  source_url: string;
+  source_kind: AssistantSourceKind;
+  is_premium: boolean;
+};
+
+export type AssistantAskRequest = {
+  question: string;
+  session_id: string;
+  language?: AssistantLanguage;
+  commune_slug?: string;
+};
+
+export type AssistantAskResponse = {
+  answer: string;
+  citations: AssistantCitation[];
+  session_id: string;
+  language: AssistantLanguage;
+};
+
+// ============================================================================
 // Directory (commerçants)
 // ============================================================================
 
