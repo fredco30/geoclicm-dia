@@ -245,6 +245,59 @@ export type AdServeResponse = {
 };
 
 // ============================================================================
+// Tiles (grille d'accueil — public)
+// ============================================================================
+
+export type TileColorPreset =
+  | "camargue"
+  | "sel"
+  | "terre"
+  | "mer"
+  | "agrume"
+  | "olive"
+  | "neutre";
+
+export type TileKind = "internal_route" | "external_url" | "module";
+
+export type TileModuleKey = "news" | "weather" | "businesses";
+
+export type TileCommuneMini = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+/**
+ * Sous-tuile (enfant) — version simplifiée, pas de récursion.
+ */
+export type TileChild = {
+  id: number;
+  label: string;
+  icon: string;
+  color: TileColorPreset;
+  cover_image: string | null;
+  kind: TileKind;
+  internal_path: string;
+  external_url: string;
+  module_key: TileModuleKey | "";
+  sort_order: number;
+  is_active: boolean;
+  span_2x: boolean;
+  /** URL de destination résolue côté serializer (selon kind). */
+  target_url: string;
+};
+
+/**
+ * Tuile publique (racine) avec sous-tuiles imbriquées.
+ */
+export type Tile = TileChild & {
+  show_on_home: boolean;
+  visible_on_communes: TileCommuneMini[];
+  has_children: boolean;
+  children: TileChild[];
+};
+
+// ============================================================================
 // Weather (Open-Meteo proxy via /api/weather/<slug>/)
 // ============================================================================
 

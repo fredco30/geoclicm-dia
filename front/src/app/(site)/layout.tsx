@@ -1,5 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { FooterFixed } from "@/components/layout/footer-fixed";
 
 export default function SiteLayout({
   children,
@@ -14,10 +15,12 @@ export default function SiteLayout({
         Aller au contenu
       </a>
       <Header />
-      <main id="main-content" className="flex-1">
+      {/* pb-16 mobile pour ne pas masquer le contenu derrière le FooterFixed */}
+      <main id="main-content" className="flex-1 pb-16 md:pb-0">
         {children}
       </main>
       <Footer />
+      <FooterFixed />
     </div>
   );
 }
