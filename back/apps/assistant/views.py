@@ -1,0 +1,158 @@
+"""
+Vue principale : POST /api/assistant/ask/
+
+Workflow :
+1. Validation rate limit (20 questions/h/IP par défaut)
+2. Validation payload (question, session_id, language, commune_slug)
+3. Embed question + retrieve top_k chunks
+4. Build prompt système + contexte injecté + question
+5. Appel Mistral chat completions
+6. Sauvegarde conversation + messages + tokens
+7. Retour JSON {answer, citations, session_id, language}
+"""
+from __future__ import annotations
+
+import logging
+
+from rest_framework import permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import AssistantConversation, AssistantMessage
+from .prompts import SYSTEM_PROMPT, build_user_message
+from .rate_limit import check_rate_limit, get_client_ip
+from .serializers import AskRequestSerializer, AskResponseSerializer
+from .services.mistral import MistralError, MistralNotConfigured, chat
+from .services.retrieval import retrieve_chunks
+
+logger = logging.getLogger(__name__)
+
+
+class AssistantAskView(APIView):
+    """POST /api/assistant/ask/ — pose une question à l'assistant."""
+
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        # 1. Rate limit
+        ip = get_client_ip(request)
+        allowed, remaining = check_rate_limit(ip)
+        if not allowed:
+            return Response(
+                {
+                    "detail": "Trop de questions ces dernières minutes. "
+                              "Réessayez dans 1 heure.",
+                    "code": "rate_limit",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        # 2. Validation
+        serializer = AskRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        question: str = data["question"].strip()
+        session_id: str = data["session_id"]
+        language: str = data.get("language", "fr")
+        commune_slug: str = (data.get("commune_slug") or "").strip()
+
+        # 3. Retrieval
+        try:
+            retrieved = retrieve_chunks(
+                question,
+                top_k=8,
+                commune_slug=commune_slug or None,
+            )
+        except MistralNotConfigured as exc:
+            return Response(
+                {"detail": str(exc), "code": "not_configured"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except MistralError as exc:
+            logger.error("Mistral error during retrieval: %s", exc)
+            return Response(
+                {"detail": "Service IA temporairement indisponible.",
+                 "code": "mistral_error"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception:
+            logger.exception("Retrieval failed unexpectedly")
+            return Response(
+                {"detail": "Erreur interne lors de la recherche.",
+                 "code": "internal"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # 4. Conversation : on enregistre la question
+        conversation, _ = AssistantConversation.objects.get_or_create(
+            session_id=session_id,
+            defaults={"language": language},
+        )
+        if conversation.language != language:
+            conversation.language = language
+
+        AssistantMessage.objects.create(
+            conversation=conversation,
+            role=AssistantMessage.Role.USER,
+            content=question,
+        )
+
+        # 5. Construction du prompt et appel Mistral
+        user_message = build_user_message(question, retrieved)
+        try:
+            result = chat(
+                system_prompt=SYSTEM_PROMPT,
+                user_question=user_message,
+            )
+        except MistralNotConfigured as exc:
+            return Response(
+                {"detail": str(exc), "code": "not_configured"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except MistralError as exc:
+            logger.error("Mistral chat error: %s", exc)
+            return Response(
+                {"detail": "L'assistant n'a pas pu répondre, réessayez.",
+                 "code": "mistral_error"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception:
+            logger.exception("Chat call failed unexpectedly")
+            return Response(
+                {"detail": "Erreur interne.",
+                 "code": "internal"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # 6. Sauvegarde réponse + citations + tokens
+        citations = [
+            {
+                "chunk_id": r.chunk.id,
+                "title": r.chunk.title,
+                "source_url": r.chunk.source_url,
+                "source_kind": r.chunk.source_kind,
+                "is_premium": r.chunk.is_premium,
+            }
+            for r in retrieved
+        ]
+        AssistantMessage.objects.create(
+            conversation=conversation,
+            role=AssistantMessage.Role.ASSISTANT,
+            content=result["answer"],
+            citations=citations,
+            cost_tokens_in=result["tokens_in"],
+            cost_tokens_out=result["tokens_out"],
+        )
+        conversation.message_count = conversation.messages.count()
+        conversation.save(update_fields=["message_count", "language", "last_message_at"])
+
+        # 7. Réponse
+        response_payload = {
+            "answer": result["answer"],
+            "citations": citations,
+            "session_id": session_id,
+            "language": language,
+        }
+        response = Response(response_payload, status=status.HTTP_200_OK)
+        response["X-RateLimit-Remaining"] = str(remaining)
+        return response

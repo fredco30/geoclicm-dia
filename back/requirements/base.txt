@@ -32,7 +32,12 @@ qrcode[pil]>=7.4,<8.0              # affichage QR code 2FA dans admin
 # --- Utils ---
 python-slugify>=8.0,<9.0           # slugs propres avec translittération unicode
 markdown>=3.7,<4.0                 # rendu corps article (preview admin)
-requests>=2.32,<3.0                # HTTP client (Open-Meteo pour app weather)
+requests>=2.32,<3.0                # HTTP client (Open-Meteo pour app weather, Mistral pour app assistant)
+
+# --- Assistant IA (Sprint 7+) ---
+# pgvector pour stocker les embeddings Mistral en base. L'extension côté
+# Postgres doit être activée séparément (cf docs/20-assistant-ia-deploiement.md).
+pgvector>=0.3,<1.0
 
 # --- Paiement / abonnements (Sprint 3 Lot E) ---
 # dj-stripe : sync Stripe ↔ DB Django (subscriptions, invoices, customers)
