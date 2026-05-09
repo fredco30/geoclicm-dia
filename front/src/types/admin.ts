@@ -1,6 +1,70 @@
 /** Types côté admin (back-office). */
 import type { ArticleStatus, ImageVariants } from "./api";
 
+// ============================================================================
+// Tiles (grille d'accueil)
+// ============================================================================
+
+export type TileColorPreset =
+  | "camargue"
+  | "sel"
+  | "terre"
+  | "mer"
+  | "agrume"
+  | "olive"
+  | "neutre";
+
+export type TileKind = "internal_route" | "external_url" | "module";
+
+export type TileModuleKey = "news" | "weather" | "businesses";
+
+type TileCommuneMini = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type AdminTile = {
+  id: number;
+  parent: number | null;
+  parent_label: string | null;
+  label: string;
+  icon: string;
+  color: TileColorPreset;
+  cover_image: string | null;
+  kind: TileKind;
+  internal_path: string;
+  external_url: string;
+  module_key: TileModuleKey | "";
+  sort_order: number;
+  is_active: boolean;
+  show_on_home: boolean;
+  visible_on_communes: number[];
+  visible_on_communes_detail: TileCommuneMini[];
+  span_2x: boolean;
+  target_url: string;
+  has_children: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminTilePayload = {
+  parent: number | null;
+  label: string;
+  icon: string;
+  color: TileColorPreset;
+  kind: TileKind;
+  internal_path: string;
+  external_url: string;
+  module_key: TileModuleKey | "";
+  sort_order: number;
+  is_active: boolean;
+  show_on_home: boolean;
+  visible_on_communes: number[];
+  span_2x: boolean;
+};
+
+
 export type AdminUser = {
   id: number;
   username: string;
