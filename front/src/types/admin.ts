@@ -337,6 +337,36 @@ export type AdminAdCampaignPayload = {
 };
 
 // ============================================================================
+// Editorial — Catégories d'articles (admin)
+// ============================================================================
+
+export type AdminArticleCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  color: string; // #RRGGBB
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+  article_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AdminArticleCategoryPayload = {
+  name: string;
+  /** Optionnel — auto-généré côté Django depuis name si vide. */
+  slug?: string;
+  description: string;
+  color: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+
+// ============================================================================
 // Utility (numéros utiles + démarches)
 // ============================================================================
 

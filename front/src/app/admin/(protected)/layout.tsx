@@ -45,6 +45,9 @@ export default async function AdminProtectedLayout({
           <NavLink href="/admin/articles/new" icon={<Plus className="h-4 w-4" />}>
             Nouvel article
           </NavLink>
+          <NavLink href="/admin/articles/categories" icon={<Tags className="h-4 w-4" />}>
+            Catégories articles
+          </NavLink>
           <NavLink href="/admin/directory/businesses" icon={<Store className="h-4 w-4" />}>
             Commerçants
           </NavLink>
