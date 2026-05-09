@@ -8,6 +8,7 @@
 import type { Workflow } from "../workflow-types";
 import { ACCOUNTS_VS_BUSINESSES } from "./accounts-vs-businesses";
 import { ADVERTISER_ONBOARDING } from "./advertiser-onboarding";
+import { CONFIGURE_CRAWL_SOURCES } from "./configure-crawl-sources";
 import { CONFIGURE_TILES } from "./configure-tiles";
 import { PUBLISH_ARTICLE } from "./publish-article";
 
@@ -16,4 +17,5 @@ export const WORKFLOWS: Record<string, Workflow> = {
   [ADVERTISER_ONBOARDING.id]: ADVERTISER_ONBOARDING,
   [ACCOUNTS_VS_BUSINESSES.id]: ACCOUNTS_VS_BUSINESSES,
   [CONFIGURE_TILES.id]: CONFIGURE_TILES,
+  [CONFIGURE_CRAWL_SOURCES.id]: CONFIGURE_CRAWL_SOURCES,
 };

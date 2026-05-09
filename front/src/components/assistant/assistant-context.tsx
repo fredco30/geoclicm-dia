@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 
 import { api } from "@/lib/api";
 import {
@@ -65,7 +66,24 @@ type ProviderProps = {
   initialCommuneSlug?: string;
 };
 
+/**
+ * Extrait un slug de commune depuis un pathname si on est sur une page
+ * contextualisée par commune (page commune, météo). Sinon retourne
+ * undefined.
+ *
+ * Patterns reconnus :
+ *   /communes/[slug]
+ *   /communes/[slug]/anything
+ *   /meteo/[slug]
+ */
+function extractCommuneFromPath(pathname: string | null): string | undefined {
+  if (!pathname) return undefined;
+  const match = pathname.match(/^\/(?:communes|meteo)\/([^/?#]+)/);
+  return match?.[1];
+}
+
 export function AssistantProvider({ children, initialCommuneSlug }: ProviderProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<AssistantConvoMessage[]>([]);
   const [language, setLanguageState] = useState<AssistantLanguage>("fr");
@@ -75,6 +93,14 @@ export function AssistantProvider({ children, initialCommuneSlug }: ProviderProp
   const [communeSlug, setCommuneSlugState] = useState<string | undefined>(
     initialCommuneSlug,
   );
+
+  // Auto-détection commune contextuelle selon la page courante.
+  // L'utilisateur peut toujours override via setCommuneSlug() si on lui
+  // donne un sélecteur dans le drawer (V2).
+  useEffect(() => {
+    const detected = extractCommuneFromPath(pathname);
+    setCommuneSlugState(detected ?? initialCommuneSlug);
+  }, [pathname, initialCommuneSlug]);
 
   // Init côté client uniquement (évite mismatch SSR)
   useEffect(() => {

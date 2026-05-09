@@ -14,18 +14,35 @@ from __future__ import annotations
 
 import logging
 
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import AssistantConversation, AssistantMessage
+from .models import AssistantConversation, AssistantMessage, CrawlSource
 from .prompts import SYSTEM_PROMPT, build_user_message
 from .rate_limit import check_rate_limit, get_client_ip
-from .serializers import AskRequestSerializer, AskResponseSerializer
+from .serializers import (
+    AskRequestSerializer,
+    AskResponseSerializer,
+    CrawlSourceAdminSerializer,
+)
 from .services.mistral import MistralError, MistralNotConfigured, chat
 from .services.retrieval import retrieve_chunks
 
 logger = logging.getLogger(__name__)
+
+
+class IsAdminOrEditor(permissions.BasePermission):
+    """Editor ou admin peut gérer les sources à crawler."""
+
+    def has_permission(self, request, view) -> bool:
+        if not request.user.is_authenticated:
+            return False
+        return (
+            request.user.is_superuser
+            or request.user.role in {"editor", "admin"}
+        )
 
 
 class AssistantAskView(APIView):
@@ -156,3 +173,61 @@ class AssistantAskView(APIView):
         response = Response(response_payload, status=status.HTTP_200_OK)
         response["X-RateLimit-Remaining"] = str(remaining)
         return response
+
+
+# ============================================================================
+# Admin CrawlSource — CRUD + bouton « Crawler maintenant »
+# ============================================================================
+
+
+class CrawlSourceAdminViewSet(viewsets.ModelViewSet):
+    """
+    /api/admin/crawl-sources/        — list / create
+    /api/admin/crawl-sources/<id>/   — retrieve / update / delete
+    /api/admin/crawl-sources/<id>/run/  — POST : déclenche un crawl async
+
+    Réservé editor/admin/superuser. Les CrawlSource ne sont pas du contenu
+    public, juste de la config.
+    """
+
+    queryset = (
+        CrawlSource.objects.all()
+        .select_related("commune")
+        .order_by("-updated_at")
+    )
+    serializer_class = CrawlSourceAdminSerializer
+    permission_classes = (IsAdminOrEditor,)
+    pagination_class = None
+
+    @action(detail=True, methods=["post"], url_path="run")
+    def run(self, request, pk=None):
+        """Déclenche un crawl manuel de la source. Asynchrone via Celery."""
+        from .tasks import crawl_external_source_now
+
+        source = self.get_object()
+        if not source.is_active:
+            return Response(
+                {"detail": "Cette source est désactivée. Activez-la d'abord."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            crawl_external_source_now.delay(source.id)
+        except Exception as exc:  # noqa: BLE001 — Celery down ou erreur de queue
+            logger.warning(
+                "crawl_external_source_now.delay(%s) failed: %s", source.id, exc,
+            )
+            return Response(
+                {
+                    "detail": (
+                        "Le crawl n'a pas pu être lancé en async (Celery indisponible). "
+                        "Réessayez ou utilisez la commande "
+                        "`python manage.py reindex_assistant --source external_sources` "
+                        "côté serveur."
+                    ),
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response(
+            {"detail": "Crawl lancé en arrière-plan.", "source_id": source.id},
+            status=status.HTTP_202_ACCEPTED,
+        )
