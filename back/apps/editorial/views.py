@@ -25,6 +25,7 @@ from .serializers import (
     ArticleDetailSerializer,
     ArticleListSerializer,
     ArticleWriteSerializer,
+    CategoryAdminSerializer,
     CategorySerializer,
     CommuneSerializer,
     TagSerializer,
@@ -90,6 +91,26 @@ class CategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     lookup_field = "slug"
     permission_classes = (AllowAny,)
     pagination_class = None  # liste courte, on retourne tout
+
+
+class CategoryAdminViewSet(viewsets.ModelViewSet):
+    """
+    /api/admin/categories/        — list / create
+    /api/admin/categories/<id>/   — retrieve / update / delete
+
+    CRUD complet pour les catégories d'articles éditoriaux. Réservé
+    editor/admin (les rédacteurs créent leurs propres catégories pour
+    éviter de toucher à Django Admin).
+
+    PROTECT côté FK Article→Category : la suppression d'une catégorie qui
+    contient encore des articles renverra une erreur 400 (DRF traduit
+    ProtectedError en payload JSON).
+    """
+
+    queryset = Category.objects.all().order_by("sort_order", "name")
+    serializer_class = CategoryAdminSerializer
+    permission_classes = (IsEditorOrAdmin,)
+    pagination_class = None  # liste courte (typique < 30 catégories)
 
 
 class TagViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

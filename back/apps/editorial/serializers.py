@@ -98,6 +98,43 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "description", "color", "icon", "sort_order")
 
 
+class CategoryAdminSerializer(serializers.ModelSerializer):
+    """Sérialiseur admin pour CRUD des catégories d'articles.
+
+    Expose en plus : article_count (nombre d'articles publiés dans cette
+    catégorie). Le slug est auto-généré côté modèle (Category.save) si
+    l'admin ne le fournit pas — on le marque writable mais optionnel.
+    """
+
+    article_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = (
+            "id", "name", "slug", "description",
+            "color", "icon", "sort_order", "is_active",
+            "article_count", "created_at", "updated_at",
+        )
+        read_only_fields = (
+            "id", "article_count", "created_at", "updated_at",
+        )
+        extra_kwargs = {
+            # Slug auto-généré depuis name si non fourni — cf Category.save
+            "slug": {"required": False, "allow_blank": True},
+        }
+
+    def get_article_count(self, obj: Category) -> int:
+        return obj.articles.filter(status="published").count()
+
+    def validate_color(self, value: str) -> str:
+        v = (value or "").strip()
+        if v and not (v.startswith("#") and len(v) in (4, 7)):
+            raise serializers.ValidationError(
+                "Format attendu : #RRGGBB ou #RGB."
+            )
+        return v or "#1a4d6e"
+
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag

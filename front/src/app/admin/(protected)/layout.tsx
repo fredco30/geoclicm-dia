@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, Plus, Home, Settings, Tags, Store, Megaphone, LayoutGrid, Sparkles } from "lucide-react";
+import { FileText, Plus, Home, Settings, Tags, Store, Megaphone, LayoutGrid, Sparkles, Phone } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 import { getRoleLabel } from "@/lib/roles";
 import { LogoutButton } from "@/components/admin/logout-button";
@@ -45,6 +45,9 @@ export default async function AdminProtectedLayout({
           <NavLink href="/admin/articles/new" icon={<Plus className="h-4 w-4" />}>
             Nouvel article
           </NavLink>
+          <NavLink href="/admin/articles/categories" icon={<Tags className="h-4 w-4" />}>
+            Catégories articles
+          </NavLink>
           <NavLink href="/admin/directory/businesses" icon={<Store className="h-4 w-4" />}>
             Commerçants
           </NavLink>
@@ -56,6 +59,9 @@ export default async function AdminProtectedLayout({
           </NavLink>
           <NavLink href="/admin/tiles" icon={<LayoutGrid className="h-4 w-4" />}>
             Tuiles d&apos;accueil
+          </NavLink>
+          <NavLink href="/admin/utility" icon={<Phone className="h-4 w-4" />}>
+            Pratique
           </NavLink>
           <NavLink href="/admin/assistant/sources" icon={<Sparkles className="h-4 w-4" />}>
             Sources IA
