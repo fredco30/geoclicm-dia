@@ -17,6 +17,7 @@ import type {
   Paginated,
   SearchResponse,
   Tag,
+  Tile,
   WeatherResponse,
 } from "@/types/api";
 
@@ -162,6 +163,20 @@ export const api = {
       revalidate: 600,
       tags: ["weather", `weather:${slug}`],
     }),
+
+  // Tuiles d'accueil (configurables côté admin)
+  tiles: {
+    list: (params: { onHome?: boolean; commune?: string } = {}) => {
+      const sp: Record<string, string | boolean | undefined> = {};
+      if (params.onHome) sp.on_home = "true";
+      if (params.commune) sp.commune = params.commune;
+      const qs = buildQuery(sp);
+      return apiGet<Tile[]>(`/api/tiles/${qs}`, {
+        revalidate: 300,
+        tags: ["tiles"],
+      });
+    },
+  },
 };
 
 // ============================================================================
