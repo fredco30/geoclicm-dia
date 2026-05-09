@@ -96,6 +96,7 @@ def generate(
     use_large: bool = False,
     temperature: float = 0.4,
     max_tokens: int = 1024,
+    response_format: dict | None = None,
 ) -> dict[str, Any]:
     """
     Appelle Mistral chat avec audit log, budget check et retour structuré.
@@ -166,7 +167,7 @@ def generate(
         raise
 
     # 3. Appel Mistral
-    payload = {
+    payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
@@ -175,6 +176,10 @@ def generate(
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    if response_format is not None:
+        # Ex: {"type": "json_object"} pour forcer Mistral à retourner du
+        # JSON parseable. Supporté sur mistral-small-latest et au-delà.
+        payload["response_format"] = response_format
 
     started = time.time()
     try:
