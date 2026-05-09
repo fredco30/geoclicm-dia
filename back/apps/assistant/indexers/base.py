@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Iterable, Optional
 
 from apps.core.models import Commune
@@ -47,6 +48,12 @@ class ChunkInput:
     content: str
     commune: Optional[Commune] = None
     is_premium: bool = False
+    # Coordonnées GPS optionnelles : permettent au widget assistant
+    # d'afficher des deep-links Maps/Waze sur la citation correspondante.
+    # Renseignées par les indexers qui ont une localisation native (OSM,
+    # Business avec PointField). NULL pour le contenu purement textuel.
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
 
 
 def chunk_text(
@@ -161,6 +168,8 @@ def save_chunks(
                 content=ci.content,
                 commune=ci.commune,
                 is_premium=ci.is_premium,
+                latitude=ci.latitude,
+                longitude=ci.longitude,
                 is_active=True,
                 embedding=None,
             )
@@ -172,6 +181,8 @@ def save_chunks(
             existing.title = ci.title
             existing.commune = ci.commune
             existing.is_premium = ci.is_premium
+            existing.latitude = ci.latitude
+            existing.longitude = ci.longitude
             existing.is_active = True
             if content_changed:
                 existing.content = ci.content
@@ -181,7 +192,8 @@ def save_chunks(
                 to_embed.append((existing, ci.content))
             else:
                 existing.save(update_fields=[
-                    "source_url", "title", "commune", "is_premium", "is_active",
+                    "source_url", "title", "commune", "is_premium",
+                    "latitude", "longitude", "is_active",
                 ])
                 unchanged += 1
 

@@ -8,6 +8,8 @@ longue est volumineuse.
 from __future__ import annotations
 
 import logging
+from decimal import Decimal, InvalidOperation
+from typing import Optional
 
 from apps.directory.models import Business
 
@@ -84,6 +86,21 @@ def _build_business_text(business: Business) -> str:
     return "\n".join(parts)
 
 
+def _business_latlng(business: Business) -> tuple[Optional[Decimal], Optional[Decimal]]:
+    """Extrait (lat, lng) en Decimal depuis le PointField (SRID 4326).
+
+    PointField.x = longitude, PointField.y = latitude. Renvoie (None, None)
+    si la fiche n'a pas de location géocodée.
+    """
+    point = getattr(business, "location", None)
+    if point is None:
+        return None, None
+    try:
+        return Decimal(str(point.y)), Decimal(str(point.x))
+    except (InvalidOperation, TypeError, ValueError, AttributeError):
+        return None, None
+
+
 def index_business(business: Business) -> dict[str, int]:
     """Indexe (ou met à jour) une fiche Business dans le RAG.
 
@@ -111,6 +128,7 @@ def index_business(business: Business) -> dict[str, int]:
 
     is_premium = business.plan in ("basic", "premium")
     base_url = f"/commerces/{business.slug}"
+    lat, lng = _business_latlng(business)
 
     chunk_inputs = [
         ChunkInput(
@@ -121,6 +139,8 @@ def index_business(business: Business) -> dict[str, int]:
             content=ct,
             commune=business.commune,
             is_premium=is_premium,
+            latitude=lat,
+            longitude=lng,
         )
         for i, ct in enumerate(chunks_text)
     ]

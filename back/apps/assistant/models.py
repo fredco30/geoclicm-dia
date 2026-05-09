@@ -103,6 +103,18 @@ class KnowledgeChunk(models.Model):
             "« ⭐ Partenaire » dans la réponse de l'assistant."
         ),
     )
+    # Coordonnées GPS pour générer des deep-links Google Maps / Waze côté
+    # widget d'assistant. Renseignées par les indexers OSM (Overpass renvoie
+    # lat/lng) et Business (PointField). NULL pour les chunks textuels
+    # (mairies/OT crawlés, articles sans location, Wikipedia générique).
+    latitude = models.DecimalField(
+        max_digits=10, decimal_places=7, null=True, blank=True,
+        help_text="Latitude WGS84. Active les boutons Maps/Waze côté widget.",
+    )
+    longitude = models.DecimalField(
+        max_digits=10, decimal_places=7, null=True, blank=True,
+        help_text="Longitude WGS84. Active les boutons Maps/Waze côté widget.",
+    )
     is_active = models.BooleanField(
         default=True,
         db_index=True,

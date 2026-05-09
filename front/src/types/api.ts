@@ -160,6 +160,10 @@ export type AssistantCitation = {
   source_url: string;
   source_kind: AssistantSourceKind;
   is_premium: boolean;
+  /** Latitude WGS84 (string décimale côté API). null si non géolocalisé. */
+  latitude?: string | null;
+  /** Longitude WGS84 (string décimale côté API). null si non géolocalisé. */
+  longitude?: string | null;
 };
 
 export type AssistantAskRequest = {
