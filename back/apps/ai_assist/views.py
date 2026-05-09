@@ -21,9 +21,12 @@ from apps.directory.models import Business, Category as BusinessCategory
 from apps.core.models import Commune
 
 from .permissions import IsAIAssistAllowed
+from .prompts.ad import build_ad_headline_prompts
 from .prompts.business import build_describe_prompts
 from .prompts.rewrite import build_rewrite_prompts
 from .serializers import (
+    AdHeadlineRequestSerializer,
+    AdHeadlineResponseSerializer,
     BusinessDescribeRequestSerializer,
     BusinessDescribeResponseSerializer,
     TextRewriteRequestSerializer,
@@ -274,6 +277,139 @@ class TextRewriteView(APIView):
             "generation_id": result["generation_id"],
         }
         out = TextRewriteResponseSerializer(out_payload)
+        return Response(out.data, status=status.HTTP_200_OK)
+
+
+# ============================================================================
+# Encart pub — variantes headline + CTA
+# ============================================================================
+
+
+class AdHeadlineView(APIView):
+    """
+    POST /api/ai-assist/ad/headline/
+
+    Génère 5 variantes (headline + CTA) à partir d'une fiche Business +
+    un placement + un objectif (click | awareness | promo). L'annonceur
+    choisit la variante qu'il préfère.
+
+    Exemple de payload :
+        {
+          "business_id": 12,
+          "placement": "home_sidebar",
+          "goal": "click"
+        }
+    """
+
+    permission_classes = (IsAIAssistAllowed,)
+
+    def post(self, request):
+        serializer = AdHeadlineRequestSerializer(
+            data=request.data, context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        business = (
+            Business.objects
+            .select_related("category", "commune")
+            .get(pk=data["business_id"])
+        )
+
+        business_data = {
+            "name": business.name,
+            "category": business.category.name if business.category_id else "",
+            "commune": business.commune.name if business.commune_id else "",
+            "short_description": business.short_description or "",
+            "specialties": list(business.specialties or [])[:8],
+        }
+
+        system_prompt, user_prompt = build_ad_headline_prompts(
+            business_data=business_data,
+            placement=data["placement"],
+            goal=data.get("goal", "click"),
+            n_variants=5,
+        )
+
+        try:
+            result = generate(
+                user=request.user,
+                endpoint="ad.headline",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                use_large=False,
+                temperature=0.7,  # plus créatif pour multiplier les angles
+                max_tokens=900,
+                response_format={"type": "json_object"},
+            )
+        except BudgetExceeded as exc:
+            return Response(
+                {"detail": str(exc), "code": "budget_exceeded"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        except MistralNotConfigured as exc:
+            return Response(
+                {"detail": str(exc), "code": "not_configured"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except MistralError as exc:
+            logger.error("AdHeadlineView Mistral error: %s", exc)
+            return Response(
+                {
+                    "detail": "L'assistance IA est temporairement indisponible.",
+                    "code": "mistral_error",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception:
+            logger.exception("AdHeadlineView unexpected error")
+            return Response(
+                {"detail": "Erreur interne.", "code": "internal"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        parsed = _parse_json_lenient(result["answer"])
+        if parsed is None:
+            return Response(
+                {"detail": "Réponse IA mal formée, réessayez.",
+                 "code": "bad_format"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        # Normalisation : tronquer les longueurs, virer les variantes
+        # malformées, garantir 1 à 5 entrées.
+        raw_variants = parsed.get("variants") or []
+        clean_variants: list[dict] = []
+        for v in raw_variants:
+            if not isinstance(v, dict):
+                continue
+            headline = (v.get("headline") or "").strip()
+            cta = (v.get("cta") or "").strip()
+            if not headline or not cta:
+                continue
+            clean_variants.append({
+                "headline": headline[:80],
+                "cta": cta[:30],
+            })
+        clean_variants = clean_variants[:5]
+
+        if not clean_variants:
+            return Response(
+                {
+                    "detail": "L'IA n'a produit aucune variante exploitable. "
+                              "Réessaie ou enrichis ta fiche.",
+                    "code": "empty_variants",
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        out_payload = {
+            "variants": clean_variants,
+            "model": result["model"],
+            "cost_eur": result["cost_eur"],
+            "generation_id": result["generation_id"],
+        }
+        out = AdHeadlineResponseSerializer(out_payload)
         return Response(out.data, status=status.HTTP_200_OK)
 
 

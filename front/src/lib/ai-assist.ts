@@ -7,6 +7,8 @@
  */
 import { apiFetch } from "./api";
 import type {
+  AIAdHeadlineRequest,
+  AIAdHeadlineResponse,
   AIBusinessDescribeRequest,
   AIBusinessDescribeResponse,
   AITextRewriteRequest,
@@ -88,6 +90,13 @@ export const aiAssist = {
     rewrite: (input: AITextRewriteRequest) =>
       postAI<AITextRewriteResponse>(
         "/api/ai-assist/text/rewrite/",
+        input,
+      ),
+  },
+  ad: {
+    headline: (input: AIAdHeadlineRequest) =>
+      postAI<AIAdHeadlineResponse>(
+        "/api/ai-assist/ad/headline/",
         input,
       ),
   },
