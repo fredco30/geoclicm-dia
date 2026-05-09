@@ -18,7 +18,8 @@ Limite Overpass : ~10000 requêtes/jour gratuit. On en fait 7/semaine
 from __future__ import annotations
 
 import logging
-from typing import Any
+from decimal import Decimal, InvalidOperation
+from typing import Any, Optional
 
 import requests
 
@@ -102,6 +103,25 @@ def fetch_osm_pois(insee_code: str) -> list[dict[str, Any]]:
     return data.get("elements", []) or []
 
 
+def _extract_latlng(element: dict) -> tuple[Optional[Decimal], Optional[Decimal]]:
+    """Extrait (lat, lng) en Decimal depuis un élément Overpass.
+
+    - node : `lat`/`lon` directement sur l'élément.
+    - way/relation : Overpass renvoie `center.lat`/`center.lon` grâce
+      au modificateur `out center`.
+    Retourne (None, None) si l'extraction échoue ou si les coordonnées
+    sont absentes.
+    """
+    lat_raw = element.get("lat") or (element.get("center") or {}).get("lat")
+    lon_raw = element.get("lon") or (element.get("center") or {}).get("lon")
+    if lat_raw is None or lon_raw is None:
+        return None, None
+    try:
+        return Decimal(str(lat_raw)), Decimal(str(lon_raw))
+    except (InvalidOperation, TypeError, ValueError):
+        return None, None
+
+
 def _human_label(tags: dict) -> str:
     """Trouve un libellé humain à partir des tags du POI."""
     for k, v, label in TARGET_TAGS:
@@ -176,6 +196,7 @@ def index_osm_for_commune(commune: Commune) -> dict[str, int]:
         title, content, source_url = _build_poi_text(el, commune)
         osm_type = el.get("type", "node")
         osm_id = el.get("id")
+        lat, lng = _extract_latlng(el)
         chunk_inputs.append(ChunkInput(
             source_kind=KnowledgeChunk.SourceKind.OSM,
             source_id=f"{commune.slug}:{osm_type}:{osm_id}",
@@ -184,6 +205,8 @@ def index_osm_for_commune(commune: Commune) -> dict[str, int]:
             content=content,
             commune=commune,
             is_premium=False,
+            latitude=lat,
+            longitude=lng,
         ))
 
     return save_chunks(

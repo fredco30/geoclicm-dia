@@ -2,6 +2,8 @@ import { ExternalLink } from "lucide-react";
 
 import type { AssistantCitation } from "@/types/api";
 
+import { MapsLinks } from "./maps-links";
+
 type Props = {
   citations: AssistantCitation[];
   label: string;
@@ -63,6 +65,11 @@ export function AssistantCitations({ citations, label }: Props) {
               ) : (
                 <span className="text-slate-600">{c.title}</span>
               )}
+              <MapsLinks
+                latitude={c.latitude}
+                longitude={c.longitude}
+                label={c.title}
+              />
             </li>
           );
         })}

@@ -36,6 +36,15 @@ class CitationSerializer(serializers.Serializer):
     source_url = serializers.URLField(allow_blank=True)
     source_kind = serializers.CharField()
     is_premium = serializers.BooleanField()
+    # Coordonnées GPS optionnelles : si présentes, le widget affiche des
+    # boutons « Itinéraire Maps » et « Waze » sous la citation. NULL pour
+    # les chunks textuels (mairie/OT crawlés, articles génériques).
+    latitude = serializers.DecimalField(
+        max_digits=10, decimal_places=7, required=False, allow_null=True,
+    )
+    longitude = serializers.DecimalField(
+        max_digits=10, decimal_places=7, required=False, allow_null=True,
+    )
 
 
 class AskResponseSerializer(serializers.Serializer):

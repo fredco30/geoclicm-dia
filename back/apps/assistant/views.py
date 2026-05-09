@@ -142,6 +142,8 @@ class AssistantAskView(APIView):
             )
 
         # 6. Sauvegarde réponse + citations + tokens
+        # Les coordonnées sont sérialisées en str (Decimal n'est pas JSON-
+        # safe pour le JSONField citations stocké côté ORM).
         citations = [
             {
                 "chunk_id": r.chunk.id,
@@ -149,6 +151,8 @@ class AssistantAskView(APIView):
                 "source_url": r.chunk.source_url,
                 "source_kind": r.chunk.source_kind,
                 "is_premium": r.chunk.is_premium,
+                "latitude": str(r.chunk.latitude) if r.chunk.latitude is not None else None,
+                "longitude": str(r.chunk.longitude) if r.chunk.longitude is not None else None,
             }
             for r in retrieved
         ]
