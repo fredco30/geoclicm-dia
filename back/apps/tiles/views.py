@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from django.db.models import Prefetch
 from rest_framework import permissions, viewsets
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 
 from apps.core.models import Commune
 
@@ -14,6 +14,11 @@ from .serializers import (
     TileAdminSerializer,
     TilePublicSerializer,
 )
+
+
+def _active_children_qs():
+    """Sous-queryset des tuiles enfants actives, triées."""
+    return Tile.objects.filter(is_active=True).order_by("sort_order", "label")
 
 
 class IsAdminOrEditor(permissions.BasePermission):
@@ -62,15 +67,10 @@ class TilePublicListView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        # Sous-tuiles actives uniquement, triées
-        active_children = Tile.objects.filter(is_active=True).order_by(
-            "sort_order", "label",
-        )
-
         qs = (
             Tile.objects.filter(is_active=True, parent__isnull=True)
             .prefetch_related(
-                Prefetch("children", queryset=active_children),
+                Prefetch("children", queryset=_active_children_qs()),
                 "visible_on_communes",
             )
             .order_by("sort_order", "label")
@@ -101,3 +101,28 @@ class TilePublicListView(ListAPIView):
             ).distinct()
 
         return qs
+
+
+class TilePublicDetailView(RetrieveAPIView):
+    """
+    GET /api/tiles/<id>/ — récupère une tuile racine active avec ses
+    sous-tuiles imbriquées.
+
+    Utilisée par la page /tiles/[id] côté front pour afficher la grille
+    des sous-tuiles quand le visiteur clique sur une tuile racine qui a
+    des enfants. 404 si la tuile n'existe pas, n'est pas active, ou n'est
+    pas une racine (les sous-tuiles ne sont pas accessibles directement
+    par cette vue — elles s'affichent uniquement à travers leur parent).
+    """
+
+    serializer_class = TilePublicSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def get_queryset(self):
+        return (
+            Tile.objects.filter(is_active=True, parent__isnull=True)
+            .prefetch_related(
+                Prefetch("children", queryset=_active_children_qs()),
+                "visible_on_communes",
+            )
+        )
