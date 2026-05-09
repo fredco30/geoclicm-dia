@@ -56,6 +56,7 @@ LOCAL_APPS = [
     "apps.tiles",
     "apps.assistant",
     "apps.utility",
+    "apps.ai_assist",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -227,3 +228,31 @@ MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
 ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default=20)
+
+# --- IA Assist (génération admin & annonceurs, app `ai_assist`) ---
+# Distinct de l'assistant public ci-dessus : ces réglages contrôlent les
+# features de génération IA exposées dans le back-office (rédactrice) et
+# l'espace annonceur (génération de fiches commerçants, headlines pub,
+# etc.). On utilise la même MISTRAL_API_KEY mais des modèles potentiellement
+# différents (small par défaut, large autorisé sur les drafts d'article).
+#
+# Cf docs/19-plan-refonte-portail-v2.md et le brief IA assist (Vague 2-3).
+AI_ASSIST_DEFAULT_MODEL = env(
+    "AI_ASSIST_DEFAULT_MODEL", default="mistral-small-latest",
+)
+AI_ASSIST_LARGE_MODEL = env(
+    "AI_ASSIST_LARGE_MODEL", default="mistral-large-latest",
+)
+
+# Caps journaliers en EUR. Au-delà, l'API renvoie 429.
+# - User : protège contre un compte annonceur qui spammerait par erreur.
+# - Global : protège la facture Mistral en cas de fuite ou de raid.
+# Valeurs conservatrices à ajuster après mesure réelle. Si tu vois 429
+# fréquemment dans les logs, augmente. Si tu vois des coûts qui grimpent
+# sans usage légitime, baisse.
+AI_ASSIST_BUDGET_USER_DAILY_EUR = env.float(
+    "AI_ASSIST_BUDGET_USER_DAILY_EUR", default=5.0,
+)
+AI_ASSIST_BUDGET_GLOBAL_DAILY_EUR = env.float(
+    "AI_ASSIST_BUDGET_GLOBAL_DAILY_EUR", default=30.0,
+)
