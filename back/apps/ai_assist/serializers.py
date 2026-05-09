@@ -143,3 +143,38 @@ class BusinessDescribeResponseSerializer(serializers.Serializer):
     model = serializers.CharField()
     cost_eur = serializers.DecimalField(max_digits=10, decimal_places=6)
     generation_id = serializers.IntegerField()
+
+
+# ============================================================================
+# Réécriture pro de texte
+# ============================================================================
+
+
+class TextRewriteRequestSerializer(serializers.Serializer):
+    """Input du POST /api/ai-assist/text/rewrite/."""
+
+    text = serializers.CharField(
+        min_length=10,
+        max_length=3000,
+        help_text="Le texte à réécrire (10 à 3000 caractères).",
+    )
+    tone = serializers.ChoiceField(
+        choices=["pro", "friendly", "concise"],
+        default="pro",
+        required=False,
+    )
+    context = serializers.ChoiceField(
+        choices=["business", "article", "ad", "general"],
+        default="general",
+        required=False,
+        help_text="Indique au prompt de quel contexte vient le texte. "
+                  "Utile pour adapter les contraintes (ex: 'ad' = court).",
+    )
+
+
+class TextRewriteResponseSerializer(serializers.Serializer):
+    rewritten = serializers.CharField()
+    alternatives = serializers.ListField(child=serializers.CharField())
+    model = serializers.CharField()
+    cost_eur = serializers.DecimalField(max_digits=10, decimal_places=6)
+    generation_id = serializers.IntegerField()

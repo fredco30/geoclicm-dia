@@ -22,9 +22,12 @@ from apps.core.models import Commune
 
 from .permissions import IsAIAssistAllowed
 from .prompts.business import build_describe_prompts
+from .prompts.rewrite import build_rewrite_prompts
 from .serializers import (
     BusinessDescribeRequestSerializer,
     BusinessDescribeResponseSerializer,
+    TextRewriteRequestSerializer,
+    TextRewriteResponseSerializer,
 )
 from .services.mistral import (
     BudgetExceeded,
@@ -171,6 +174,107 @@ class BusinessDescribeView(APIView):
             "commune": commune_name,
             "keywords": data.get("keywords") or [],
         }
+
+
+# ============================================================================
+# Text — réécriture pro d'un paragraphe
+# ============================================================================
+
+
+class TextRewriteView(APIView):
+    """
+    POST /api/ai-assist/text/rewrite/
+
+    Réécrit un texte (paragraphe ou phrase) avec un ton choisi tout en
+    préservant les faits. Renvoie une version principale + N
+    alternatives courtes pour laisser à l'utilisateur le choix.
+
+    Utilisé partout où un long champ texte doit être amélioré :
+    descriptions de fiche, body d'article, headline pub.
+    """
+
+    permission_classes = (IsAIAssistAllowed,)
+
+    def post(self, request):
+        serializer = TextRewriteRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        system_prompt, user_prompt = build_rewrite_prompts(
+            text=data["text"],
+            tone=data.get("tone", "pro"),
+            context=data.get("context", "general"),
+            n_alternatives=2,
+        )
+
+        try:
+            result = generate(
+                user=request.user,
+                endpoint="text.rewrite",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                use_large=False,
+                temperature=0.6,
+                max_tokens=900,
+                response_format={"type": "json_object"},
+            )
+        except BudgetExceeded as exc:
+            return Response(
+                {"detail": str(exc), "code": "budget_exceeded"},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        except MistralNotConfigured as exc:
+            return Response(
+                {"detail": str(exc), "code": "not_configured"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except MistralError as exc:
+            logger.error("TextRewriteView Mistral error: %s", exc)
+            return Response(
+                {
+                    "detail": "L'assistance IA est temporairement indisponible.",
+                    "code": "mistral_error",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception:
+            logger.exception("TextRewriteView unexpected error")
+            return Response(
+                {"detail": "Erreur interne.", "code": "internal"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        parsed = _parse_json_lenient(result["answer"])
+        if parsed is None:
+            return Response(
+                {"detail": "Réponse IA mal formée, réessayez.",
+                 "code": "bad_format"},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        rewritten = (parsed.get("rewritten") or "").strip()
+        alternatives_raw = parsed.get("alternatives") or []
+        alternatives = [
+            s.strip()
+            for s in alternatives_raw
+            if isinstance(s, str) and s.strip()
+        ][:4]
+
+        # Si Mistral n'a pas mis "rewritten", on retombe sur la 1re
+        # alternative ou sur le texte original.
+        if not rewritten:
+            rewritten = alternatives[0] if alternatives else data["text"]
+            alternatives = alternatives[1:]
+
+        out_payload = {
+            "rewritten": rewritten,
+            "alternatives": alternatives,
+            "model": result["model"],
+            "cost_eur": result["cost_eur"],
+            "generation_id": result["generation_id"],
+        }
+        out = TextRewriteResponseSerializer(out_payload)
+        return Response(out.data, status=status.HTTP_200_OK)
 
 
 def _parse_json_lenient(raw: str) -> dict | None:
