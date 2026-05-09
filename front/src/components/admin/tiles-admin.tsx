@@ -29,12 +29,14 @@ import {
   GripVertical,
   Layers,
   Loader2,
+  Monitor,
   Smartphone,
+  Tablet,
 } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
 import { TILE_COLOR_PRESETS } from "@/lib/tile-presets";
-import { TileGrid } from "@/components/tiles/tile-grid";
+import { TileItem } from "@/components/tiles/tile-item";
 import type { AdminTile } from "@/types/admin";
 import type { Tile, TileChild, TileCommuneMini } from "@/types/api";
 
@@ -46,6 +48,34 @@ const KIND_LABELS: Record<string, string> = {
   internal_route: "Lien interne",
   external_url: "Lien externe",
   module: "Module",
+};
+
+type Viewport = "mobile" | "tablet" | "desktop";
+
+/**
+ * Configuration de la preview par viewport.
+ *
+ * - cols : nombre de colonnes utilisé dans la grille (correspond au
+ *   breakpoint Tailwind appliqué côté front public à cette taille
+ *   d'écran : grid-cols-3 mobile, sm:grid-cols-4 tablette, lg:grid-cols-5
+ *   desktop).
+ * - width : largeur fixe du cadre simulé en CSS (ne reflète pas
+ *   exactement chaque device, mais donne une idée juste).
+ * - label : texte affiché sur le bouton du toggle.
+ *
+ * Note : on n'utilise PAS le composant <TileGrid> ici car il dépend des
+ * media queries de la viewport globale (qui ne savent rien de la largeur
+ * de notre cadre simulé). On reconstruit la grille avec des classes
+ * statiques (grid-cols-3 / 4 / 5) — Tailwind 4 les détecte parce
+ * qu'elles apparaissent en littéral dans le code.
+ */
+const VIEWPORTS: Record<
+  Viewport,
+  { cols: 3 | 4 | 5; widthPx: number; label: string }
+> = {
+  mobile: { cols: 3, widthPx: 390, label: "Mobile" },
+  tablet: { cols: 4, widthPx: 720, label: "Tablette" },
+  desktop: { cols: 5, widthPx: 1100, label: "Desktop" },
 };
 
 type SaveStatus =
@@ -103,6 +133,7 @@ function adminToPublicTileChild(tile: AdminTile): TileChild {
 export function TilesAdmin({ initialTiles }: Props) {
   const [tiles, setTiles] = useState<AdminTile[]>(initialTiles);
   const [status, setStatus] = useState<SaveStatus>({ state: "idle" });
+  const [viewport, setViewport] = useState<Viewport>("mobile");
   const [, startTransition] = useTransition();
 
   const sensors = useSensors(
@@ -211,27 +242,33 @@ export function TilesAdmin({ initialTiles }: Props) {
     <>
       {/* === PREVIEW === */}
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
-          <Smartphone className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
-          Aperçu de la home
-          <span className="ml-2 text-xs font-normal text-slate-500">
-            ({previewTiles.length} tuile{previewTiles.length > 1 ? "s" : ""}{" "}
-            visible{previewTiles.length > 1 ? "s" : ""})
-          </span>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Smartphone className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+            Aperçu de la home
+            <span className="ml-1 text-xs font-normal text-slate-500">
+              ({previewTiles.length} tuile{previewTiles.length > 1 ? "s" : ""}{" "}
+              visible{previewTiles.length > 1 ? "s" : ""})
+            </span>
+          </div>
+          <ViewportToggle current={viewport} onChange={setViewport} />
         </div>
+
         {previewTiles.length === 0 ? (
           <p className="rounded-md bg-slate-50 p-4 text-center text-xs text-slate-500">
             Aucune tuile n&apos;est active + visible sur la home actuellement.
           </p>
         ) : (
-          <div className="overflow-hidden rounded-lg bg-slate-50 p-3">
-            <TileGrid tiles={previewTiles} />
-          </div>
+          <PreviewFrame viewport={viewport}>
+            <PreviewGrid tiles={previewTiles} cols={VIEWPORTS[viewport].cols} />
+          </PreviewFrame>
         )}
         <p className="mt-2 text-[11px] text-slate-500">
-          La home publique met jusqu&apos;à 5 minutes à refléter les
-          changements (cache Next). Cet aperçu, lui, est mis à jour
-          immédiatement.
+          La home publique passe à <strong>3 colonnes</strong> sur mobile,{" "}
+          <strong>4</strong> sur tablette, <strong>5</strong> sur desktop. Le
+          PWA cible majoritairement les visiteurs mobiles. Le cache Next met
+          jusqu&apos;à 5 minutes à refléter les changements côté visiteurs ;
+          cet aperçu est immédiat.
         </p>
       </section>
 
@@ -270,6 +307,107 @@ export function TilesAdmin({ initialTiles }: Props) {
         </SortableContext>
       </DndContext>
     </>
+  );
+}
+
+function ViewportToggle({
+  current,
+  onChange,
+}: {
+  current: Viewport;
+  onChange: (v: Viewport) => void;
+}) {
+  const items: { key: Viewport; icon: typeof Smartphone }[] = [
+    { key: "mobile", icon: Smartphone },
+    { key: "tablet", icon: Tablet },
+    { key: "desktop", icon: Monitor },
+  ];
+  return (
+    <div
+      role="tablist"
+      aria-label="Largeur de simulation"
+      className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs"
+    >
+      {items.map(({ key, icon: Icon }) => {
+        const isActive = current === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(key)}
+            className={
+              "inline-flex items-center gap-1 rounded px-2 py-1 transition " +
+              (isActive
+                ? "bg-white font-semibold text-[#1a4d6e] shadow-sm"
+                : "text-slate-600 hover:text-slate-900")
+            }
+          >
+            <Icon className="h-3 w-3" aria-hidden />
+            {VIEWPORTS[key].label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Cadre simulé d'un device. Largeur fixe selon le viewport, centré dans
+ * un conteneur scrollable horizontalement (au cas où l'admin tournerait
+ * sur un écran étroit). Style discret de cadre pour suggérer un appareil.
+ */
+function PreviewFrame({
+  viewport,
+  children,
+}: {
+  viewport: Viewport;
+  children: React.ReactNode;
+}) {
+  const { widthPx } = VIEWPORTS[viewport];
+  return (
+    <div className="overflow-x-auto rounded-lg bg-slate-100 p-4">
+      <div
+        className="mx-auto rounded-2xl border border-slate-300 bg-white p-3 shadow-inner"
+        style={{ width: widthPx, maxWidth: "100%" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Grille de preview : reconstruit la même structure que <TileGrid> mais
+ * avec un nombre de colonnes FIXE (statique). Indispensable parce que
+ * <TileGrid> dépend des media queries de la viewport globale qui ne
+ * savent rien de notre cadre simulé en CSS.
+ *
+ * Les classes grid-cols-3/4/5 et col-span-2 doivent apparaître en
+ * littéral dans le code pour que Tailwind 4 les compile.
+ */
+function PreviewGrid({
+  tiles,
+  cols,
+}: {
+  tiles: Tile[];
+  cols: 3 | 4 | 5;
+}) {
+  const colsClass =
+    cols === 3 ? "grid-cols-3" : cols === 4 ? "grid-cols-4" : "grid-cols-5";
+  const visible = tiles.filter((t) => t.is_active);
+  if (visible.length === 0) return null;
+  return (
+    <div className={`grid ${colsClass} gap-3`}>
+      {visible.map((tile) => (
+        <TileItem
+          key={tile.id}
+          tile={tile}
+          className={tile.span_2x ? "col-span-2" : undefined}
+        />
+      ))}
+    </div>
   );
 }
 
