@@ -54,6 +54,7 @@ LOCAL_APPS = [
     "apps.advertisers",
     "apps.weather",
     "apps.tiles",
+    "apps.assistant",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -212,3 +213,16 @@ STRIPE_PRICE_PREMIUM = env("STRIPE_PRICE_PREMIUM", default="")  # 149€/an
 
 # URL publique du site (pour les success/cancel URLs Stripe Checkout)
 SITE_URL = env("SITE_URL", default="https://media.geoclic.fr")
+
+# --- Assistant IA (Mistral AI + pgvector) ---
+# Clé API Mistral, à générer sur https://console.mistral.ai/api-keys
+# Mode TEST gratuit Mistral disponible avec un crédit initial — bascule
+# en facturé après. Coûts attendus : 5-15 €/mois en cruise (cf
+# docs/20-assistant-ia-deploiement.md).
+MISTRAL_API_KEY = env("MISTRAL_API_KEY", default="")
+MISTRAL_MODEL = env("MISTRAL_MODEL", default="mistral-small-latest")
+MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
+
+# Anti-abus : nb max de questions par IP par heure (sliding window).
+# Hashage SHA-256 de l'IP en cache Redis (RGPD).
+ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default=20)
