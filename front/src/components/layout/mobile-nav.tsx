@@ -3,29 +3,21 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  Menu, X, Search, Home, BookOpen, Landmark, User as UserIcon,
-  Newspaper, Image as ImageIcon, MapPin, MessageSquare, Fish, Mail, Store, CloudSun,
-} from "lucide-react";
+import { Mail, MapPin, Menu, X, Home as HomeIcon } from "lucide-react";
+
+import { useAssistant } from "@/components/assistant/assistant-context";
 
 type MenuLink = {
   href: string;
   label: string;
-  icon?: React.ReactNode;
 };
 
-const RUBRIQUES: MenuLink[] = [
-  { href: "/", label: "À la une", icon: <Home className="h-4 w-4" /> },
-  { href: "/categories/memoire-vivante", label: "Mémoire vivante", icon: <BookOpen className="h-4 w-4" /> },
-  { href: "/categories/patrimoine", label: "Patrimoine", icon: <Landmark className="h-4 w-4" /> },
-  { href: "/categories/peche-et-traditions", label: "Pêche et traditions", icon: <Fish className="h-4 w-4" /> },
-  { href: "/categories/portraits", label: "Portraits", icon: <UserIcon className="h-4 w-4" /> },
-  { href: "/categories/reportages", label: "Reportages", icon: <Newspaper className="h-4 w-4" /> },
-  { href: "/categories/archives-photos", label: "Archives photos", icon: <ImageIcon className="h-4 w-4" /> },
-  { href: "/categories/bons-plans", label: "Bons plans", icon: <MapPin className="h-4 w-4" /> },
-  { href: "/categories/tribune-libre", label: "Tribune libre", icon: <MessageSquare className="h-4 w-4" /> },
-];
-
+/**
+ * Liste des 7 communes du territoire — raccourci pratique vers les pages
+ * commune. Conservé dans le drawer mobile car les pages commune sont
+ * fréquemment consultées et un visiteur sur mobile a peu d'écran pour
+ * naviguer via les tuiles.
+ */
 const TERRITOIRE: MenuLink[] = [
   { href: "/communes/le-grau-du-roi", label: "Le Grau-du-Roi" },
   { href: "/communes/aigues-mortes", label: "Aigues-Mortes" },
@@ -36,16 +28,24 @@ const TERRITOIRE: MenuLink[] = [
   { href: "/communes/vauvert", label: "Vauvert" },
 ];
 
+/**
+ * Drawer mobile simplifié — pattern « city ».
+ *
+ * Les rubriques éditoriales (Mémoire, Patrimoine, Reportages…) sont
+ * désormais accessibles via les tuiles de la home et des pages commune,
+ * pas via ce drawer. Ne reste ici qu'un raccourci vers les communes du
+ * territoire et les liens légaux.
+ */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { open: openAssistant } = useAssistant();
 
-  // createPortal nécessite document → on attend le client
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Bloquer le scroll du body quand ouvert
+  // Bloquer le scroll body quand le drawer est ouvert
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -57,7 +57,7 @@ export function MobileNav() {
     };
   }, [open]);
 
-  // Fermer avec Échap
+  // Échap pour fermer
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -72,7 +72,6 @@ export function MobileNav() {
   // stacking contexts créés par les parents (header avec backdrop-blur, etc.).
   const drawer = (
     <>
-      {/* Backdrop */}
       <div
         onClick={close}
         className={`fixed inset-0 z-[100] bg-black/50 transition-opacity md:hidden ${
@@ -81,7 +80,6 @@ export function MobileNav() {
         aria-hidden
       />
 
-      {/* Drawer */}
       <aside
         id="mobile-nav-panel"
         className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 md:hidden ${
@@ -95,7 +93,10 @@ export function MobileNav() {
             onClick={close}
             className="flex items-center gap-2 font-semibold text-[#1a4d6e]"
           >
-            <span className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]" aria-hidden />
+            <span
+              className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]"
+              aria-hidden
+            />
             geoclicMédia
           </Link>
           <button
@@ -109,67 +110,17 @@ export function MobileNav() {
         </div>
 
         <div className="flex flex-col gap-6 p-4">
-          {/* Recherche prominente */}
+          {/* Accueil prominent */}
           <Link
-            href="/recherche"
+            href="/"
             onClick={close}
-            className="flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-500 hover:border-[#1a4d6e]"
+            className="flex items-center gap-2 rounded-md bg-[#1a4d6e] px-3 py-2 text-sm font-medium text-white hover:bg-[#13384f]"
           >
-            <Search className="h-4 w-4" />
-            Rechercher un article…
+            <HomeIcon className="h-4 w-4" />
+            Retour à l&apos;accueil
           </Link>
 
-          {/* Météo — accès direct */}
-          <Link
-            href="/meteo"
-            onClick={close}
-            className="flex items-center gap-2 rounded-md border border-[#1a4d6e]/30 bg-[#1a4d6e]/5 px-3 py-2 text-sm font-medium text-[#1a4d6e] hover:bg-[#1a4d6e]/10"
-          >
-            <CloudSun className="h-4 w-4" />
-            Météo et état de la mer
-          </Link>
-
-          {/* Rubriques */}
-          <nav aria-label="Rubriques">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Rubriques
-            </h2>
-            <ul className="space-y-0.5">
-              {RUBRIQUES.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    onClick={close}
-                    className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100 hover:text-[#1a4d6e]"
-                  >
-                    {l.icon}
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          {/* Annuaire */}
-          <nav aria-label="Annuaire">
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Annuaire
-            </h2>
-            <ul className="space-y-0.5">
-              <li>
-                <Link
-                  href="/commerces"
-                  onClick={close}
-                  className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-[#a8533a] hover:bg-[#a8533a]/10"
-                >
-                  <Store className="h-4 w-4" />
-                  Commerces du territoire
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          {/* Territoire */}
+          {/* Communes du territoire — raccourci pratique */}
           <nav aria-label="Le territoire">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
               Le territoire
@@ -190,6 +141,25 @@ export function MobileNav() {
             </ul>
           </nav>
 
+          {/* Astuce assistant IA */}
+          <div className="rounded-md border border-[#1a4d6e]/20 bg-[#1a4d6e]/5 p-3 text-xs text-slate-600">
+            <p>
+              <strong className="text-[#1a4d6e]">💡 Astuce</strong> — pour
+              trouver un commerce, une activité ou une info pratique, utilisez
+              l&apos;assistant IA.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                close();
+                openAssistant();
+              }}
+              className="mt-2 text-[#1a4d6e] underline hover:no-underline"
+            >
+              Ouvrir l&apos;assistant
+            </button>
+          </div>
+
           {/* Footer du menu — légales */}
           <div className="border-t border-slate-200 pt-4 text-xs text-slate-500">
             <Link
@@ -200,7 +170,11 @@ export function MobileNav() {
               <Mail className="h-3 w-3" /> Contact
             </Link>
             <div className="space-x-2">
-              <Link href="/mentions-legales" onClick={close} className="hover:underline">
+              <Link
+                href="/mentions-legales"
+                onClick={close}
+                className="hover:underline"
+              >
                 Mentions
               </Link>
               <span>·</span>
@@ -208,7 +182,11 @@ export function MobileNav() {
                 CGU
               </Link>
               <span>·</span>
-              <Link href="/politique-confidentialite" onClick={close} className="hover:underline">
+              <Link
+                href="/politique-confidentialite"
+                onClick={close}
+                className="hover:underline"
+              >
                 Confidentialité
               </Link>
             </div>
