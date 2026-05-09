@@ -3,9 +3,12 @@ Vues Tile — séparation lecture publique / écriture admin.
 """
 from __future__ import annotations
 
+from django.db import transaction
 from django.db.models import Prefetch
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.response import Response
 
 from apps.core.models import Commune
 
@@ -37,8 +40,9 @@ class IsAdminOrEditor(permissions.BasePermission):
 
 class TileAdminViewSet(viewsets.ModelViewSet):
     """
-    /api/admin/tiles/        — list / create
-    /api/admin/tiles/<id>/   — retrieve / update / delete
+    /api/admin/tiles/                — list / create
+    /api/admin/tiles/<id>/           — retrieve / update / delete
+    /api/admin/tiles/reorder/        — POST : update bulk sort_order
     """
 
     queryset = (
@@ -50,6 +54,57 @@ class TileAdminViewSet(viewsets.ModelViewSet):
     serializer_class = TileAdminSerializer
     permission_classes = (IsAdminOrEditor,)
     pagination_class = None  # liste courte typiquement (< 50 tuiles)
+
+    @action(detail=False, methods=["post"], url_path="reorder")
+    def reorder(self, request):
+        """
+        POST {"tiles": [{"id": 1, "sort_order": 0}, {"id": 2, "sort_order": 1}, ...]}
+
+        Met à jour `sort_order` en bulk pour un set de tuiles. Utilisé par
+        la liste admin draggable : à chaque drop, le client envoie l'ordre
+        complet de la liste visible.
+
+        Validation :
+        - Le payload doit être une liste d'objets {id, sort_order}.
+        - Tous les IDs doivent exister (sinon 400).
+        - Pas de check de cohérence parent-enfant (un drag ne change pas
+          le parent, juste l'ordre au sein du même niveau).
+        """
+        items = request.data.get("tiles")
+        if not isinstance(items, list) or not items:
+            return Response(
+                {"detail": "Payload attendu : { tiles: [{id, sort_order}, ...] }"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Construire un dict {id: sort_order} et valider le format
+        try:
+            new_orders = {int(item["id"]): int(item["sort_order"]) for item in items}
+        except (KeyError, TypeError, ValueError):
+            return Response(
+                {"detail": "Chaque entrée doit avoir des champs id et sort_order entiers."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ids = list(new_orders.keys())
+        tiles = list(Tile.objects.filter(id__in=ids))
+        if len(tiles) != len(ids):
+            missing = set(ids) - {t.id for t in tiles}
+            return Response(
+                {"detail": f"Tuiles introuvables : {sorted(missing)}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        for tile in tiles:
+            tile.sort_order = new_orders[tile.id]
+
+        with transaction.atomic():
+            Tile.objects.bulk_update(tiles, ["sort_order"])
+
+        return Response(
+            {"updated": len(tiles)},
+            status=status.HTTP_200_OK,
+        )
 
 
 class TilePublicListView(ListAPIView):
