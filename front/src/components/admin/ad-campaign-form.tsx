@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { AIAdHeadlineButton } from "@/components/admin/ai-ad-headline-button";
 import type { Commune } from "@/types/api";
 import type {
   AdminAdCampaignDetail,
@@ -349,6 +350,16 @@ export function AdCampaignForm({
               ) : null}
             </div>
             <div className="space-y-3">
+              <div className="flex justify-end">
+                <AIAdHeadlineButton
+                  getBusinessId={() => form.business}
+                  getPlacement={() => form.placement}
+                  onApply={(v) => {
+                    update("headline", v.headline);
+                    update("cta_text", v.cta);
+                  }}
+                />
+              </div>
               <div className="space-y-1">
                 <Label htmlFor="headline">
                   Titre court ({form.headline.length}/80)

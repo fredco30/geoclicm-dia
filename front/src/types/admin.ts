@@ -409,6 +409,24 @@ export type AITextRewriteResponse = {
   generation_id: number;
 };
 
+export type AIAdHeadlineRequest = {
+  business_id: number;
+  placement: string; // un des AdPlacement (cf types/api.ts)
+  goal?: "click" | "awareness" | "promo";
+};
+
+export type AIAdHeadlineVariant = {
+  headline: string;
+  cta: string;
+};
+
+export type AIAdHeadlineResponse = {
+  variants: AIAdHeadlineVariant[];
+  model: string;
+  cost_eur: string;
+  generation_id: number;
+};
+
 
 // ============================================================================
 // Utility (numéros utiles + démarches)

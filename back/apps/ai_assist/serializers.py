@@ -178,3 +178,63 @@ class TextRewriteResponseSerializer(serializers.Serializer):
     model = serializers.CharField()
     cost_eur = serializers.DecimalField(max_digits=10, decimal_places=6)
     generation_id = serializers.IntegerField()
+
+
+# ============================================================================
+# Encart pub — variantes headline + CTA
+# ============================================================================
+
+
+# Liste exposée pour cohérence avec apps.ads.models.AdCampaign.Placement
+AD_PLACEMENTS = [
+    "home_hero", "home_sidebar",
+    "article_inline", "article_sidebar",
+    "directory_top", "directory_inline",
+    "agenda_top",
+    "weather_top", "weather_sidebar",
+    "newsletter",
+]
+
+
+class AdHeadlineRequestSerializer(serializers.Serializer):
+    """Input du POST /api/ai-assist/ad/headline/."""
+
+    business_id = serializers.IntegerField(
+        help_text="ID du Business sur lequel s'appuyer pour la génération.",
+    )
+    placement = serializers.ChoiceField(
+        choices=AD_PLACEMENTS,
+        help_text="Emplacement de l'encart, conditionne la longueur "
+                  "et le ton suggéré.",
+    )
+    goal = serializers.ChoiceField(
+        choices=["click", "awareness", "promo"],
+        default="click",
+        required=False,
+        help_text="Objectif visé : guide le ton et le CTA.",
+    )
+
+    def validate_business_id(self, value: int) -> int:
+        from apps.directory.models import Business
+        try:
+            business = Business.objects.get(pk=value)
+        except Business.DoesNotExist:
+            raise serializers.ValidationError("Fiche introuvable.")
+        request = self.context.get("request")
+        if request and not _can_use_for_business(request.user, business):
+            raise serializers.ValidationError(
+                "Vous n'êtes pas propriétaire de cette fiche."
+            )
+        return value
+
+
+class AdHeadlineVariantSerializer(serializers.Serializer):
+    headline = serializers.CharField(max_length=80)
+    cta = serializers.CharField(max_length=30)
+
+
+class AdHeadlineResponseSerializer(serializers.Serializer):
+    variants = serializers.ListField(child=AdHeadlineVariantSerializer())
+    model = serializers.CharField()
+    cost_eur = serializers.DecimalField(max_digits=10, decimal_places=6)
+    generation_id = serializers.IntegerField()
