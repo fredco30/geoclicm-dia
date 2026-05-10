@@ -367,6 +367,36 @@ export type AdminArticleCategoryPayload = {
 
 
 // ============================================================================
+// IA Assist — génération de contenu (admin & annonceurs)
+// ============================================================================
+
+export type AIBusinessDescribeRequest = {
+  /** Mode pré-création : nom + catégorie + commune (+ keywords). */
+  name?: string;
+  category_id?: number | null;
+  commune_id?: number | null;
+  keywords?: string[];
+  /** Mode complétion d'une fiche existante. */
+  business_id?: number | null;
+  /** Tonalité de la rédaction. */
+  tone?: "pro" | "friendly" | "concise";
+};
+
+export type AIBusinessFaqItem = { q: string; a: string };
+
+export type AIBusinessDescribeResponse = {
+  short_description: string;
+  description: string;
+  specialties: string[];
+  faq: AIBusinessFaqItem[];
+  /** Méta : modèle utilisé, coût estimé en EUR (string décimale), id audit. */
+  model: string;
+  cost_eur: string;
+  generation_id: number;
+};
+
+
+// ============================================================================
 // Utility (numéros utiles + démarches)
 // ============================================================================
 

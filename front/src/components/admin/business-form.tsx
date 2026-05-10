@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ImageUploader } from "@/components/admin/image-uploader";
+import { AIBusinessAssistButton } from "@/components/admin/ai-business-assist-button";
 import {
   OpeningHoursEditor,
   type OpeningHoursValue,
@@ -494,9 +495,30 @@ export function BusinessForm({
 
         {/* DESCRIPTIONS */}
         <fieldset className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 lg:col-span-2">
-          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Descriptions
-          </legend>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Descriptions
+            </legend>
+            <AIBusinessAssistButton
+              getCurrentName={() => form.name}
+              getCurrentCategoryId={() => form.category}
+              getCurrentCommuneId={() => form.commune}
+              getExistingShortDescription={() => form.short_description}
+              getExistingDescription={() => form.description}
+              getExistingSpecialties={() =>
+                form.specialties_text
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              }
+              businessId={business?.id ?? null}
+              onApply={(data) => {
+                update("short_description", data.short_description);
+                update("description", data.description);
+                update("specialties_text", data.specialties.join(", "));
+              }}
+            />
+          </div>
           <div className="space-y-1">
             <Label htmlFor="short_description">
               Description courte * ({form.short_description.length}/200)
