@@ -4,7 +4,7 @@ from __future__ import annotations
 from rest_framework import serializers
 
 from apps.core.models import Commune
-from apps.directory.models import Business, Category as BusinessCategory
+from apps.directory.models import Business, BusinessCategory
 
 
 # ============================================================================
