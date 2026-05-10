@@ -1,7 +1,7 @@
 """URL patterns pour l'app ai_assist."""
 from django.urls import path
 
-from .views import BusinessDescribeView
+from .views import BusinessDescribeView, TextRewriteView
 
 app_name = "ai_assist"
 
@@ -10,5 +10,10 @@ urlpatterns = [
         "business/describe/",
         BusinessDescribeView.as_view(),
         name="business-describe",
+    ),
+    path(
+        "text/rewrite/",
+        TextRewriteView.as_view(),
+        name="text-rewrite",
     ),
 ]

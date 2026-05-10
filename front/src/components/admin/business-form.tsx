@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { AIBusinessAssistButton } from "@/components/admin/ai-business-assist-button";
+import { AIRewriteButton } from "@/components/admin/ai-rewrite-button";
 import {
   OpeningHoursEditor,
   type OpeningHoursValue,
@@ -533,7 +534,14 @@ export function BusinessForm({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="description">Description complète *</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="description">Description complète *</Label>
+              <AIRewriteButton
+                value={form.description}
+                onChange={(v) => update("description", v)}
+                context="business"
+              />
+            </div>
             <textarea
               id="description"
               required

@@ -395,6 +395,20 @@ export type AIBusinessDescribeResponse = {
   generation_id: number;
 };
 
+export type AITextRewriteRequest = {
+  text: string;
+  tone?: "pro" | "friendly" | "concise";
+  context?: "business" | "article" | "ad" | "general";
+};
+
+export type AITextRewriteResponse = {
+  rewritten: string;
+  alternatives: string[];
+  model: string;
+  cost_eur: string;
+  generation_id: number;
+};
+
 
 // ============================================================================
 // Utility (numéros utiles + démarches)

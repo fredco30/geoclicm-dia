@@ -9,6 +9,8 @@ import { apiFetch } from "./api";
 import type {
   AIBusinessDescribeRequest,
   AIBusinessDescribeResponse,
+  AITextRewriteRequest,
+  AITextRewriteResponse,
 } from "@/types/admin";
 
 function readCsrfToken(): string | null {
@@ -79,6 +81,13 @@ export const aiAssist = {
     describe: (input: AIBusinessDescribeRequest) =>
       postAI<AIBusinessDescribeResponse>(
         "/api/ai-assist/business/describe/",
+        input,
+      ),
+  },
+  text: {
+    rewrite: (input: AITextRewriteRequest) =>
+      postAI<AITextRewriteResponse>(
+        "/api/ai-assist/text/rewrite/",
         input,
       ),
   },

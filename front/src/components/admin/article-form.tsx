@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "./markdown-editor";
 import { ImageUploader } from "./image-uploader";
+import { AIRewriteButton } from "./ai-rewrite-button";
 import type {
   ArticleDetail,
   BusinessListItem,
@@ -239,7 +240,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="chapeau">Chapeau</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="chapeau">Chapeau</Label>
+              <AIRewriteButton
+                value={form.chapeau}
+                onChange={(v) => update("chapeau", v.slice(0, 300))}
+                context="article"
+                defaultTone="concise"
+              />
+            </div>
             <Textarea
               id="chapeau"
               value={form.chapeau}
