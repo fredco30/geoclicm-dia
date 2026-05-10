@@ -17,7 +17,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.directory.models import Business, Category as BusinessCategory
+from apps.directory.models import Business, BusinessCategory
 from apps.core.models import Commune
 
 from .permissions import IsAIAssistAllowed
