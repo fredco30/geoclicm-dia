@@ -1,6 +1,10 @@
 import { Droplet, Wind } from "lucide-react";
 import type { WeatherDailyEntry } from "@/types/api";
-import { degreesToCompass, formatDayLabel } from "@/lib/weather";
+import {
+  degreesToCompass,
+  formatDayLabel,
+  getCurrentParisDateTime,
+} from "@/lib/weather";
 import { WeatherIcon } from "./weather-icon";
 
 type Props = {
@@ -10,7 +14,9 @@ type Props = {
 export function WeatherDaily({ daily }: Props) {
   if (daily.length === 0) return null;
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Date Paris (pas UTC du serveur), pour repérer correctement "Aujourd'hui"
+  // entre 22h Paris et minuit (où UTC est sur la veille).
+  const today = getCurrentParisDateTime().date;
 
   return (
     <section>
