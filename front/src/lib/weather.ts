@@ -135,27 +135,69 @@ export function describeUv(uv: number | null | undefined): string {
 
 /** "2026-05-05" → "lundi 5 mai" */
 export function formatDayLabel(isoDate: string, isToday: boolean): string {
-  const d = new Date(isoDate + "T12:00:00");
   if (isToday) return "Aujourd'hui";
+  // Parse manuel : la TZ du serveur SSR (VPS en UTC) n'influence pas le rendu.
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return isoDate;
+  // On crée la date en UTC midi (safe contre les sauts d'heure d'été), puis
+  // on formate explicitement en UTC pour rester cohérent.
+  const d = new Date(Date.UTC(year, month - 1, day, 12));
   const formatter = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "short",
+    timeZone: "UTC",
   });
   return formatter.format(d);
 }
 
-/** "2026-05-05T14:00" → "14h" */
+/**
+ * "2026-05-05T14:00" → "14h"
+ *
+ * Open-Meteo retourne les timestamps déjà en heure de Paris (paramètre
+ * `timezone=Europe/Paris` côté backend) mais SANS offset explicite.
+ * `new Date(iso).getHours()` interpréterait le timestamp comme local time
+ * du serveur SSR (VPS en UTC), ce qui donne un décalage de 1-2h selon la
+ * saison. On parse donc le string par regex pour rester fidèle à la
+ * valeur retournée par l'API.
+ */
 export function formatHourLabel(isoTime: string): string {
-  const d = new Date(isoTime);
-  return `${d.getHours()}h`;
+  const match = isoTime.match(/T(\d{2}):/);
+  if (!match) return isoTime;
+  return `${parseInt(match[1], 10)}h`;
 }
 
-/** "2026-05-05T06:30" → "06:30" */
+/**
+ * "2026-05-05T06:30" → "06:30"
+ *
+ * Même rationale que formatHourLabel : on extract HH:MM du string sans
+ * passer par new Date(), pour éviter la conversion timezone parasite
+ * côté serveur SSR.
+ */
 export function formatTimeShort(iso: string | null | undefined): string {
   if (!iso) return "—";
+  const match = iso.match(/T(\d{2}):(\d{2})/);
+  if (!match) return "—";
+  return `${match[1]}:${match[2]}`;
+}
+
+/**
+ * Format un timestamp UTC complet (avec offset Z ou +00:00) en heure de
+ * Paris. Utilisé pour `fetched_at` (renvoyé par Django en
+ * `datetime.now(UTC).isoformat()` → "2026-05-05T13:45:12.345+00:00").
+ *
+ * Diffère de formatTimeShort qui s'applique aux timestamps Open-Meteo
+ * SANS offset — ici on a un offset explicite, donc Date() parse OK et on
+ * formate via Intl avec timeZone=Europe/Paris.
+ */
+export function formatTimestampParis(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const d = new Date(iso);
-  const hh = d.getHours().toString().padStart(2, "0");
-  const mm = d.getMinutes().toString().padStart(2, "0");
-  return `${hh}:${mm}`;
+  if (Number.isNaN(d.getTime())) return "—";
+  const formatter = new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  });
+  return formatter.format(d);
 }

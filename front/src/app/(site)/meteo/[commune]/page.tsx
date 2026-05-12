@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { CloudSun } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
-import { formatTimeShort } from "@/lib/weather";
+import { formatTimeShort, formatTimestampParis } from "@/lib/weather";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { CommuneSelector } from "@/components/weather/commune-selector";
 import { WeatherNow } from "@/components/weather/weather-now";
@@ -12,8 +12,11 @@ import { WeatherHourly } from "@/components/weather/weather-hourly";
 import { WeatherDaily } from "@/components/weather/weather-daily";
 import { WeatherMarinePanel } from "@/components/weather/weather-marine";
 
-// Cache Next 10 min (le proxy Django garde 15 min en Redis).
-export const revalidate = 600;
+// Cache Next 60s (le proxy Django garde 15 min en Redis donc backend OK).
+// Plus court qu'avant (était 600s) pour réduire le décalage perçu quand
+// l'utilisateur clique sur l'onglet météo. La fraîcheur exacte est aussi
+// affichée dans le header (timestamp "Mis à jour à HH:MM").
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ commune: string }>;
@@ -69,7 +72,14 @@ export default async function MeteoCommunePage({ params }: Props) {
               Météo · {commune.name}
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Prévisions Open-Meteo, mises à jour toutes les 15 minutes.
+              Prévisions Open-Meteo · Mis à jour à{" "}
+              <time
+                dateTime={weather.fetched_at}
+                title="Heure de Paris · Données rafraîchies toutes les 15 min"
+                className="font-medium text-slate-700"
+              >
+                {formatTimestampParis(weather.fetched_at)}
+              </time>
               {today?.sunrise && today?.sunset ? (
                 <>
                   {" · Lever "}
