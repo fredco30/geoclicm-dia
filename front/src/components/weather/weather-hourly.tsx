@@ -1,5 +1,9 @@
 import type { WeatherHourlyEntry } from "@/types/api";
-import { formatHourLabel } from "@/lib/weather";
+import {
+  extractParisHour,
+  formatHourLabel,
+  isFutureParisTimestamp,
+} from "@/lib/weather";
 import { WeatherIcon } from "./weather-icon";
 
 type Props = {
@@ -9,9 +13,11 @@ type Props = {
 };
 
 export function WeatherHourly({ hourly, isDay }: Props) {
-  const now = Date.now();
+  // Filtre par comparaison string/int avec l'heure courante Paris pour
+  // rester immune à la TZ du serveur SSR (VPS en UTC). Garde 30 min de
+  // marge passée pour conserver l'heure "Maintenant".
   const upcoming = hourly
-    .filter((h) => new Date(h.time).getTime() >= now - 30 * 60 * 1000)
+    .filter((h) => isFutureParisTimestamp(h.time, 30))
     .slice(0, 24);
 
   if (upcoming.length === 0) {
@@ -70,8 +76,10 @@ export function WeatherHourly({ hourly, isDay }: Props) {
 }
 
 /** Heuristique : entre 7 h et 21 h c'est le jour, sinon nuit.
- *  is_day du current ne couvre que l'instant T, pas les 24 h suivantes. */
+ *  is_day du current ne couvre que l'instant T, pas les 24 h suivantes.
+ *  Extract heure directement du string (TZ-safe vs new Date().getHours()). */
 function isHourDaytime(iso: string, _currentIsDay: boolean): boolean {
-  const h = new Date(iso).getHours();
+  const h = extractParisHour(iso);
+  if (h === null) return true;
   return h >= 7 && h <= 20;
 }

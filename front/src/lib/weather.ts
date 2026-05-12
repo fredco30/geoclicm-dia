@@ -201,3 +201,68 @@ export function formatTimestampParis(iso: string | null | undefined): string {
   });
   return formatter.format(d);
 }
+
+/**
+ * Retourne la date + l'heure courantes en heure de Paris, sous forme
+ * de string et int pour comparaison directe avec les timestamps
+ * Open-Meteo (qui sont en heure de Paris littérale, sans offset).
+ *
+ * Évite `new Date().getHours()` qui dépend de la TZ du serveur SSR
+ * (VPS en UTC → décalage 1-2h sinon).
+ *
+ * @returns `{ date: "YYYY-MM-DD", hour: 0-23, minute: 0-59 }`
+ */
+export function getCurrentParisDateTime(): {
+  date: string;
+  hour: number;
+  minute: number;
+} {
+  const now = new Date();
+  // fr-CA donne le format ISO YYYY-MM-DD ; hour24 pour HH 00-23.
+  const formatter = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(now);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    hour: parseInt(get("hour"), 10),
+    minute: parseInt(get("minute"), 10),
+  };
+}
+
+/**
+ * Renvoie true si le timestamp Open-Meteo (format "YYYY-MM-DDTHH:MM",
+ * heure de Paris littérale) est à venir ou dans la marge `pastMinutes`.
+ *
+ * On compare date + heure par valeurs string/int plutôt que via Date()
+ * pour rester immune à la TZ du serveur SSR.
+ */
+export function isFutureParisTimestamp(
+  iso: string,
+  pastMinutes: number = 30,
+): boolean {
+  const match = iso.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+  if (!match) return false;
+  const [, dateStr, hStr, mStr] = match;
+  const ts = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
+
+  const now = getCurrentParisDateTime();
+  if (dateStr > now.date) return true;
+  if (dateStr < now.date) return false;
+  const nowMin = now.hour * 60 + now.minute;
+  return ts >= nowMin - pastMinutes;
+}
+
+/** Extrait l'heure (0-23) d'un timestamp Open-Meteo, sans Date(). */
+export function extractParisHour(iso: string): number | null {
+  const match = iso.match(/T(\d{2}):/);
+  return match ? parseInt(match[1], 10) : null;
+}
