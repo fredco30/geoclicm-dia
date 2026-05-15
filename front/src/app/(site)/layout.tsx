@@ -4,6 +4,7 @@ import { FooterFixed } from "@/components/layout/footer-fixed";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { AssistantDrawer } from "@/components/assistant/assistant-drawer";
 import { AssistantFloatingButton } from "@/components/assistant/floating-button";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 export default function SiteLayout({
   children,
@@ -27,6 +28,7 @@ export default function SiteLayout({
         <FooterFixed />
         <AssistantFloatingButton />
         <AssistantDrawer />
+        <InstallPrompt />
       </div>
     </AssistantProvider>
   );
