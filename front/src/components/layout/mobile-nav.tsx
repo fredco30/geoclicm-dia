@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Mail, MapPin, Menu, X, Home as HomeIcon } from "lucide-react";
+import { Mail, MapPin, Menu, Smartphone, X, Home as HomeIcon } from "lucide-react";
 
 import { useAssistant } from "@/components/assistant/assistant-context";
 
@@ -159,6 +159,24 @@ export function MobileNav() {
               Ouvrir l&apos;assistant
             </button>
           </div>
+
+          {/* Installer l'application — point d'entrée permanent, accessible
+              même si le bandeau d'invitation a été masqué. Le composant
+              <InstallPrompt /> du layout écoute cet événement et adapte
+              l'action selon la plate-forme (tutoriel iOS, prompt natif
+              Android, copie d'URL sur Chrome-iOS). */}
+          <button
+            type="button"
+            onClick={() => {
+              close();
+              window.dispatchEvent(new CustomEvent("gm:open-install"));
+            }}
+            className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#1a4d6e]"
+            aria-label="Installer l'application sur votre téléphone ou ordinateur"
+          >
+            <Smartphone className="h-4 w-4" aria-hidden />
+            Installer l&apos;application
+          </button>
 
           {/* Footer du menu — légales */}
           <div className="border-t border-slate-200 pt-4 text-xs text-slate-500">
