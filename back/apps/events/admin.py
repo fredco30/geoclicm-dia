@@ -34,7 +34,7 @@ class EventCategoryAdmin(admin.ModelAdmin):
 @admin.register(EventSource)
 class EventSourceAdmin(admin.ModelAdmin):
     list_display = ("label", "connector", "commune", "is_active", "last_status", "last_synced_at")
-    list_filter = ("connector", "is_active", "last_sync_status", "commune")
+    list_filter = ("connector", "is_active", "last_status", "commune")
     search_fields = ("label", "source_url", "website_url")
 
 

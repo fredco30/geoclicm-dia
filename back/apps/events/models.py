@@ -456,7 +456,7 @@ class EventImportCandidate(models.Model):
         indexes = [
             models.Index(
                 fields=["source", "status", "starts_at"],
-                name="event_candidate_source_status_idx",
+                name="event_cand_src_status_idx",
             ),
         ]
         verbose_name = "Candidat Agenda"
