@@ -40,6 +40,8 @@ requests>=2.32,<3.0                # HTTP client (Open-Meteo pour app weather, M
 pgvector>=0.3,<1.0
 beautifulsoup4>=4.12,<5.0           # parser HTML pour le crawler web (mairies, OT)
 lxml>=5.0,<6.0                      # backend rapide pour BeautifulSoup
+icalendar>=6.1,<7.0                  # ingestion de flux calendriers officiels
+recurring-ical-events>=3.3,<4.0      # expansion sûre des récurrences ICS
 
 # --- Paiement / abonnements (Sprint 3 Lot E) ---
 # dj-stripe : sync Stripe ↔ DB Django (subscriptions, invoices, customers)
