@@ -381,7 +381,7 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="eventimportcandidate",
             index=models.Index(
-                fields=["source", "status", "starts_at"], name="event_candidate_source_status_idx"
+                fields=["source", "status", "starts_at"], name="event_cand_src_status_idx"
             ),
         ),
     ]
