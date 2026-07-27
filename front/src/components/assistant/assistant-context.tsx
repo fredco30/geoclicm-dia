@@ -15,6 +15,7 @@ import {
   detectBrowserLanguage,
   getOrCreateSessionId,
 } from "@/lib/browser-language";
+import { useMounted } from "@/lib/use-mounted";
 import type {
   AssistantCitation,
   AssistantLanguage,
@@ -84,29 +85,33 @@ function extractCommuneFromPath(pathname: string | null): string | undefined {
 
 export function AssistantProvider({ children, initialCommuneSlug }: ProviderProps) {
   const pathname = usePathname();
+  const mounted = useMounted();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<AssistantConvoMessage[]>([]);
-  const [language, setLanguageState] = useState<AssistantLanguage>("fr");
-  const [sessionId, setSessionId] = useState<string>("");
+  const [languageOverride, setLanguageOverride] =
+    useState<AssistantLanguage | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [communeSlug, setCommuneSlugState] = useState<string | undefined>(
-    initialCommuneSlug,
-  );
+  const [communeOverride, setCommuneOverride] = useState<{
+    pathname: string;
+    slug?: string;
+  } | null>(null);
+
+  const language =
+    languageOverride ?? (mounted ? detectBrowserLanguage() : "fr");
+  const sessionId = mounted ? getOrCreateSessionId() : "";
+  const detectedCommuneSlug =
+    extractCommuneFromPath(pathname) ?? initialCommuneSlug;
+  const communeSlug =
+    communeOverride?.pathname === pathname
+      ? communeOverride.slug
+      : detectedCommuneSlug;
 
   // Auto-détection commune contextuelle selon la page courante.
   // L'utilisateur peut toujours override via setCommuneSlug() si on lui
   // donne un sélecteur dans le drawer (V2).
-  useEffect(() => {
-    const detected = extractCommuneFromPath(pathname);
-    setCommuneSlugState(detected ?? initialCommuneSlug);
-  }, [pathname, initialCommuneSlug]);
-
-  // Init côté client uniquement (évite mismatch SSR)
-  useEffect(() => {
-    setLanguageState(detectBrowserLanguage());
-    setSessionId(getOrCreateSessionId());
-  }, []);
+  // Un override reste valable sur la page où il a été choisi ; un changement
+  // de route réactive automatiquement la commune détectée dans l'URL.
 
   // Bloque le scroll body quand drawer ouvert
   useEffect(() => {
@@ -180,11 +185,14 @@ export function AssistantProvider({ children, initialCommuneSlug }: ProviderProp
   const close = useCallback(() => setIsOpen(false), []);
   const toggle = useCallback(() => setIsOpen((v) => !v), []);
   const setLanguage = useCallback((lang: AssistantLanguage) => {
-    setLanguageState(lang);
+    setLanguageOverride(lang);
   }, []);
-  const setCommuneSlug = useCallback((slug?: string) => {
-    setCommuneSlugState(slug);
-  }, []);
+  const setCommuneSlug = useCallback(
+    (slug?: string) => {
+      setCommuneOverride({ pathname, slug });
+    },
+    [pathname],
+  );
 
   const value = useMemo<AssistantContextValue>(
     () => ({

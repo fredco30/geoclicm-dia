@@ -67,7 +67,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
             "latitude", "longitude",
             "owner", "owner_username",
             "logo", "plan",
-            "is_published", "is_featured", "is_claimed",
+            "is_published", "is_featured", "is_local_producer", "is_claimed",
             "created_at", "updated_at",
         )
 
@@ -105,7 +105,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             "facebook_url", "instagram_url", "tiktok_url",
             "opening_hours", "seasonal_closures",
             "plan", "plan_starts_at", "plan_ends_at",
-            "is_published", "is_featured", "is_claimed",
+            "is_published", "is_featured", "is_local_producer", "is_claimed",
             "meta_description", "view_count",
             "created_at", "updated_at",
         )
@@ -146,7 +146,7 @@ class BusinessWriteSerializer(serializers.ModelSerializer):
             "opening_hours", "seasonal_closures",
             "plan", "plan_starts_at", "plan_ends_at",
             "owner", "is_claimed",
-            "is_published", "is_featured",
+            "is_published", "is_featured", "is_local_producer",
             "meta_description",
         )
         read_only_fields = ("id", "slug")

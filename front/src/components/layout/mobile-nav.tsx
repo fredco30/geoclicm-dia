@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Mail, MapPin, Menu, Smartphone, X, Home as HomeIcon } from "lucide-react";
 
 import { useAssistant } from "@/components/assistant/assistant-context";
+import { useMounted } from "@/lib/use-mounted";
 
 type MenuLink = {
   href: string;
@@ -38,12 +39,8 @@ const TERRITOIRE: MenuLink[] = [
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const { open: openAssistant } = useAssistant();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Bloquer le scroll body quand le drawer est ouvert
   useEffect(() => {

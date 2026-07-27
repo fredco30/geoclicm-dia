@@ -78,8 +78,8 @@ export function WeatherHourly({ hourly, isDay }: Props) {
 /** Heuristique : entre 7 h et 21 h c'est le jour, sinon nuit.
  *  is_day du current ne couvre que l'instant T, pas les 24 h suivantes.
  *  Extract heure directement du string (TZ-safe vs new Date().getHours()). */
-function isHourDaytime(iso: string, _currentIsDay: boolean): boolean {
+function isHourDaytime(iso: string, currentIsDay: boolean): boolean {
   const h = extractParisHour(iso);
-  if (h === null) return true;
+  if (h === null) return currentIsDay;
   return h >= 7 && h <= 20;
 }

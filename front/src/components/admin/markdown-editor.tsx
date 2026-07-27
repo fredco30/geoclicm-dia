@@ -108,6 +108,8 @@ Bloc de code
                     </blockquote>
                   ),
                   img: ({ src, alt }) => (
+                    // Images Markdown distantes : dimensions inconnues à l'édition.
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={src as string}
                       alt={alt || ""}

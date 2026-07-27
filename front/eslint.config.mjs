@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefacts générés et minifiés par next-pwa pendant le build.
+    "public/sw.js",
+    "public/workbox-*.js",
+    "public/worker-*.js",
+    "public/swe-worker-*.js",
+    "public/fallback-*.js",
   ]),
 ]);
 

@@ -28,7 +28,6 @@ type Props = {
   getCurrentCategoryId: () => number | null;
   getCurrentCommuneId: () => number | null;
   getExistingShortDescription?: () => string;
-  getExistingDescription?: () => string;
   getExistingSpecialties?: () => string[];
   /**
    * Mode complétion : si la fiche existe déjà, passer son ID. La modal
@@ -56,15 +55,14 @@ type Props = {
  *     spécialités, FAQ)
  *  4. Bouton « Utiliser ce brouillon » qui dispatche au form parent
  *
- * La FAQ est affichée en preview seulement (pas encore de champ
- * dédié sur Business — sera ajouté plus tard).
+ * La FAQ reste une suggestion à copier : elle n'est pas persistée dans la
+ * fiche et l'interface le signale explicitement.
  */
 export function AIBusinessAssistButton({
   getCurrentName,
   getCurrentCategoryId,
   getCurrentCommuneId,
   getExistingShortDescription,
-  getExistingDescription,
   getExistingSpecialties,
   businessId,
   onApply,

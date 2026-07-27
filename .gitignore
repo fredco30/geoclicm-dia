@@ -40,9 +40,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# next-pwa artefacts (regénérés au build, ne pas versionner)
-# front/public/sw.js retiré de l'ignore depuis 2026-05-06 : c'est désormais
-# un killer SW maintenu manuellement (cf next.config.ts désactivation PWA).
+# next-pwa artefacts (régénérés au build, ne pas versionner)
+front/public/sw.js
 front/public/sw.js.map
 front/public/workbox-*.js
 front/public/workbox-*.js.map

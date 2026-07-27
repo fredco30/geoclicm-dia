@@ -70,22 +70,6 @@ const withPWA = withPWAInit({
     runtimeCaching: [
       // ---- Polices ----
       {
-        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "google-fonts-stylesheets",
-          expiration: { maxEntries: 4, maxAgeSeconds: 7 * 24 * 60 * 60 },
-        },
-      },
-      {
-        urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-        handler: "CacheFirst",
-        options: {
-          cacheName: "google-fonts-webfonts",
-          expiration: { maxEntries: 4, maxAgeSeconds: 365 * 24 * 60 * 60 },
-        },
-      },
-      {
         urlPattern: /\.(?:eot|otf|ttc|ttf|woff|woff2|font.css)$/i,
         handler: "StaleWhileRevalidate",
         options: {
@@ -175,6 +159,25 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: "/annuaire",
+        destination: "/commerces",
+        permanent: true,
+      },
+      {
+        source: "/admin/users",
+        destination: "/admin/settings/users",
+        permanent: true,
+      },
+      {
+        source: "/admin/ads/campaigns/:path*",
+        destination: "/admin/regie/campagnes/:path*",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

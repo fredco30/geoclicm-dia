@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Trash2, X } from "lucide-react";
 
 import { getAssistantI18n } from "@/lib/assistant-i18n";
+import { useMounted } from "@/lib/use-mounted";
 
 import { AssistantInput } from "./assistant-input";
 import { AssistantMessage } from "./assistant-message";
@@ -26,12 +27,8 @@ export function AssistantDrawer() {
     isOpen, close, messages, language, setLanguage,
     isPending, error, ask, reset,
   } = useAssistant();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Auto-scroll en bas à chaque nouveau message
   useEffect(() => {

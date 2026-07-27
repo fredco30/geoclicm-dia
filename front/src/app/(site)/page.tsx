@@ -10,7 +10,7 @@ export const revalidate = 60;
  * Home v2 — pattern « city » :
  *  1. Bandeau "À la une" (carrousel articles featured / récents)
  *  2. Barre de recherche / question (stub vers /recherche, drawer IA en PR 7)
- *  3. Grille de tuiles thématiques (Actualités, Météo, Commerçants, Agenda…)
+ *  3. Grille de tuiles thématiques actives
  *  4. Encart publicitaire home_sidebar (préservé pour la régie)
  *
  * Pages détail (article, commune, commerce, météo) restent inchangées.

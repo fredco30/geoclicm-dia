@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useMounted } from "@/lib/use-mounted";
 
 import { useHelp } from "./help-context";
 import { StepBlock } from "./primitives";
@@ -10,12 +11,8 @@ import { StepBlock } from "./primitives";
 /** Drawer slide-in depuis la droite, contient le workflow d'aide contextuel. */
 export function HelpDrawer() {
   const { workflow, activeStepId, open, setOpen } = useHelp();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const panelRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Auto-scroll vers l'étape active à l'ouverture.
   useEffect(() => {

@@ -18,6 +18,7 @@ class BusinessFilter(django_filters.FilterSet):
     plan = django_filters.CharFilter(field_name="plan")
     is_published = django_filters.BooleanFilter(field_name="is_published")
     is_featured = django_filters.BooleanFilter(field_name="is_featured")
+    local_producer = django_filters.BooleanFilter(field_name="is_local_producer")
     is_claimed = django_filters.BooleanFilter(field_name="is_claimed")
     owner = django_filters.NumberFilter(field_name="owner_id")
 
@@ -25,7 +26,7 @@ class BusinessFilter(django_filters.FilterSet):
         model = Business
         fields = (
             "category", "commune", "area", "department",
-            "plan", "is_published", "is_featured",
+            "plan", "is_published", "is_featured", "local_producer",
             "is_claimed", "owner",
         )
 

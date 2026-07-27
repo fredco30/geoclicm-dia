@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --font-geoclic-sans: "Inter Variable";
+  --font-geoclic-serif: "Fraunces Variable";
+
   /* Palette geoclicMédia — direction "magazine littéraire ancré local" */
   --color-camargue: #1a4d6e;        /* primaire — bleu lagune */
   --color-camargue-light: #2c6a93;  /* lift */
@@ -13,8 +16,8 @@
 
 @theme inline {
   /* Polices : Fraunces (serif éditorial) + Inter (sans-serif UI) */
-  --font-sans: var(--font-sans);
-  --font-serif: var(--font-serif);
+  --font-sans: var(--font-geoclic-sans);
+  --font-serif: var(--font-geoclic-serif);
 
   /* Couleurs custom utilisables via classes Tailwind (ex: bg-camargue, text-terracotta) */
   --color-camargue: var(--color-camargue);
@@ -30,7 +33,7 @@ html {
 }
 
 body {
-  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-geoclic-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -44,7 +47,7 @@ body {
 
 /* Lettrine sur le 1er paragraphe du corps d'article — affiné pour "magazine" */
 .article-body > p:first-of-type::first-letter {
-  font-family: var(--font-serif), "Georgia", serif;
+  font-family: var(--font-geoclic-serif), "Georgia", serif;
   font-size: 4.5rem;
   line-height: 0.9;
   font-weight: 600;

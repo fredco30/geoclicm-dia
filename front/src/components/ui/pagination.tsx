@@ -6,15 +6,16 @@ type Props = {
   totalCount: number;
   pageSize: number;
   baseUrl: string;
+  pageParam?: string;
 };
 
-export function Pagination({ currentPage, totalCount, pageSize, baseUrl }: Props) {
+export function Pagination({ currentPage, totalCount, pageSize, baseUrl, pageParam = "page" }: Props) {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   if (totalPages <= 1) return null;
 
   const buildUrl = (page: number): string => {
     const sep = baseUrl.includes("?") ? "&" : "?";
-    return page === 1 ? baseUrl : `${baseUrl}${sep}page=${page}`;
+    return page === 1 ? baseUrl : `${baseUrl}${sep}${pageParam}=${page}`;
   };
 
   const pages = pagesAround(currentPage, totalPages);

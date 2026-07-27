@@ -28,7 +28,12 @@ const HelpContext = createContext<HelpState | null>(null);
 
 export function HelpProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState({ pathname, value: false });
+  const open = openState.pathname === pathname && openState.value;
+  const setOpenStable = useCallback(
+    (value: boolean) => setOpenState({ pathname, value }),
+    [pathname],
+  );
 
   const { workflow, activeStepId } = useMemo(() => {
     const route = getHelpForPath(pathname);
@@ -51,18 +56,11 @@ export function HelpProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") setOpenStable(false);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [open]);
-
-  // Ferme automatiquement si on change de page.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  const setOpenStable = useCallback((v: boolean) => setOpen(v), []);
+  }, [open, setOpenStable]);
 
   return (
     <HelpContext.Provider

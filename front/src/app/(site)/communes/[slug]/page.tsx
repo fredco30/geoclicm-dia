@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description:
         c.short_description ||
         c.description ||
-        `Actualités, commerçants, agenda et infos pratiques de ${c.name}.`,
+        `Actualités, commerçants et infos pratiques de ${c.name}.`,
     };
   } catch {
     return { title: "Commune introuvable" };
