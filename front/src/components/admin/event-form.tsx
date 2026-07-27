@@ -278,6 +278,19 @@ export function EventForm({
     });
   };
 
+  const handleOfficialImage = async (action: "refresh-source-image" | "revert-source-image") => {
+    if (!event) return;
+    setError(null);
+    let csrf = readCsrfToken();
+    if (!csrf) { await apiFetch("/api/auth/csrf/"); csrf = readCsrfToken(); }
+    startTransition(async () => {
+      const response = await apiFetch(`/api/admin/events/${event.slug}/${action}/`, { method: "POST", headers: csrf ? { "X-CSRFToken": csrf } : {} });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) { setError(payload?.detail ?? "Action image impossible."); return; }
+      router.refresh();
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="sticky top-0 z-10 -mx-4 -mt-6 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
@@ -368,7 +381,7 @@ export function EventForm({
             <div><Label htmlFor="status">Statut</Label><Select id="status" value={form.status} onChange={(e) => update("status", e.target.value as FormState["status"])}>{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</Select></div>
             <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={form.is_featured} onChange={(e) => update("is_featured", e.target.checked)} /> Mettre en avant</label>
           </section>
-          <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4"><h2 className="font-semibold text-slate-900">Image</h2><ImageUploader currentUrl={event?.cover_image?.medium ?? null} onFileSelected={setCoverFile} /></section>
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4"><h2 className="font-semibold text-slate-900">Image</h2><ImageUploader currentUrl={event?.cover_image?.medium ?? null} onFileSelected={setCoverFile} />{event?.source_image_url ? <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-900"><p><strong>Image officielle détectée.</strong> Elle est actualisée automatiquement tant qu’aucun remplacement manuel n’est conservé.</p>{event.image_credit ? <p className="mt-1">Crédit : {event.image_credit}</p> : null}<div className="mt-3 flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" disabled={isPending} onClick={() => handleOfficialImage("refresh-source-image")}>Actualiser depuis la source</Button>{event.cover_image?.original !== event.source_cover_image?.original ? <Button type="button" size="sm" variant="ghost" disabled={isPending} onClick={() => handleOfficialImage("revert-source-image")}>Revenir à l’image officielle</Button> : null}</div></div> : <p className="text-xs text-slate-500">Aucune image officielle liée. Une image déposée ici devient le remplacement manuel.</p>}</section>
           <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4"><h2 className="font-semibold text-slate-900">Référencement</h2><div><Label htmlFor="slug">Slug</Label><Input id="slug" value={form.slug} onChange={(e) => update("slug", e.target.value)} placeholder="Automatique si vide" /></div><div><Label htmlFor="meta-title">Meta title</Label><Input id="meta-title" maxLength={70} value={form.meta_title} onChange={(e) => update("meta_title", e.target.value)} /></div><div><Label htmlFor="meta-description">Meta description</Label><Textarea id="meta-description" maxLength={160} rows={3} value={form.meta_description} onChange={(e) => update("meta_description", e.target.value)} /></div></section>
         </aside>
       </div>

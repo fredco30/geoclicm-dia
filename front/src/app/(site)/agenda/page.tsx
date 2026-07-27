@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AdSlot } from "@/components/ads/ad-slot";
 import { EventCard } from "@/components/events/event-card";
+import { AgendaMapExplorer } from "@/components/events/agenda-map-explorer";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api";
 
@@ -12,13 +13,15 @@ export const metadata: Metadata = {
   description: "Sorties, fêtes, culture, sport et rendez-vous du littoral camarguais.",
 };
 
-type Props = { searchParams: Promise<{ page?: string; category?: string; commune?: string; from?: string; to?: string }> };
+type Props = { searchParams: Promise<{ page?: string; category?: string; commune?: string; from?: string; to?: string; event?: string }> };
 
 export default async function AgendaPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
-  const [events, categories, communes] = await Promise.all([
-    api.events.list({ page, category: params.category, commune: params.commune, from: params.from, to: params.to }),
+  const eventFilters = { category: params.category, commune: params.commune, from: params.from, to: params.to };
+  const [events, mapEvents, categories, communes] = await Promise.all([
+    api.events.list({ page, ...eventFilters }),
+    api.events.map(eventFilters),
     api.events.categories(),
     api.communes(),
   ]);
@@ -46,6 +49,8 @@ export default async function AgendaPage({ searchParams }: Props) {
       </form>
 
       <div className="mb-7"><AdSlot placement="agenda_top" communeSlug={params.commune} /></div>
+
+      <AgendaMapExplorer events={mapEvents} initialSelectedSlug={params.event} />
 
       {events.results.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-600">Aucun rendez-vous ne correspond à ces critères.</div>

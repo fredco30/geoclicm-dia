@@ -4,19 +4,31 @@ from __future__ import annotations
 from datetime import UTC, datetime, time
 
 from django.conf import settings
+from django.contrib.gis.geos import Polygon
 from django.db.models import Min, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from rest_framework import mixins, permissions, viewsets
+from rest_framework import mixins, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from apps.editorial.permissions import IsEditorOrAdmin
 
-from .models import Event, EventCategory, EventOccurrence
+from .imports import import_candidate, sync_source_image
+from .models import (
+    Event,
+    EventCategory,
+    EventImportCandidate,
+    EventOccurrence,
+    EventSource,
+)
 from .serializers import (
     EventCategorySerializer,
     EventDetailSerializer,
+    EventImportCandidateSerializer,
     EventListSerializer,
+    EventSourceSerializer,
     EventWriteSerializer,
 )
 
@@ -29,7 +41,7 @@ def _public_events_queryset():
             occurrences__status=EventOccurrence.Status.SCHEDULED,
             occurrences__ends_at__gte=now,
         )
-        .select_related("category", "commune", "business")
+        .select_related("category", "commune", "business", "source")
         .prefetch_related("occurrences")
         .annotate(
             next_start=Min(
@@ -68,7 +80,23 @@ class EventPublicViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.order_by("next_start", "title").distinct()
 
     def get_serializer_class(self):
-        return EventListSerializer if self.action == "list" else EventDetailSerializer
+        return EventListSerializer if self.action in ("list", "map") else EventDetailSerializer
+
+    @action(detail=False, methods=["get"], url_path="map")
+    def map(self, request):
+        qs = self.get_queryset().filter(location__isnull=False)
+        bbox = request.query_params.get("bbox", "")
+        if bbox:
+            try:
+                west, south, east, north = (float(value) for value in bbox.split(","))
+                qs = qs.filter(location__within=Polygon.from_bbox((west, south, east, north)))
+            except (TypeError, ValueError):
+                return Response(
+                    {"bbox": "Format attendu : ouest,sud,est,nord."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        serializer = self.get_serializer(qs[:500], many=True)
+        return Response(serializer.data)
 
 
 class EventCategoryPublicViewSet(
@@ -86,7 +114,7 @@ class EventCategoryPublicViewSet(
 class EventAdminViewSet(viewsets.ModelViewSet):
     queryset = (
         Event.objects.all()
-        .select_related("category", "commune", "business", "created_by")
+        .select_related("category", "commune", "business", "created_by", "source")
         .prefetch_related("occurrences", "related_articles")
     )
     lookup_field = "slug"
@@ -100,6 +128,29 @@ class EventAdminViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=["post"], url_path="revert-source-image")
+    def revert_source_image(self, request, slug=None):
+        event = self.get_object()
+        if event.cover_image:
+            event.cover_image.delete(save=False)
+            event.cover_image = None
+            event.save(update_fields=["cover_image", "updated_at"])
+        return Response(EventDetailSerializer(event, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], url_path="refresh-source-image")
+    def refresh_source_image(self, request, slug=None):
+        event = self.get_object()
+        if not event.source_image_url:
+            return Response(
+                {"detail": "Aucune image officielle détectée."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            changed = sync_source_image(event, event.source_image_url)
+        except Exception as exc:  # noqa: BLE001
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"changed": changed})
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -161,3 +212,95 @@ def _ics_escape(value: str) -> str:
         .replace(",", "\\,")
         .replace("\n", "\\n")
     )
+
+
+
+class EventSourceAdminViewSet(viewsets.ModelViewSet):
+    queryset = (
+        EventSource.objects.all()
+        .select_related("commune", "default_category", "created_by")
+        .prefetch_related("runs")
+    )
+    serializer_class = EventSourceSerializer
+    permission_classes = (permissions.IsAuthenticated, IsEditorOrAdmin)
+    pagination_class = None
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=["post"])
+    def run(self, request, pk=None):
+        source = self.get_object()
+        if not source.is_active:
+            return Response(
+                {"detail": "Active la source avant de la synchroniser."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from .tasks import sync_event_source_now
+        try:
+            task = sync_event_source_now.delay(source.pk)
+        except Exception as exc:  # noqa: BLE001
+            return Response(
+                {"detail": f"Celery indisponible : {exc}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+
+
+class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
+    queryset = (
+        EventImportCandidate.objects.all()
+        .select_related("source", "commune", "category", "matched_event")
+    )
+    serializer_class = EventImportCandidateSerializer
+    permission_classes = (permissions.IsAuthenticated, IsEditorOrAdmin)
+    pagination_class = None
+    http_method_names = ("get", "patch", "post", "head", "options")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if source_id := self.request.query_params.get("source"):
+            qs = qs.filter(source_id=source_id)
+        if candidate_status := self.request.query_params.get("status"):
+            qs = qs.filter(status=candidate_status)
+        else:
+            qs = qs.filter(status__in=(
+                EventImportCandidate.Status.PENDING,
+                EventImportCandidate.Status.INVALID,
+            ))
+        return qs
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        candidate = self.get_object()
+        serializer = self.get_serializer(
+            candidate, data=request.data or {}, partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        candidate = serializer.save()
+        missing = []
+        if candidate.category_id is None:
+            missing.append("catégorie")
+        if candidate.commune_id is None:
+            missing.append("commune")
+        if candidate.starts_at is None or candidate.ends_at is None:
+            missing.append("dates")
+        if missing:
+            return Response(
+                {"detail": "Champs requis : " + ", ".join(missing)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            event = import_candidate(candidate, publish=True)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            EventDetailSerializer(event, context={"request": request}).data,
+        )
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        candidate = self.get_object()
+        candidate.status = EventImportCandidate.Status.REJECTED
+        candidate.save(update_fields=["status", "last_seen_at"])
+        return Response(self.get_serializer(candidate).data)

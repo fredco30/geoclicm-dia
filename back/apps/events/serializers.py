@@ -1,4 +1,5 @@
 """Serializers publics et admin du module Agenda."""
+
 from __future__ import annotations
 
 import json
@@ -10,14 +11,27 @@ from rest_framework import serializers
 
 from apps.editorial.serializers import ImageVariantsField
 
-from .models import Event, EventCategory, EventOccurrence
+from .models import (
+    Event,
+    EventCategory,
+    EventImportCandidate,
+    EventImportRun,
+    EventOccurrence,
+    EventSource,
+)
 
 
 class EventCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = EventCategory
         fields = (
-            "id", "name", "slug", "icon", "color", "sort_order", "is_active",
+            "id",
+            "name",
+            "slug",
+            "icon",
+            "color",
+            "sort_order",
+            "is_active",
         )
         read_only_fields = ("id",)
         extra_kwargs = {"slug": {"required": False, "allow_blank": True}}
@@ -27,7 +41,12 @@ class EventOccurrenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventOccurrence
         fields = (
-            "id", "starts_at", "ends_at", "is_all_day", "status", "note",
+            "id",
+            "starts_at",
+            "ends_at",
+            "is_all_day",
+            "status",
+            "note",
         )
         read_only_fields = ("id",)
 
@@ -36,17 +55,45 @@ class EventListSerializer(serializers.ModelSerializer):
     category = EventCategorySerializer(read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)
     commune_slug = serializers.CharField(source="commune.slug", read_only=True)
-    cover_image = ImageVariantsField(read_only=True)
+    cover_image = ImageVariantsField(source="resolved_cover_image", read_only=True)
+    source_cover_image = ImageVariantsField(read_only=True)
     next_occurrence = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+    source_label = serializers.CharField(source="source.label", read_only=True, default=None)
 
     class Meta:
         model = Event
         fields = (
-            "id", "title", "slug", "short_description", "cover_image",
-            "kind", "category", "commune_name", "commune_slug",
-            "venue_name", "price", "status", "is_featured",
-            "next_occurrence", "updated_at",
+            "id",
+            "title",
+            "slug",
+            "short_description",
+            "cover_image",
+            "kind",
+            "category",
+            "commune_name",
+            "commune_slug",
+            "venue_name",
+            "address",
+            "latitude",
+            "longitude",
+            "price",
+            "organizer",
+            "official_url",
+            "status",
+            "is_featured",
+            "source_label",
+            "source_cover_image",
+            "next_occurrence",
+            "updated_at",
         )
+
+    def get_latitude(self, obj: Event) -> float | None:
+        return obj.location.y if obj.location else None
+
+    def get_longitude(self, obj: Event) -> float | None:
+        return obj.location.x if obj.location else None
 
     def get_next_occurrence(self, obj: Event):
         now = timezone.now()
@@ -54,8 +101,7 @@ class EventListSerializer(serializers.ModelSerializer):
             (
                 item
                 for item in obj.occurrences.all()
-                if item.status == EventOccurrence.Status.SCHEDULED
-                and item.ends_at >= now
+                if item.status == EventOccurrence.Status.SCHEDULED and item.ends_at >= now
             ),
             None,
         )
@@ -64,13 +110,15 @@ class EventListSerializer(serializers.ModelSerializer):
 
 class EventDetailSerializer(EventListSerializer):
     occurrences = serializers.SerializerMethodField()
-    latitude = serializers.SerializerMethodField()
-    longitude = serializers.SerializerMethodField()
     business_slug = serializers.CharField(
-        source="business.slug", read_only=True, default=None,
+        source="business.slug",
+        read_only=True,
+        default=None,
     )
     business_name = serializers.CharField(
-        source="business.name", read_only=True, default=None,
+        source="business.name",
+        read_only=True,
+        default=None,
     )
     category_id = serializers.IntegerField(read_only=True)
     commune_id = serializers.IntegerField(read_only=True)
@@ -78,22 +126,30 @@ class EventDetailSerializer(EventListSerializer):
 
     class Meta(EventListSerializer.Meta):
         fields = EventListSerializer.Meta.fields + (
-            "description", "address", "latitude", "longitude",
-            "booking_url", "contact_phone", "contact_email", "organizer",
-            "official_url", "business_slug", "business_name",
-            "category_id", "commune_id", "business_id",
-            "occurrences", "meta_title", "meta_description",
-            "published_at", "created_at",
+            "description",
+            "booking_url",
+            "contact_phone",
+            "contact_email",
+            "organizer",
+            "official_url",
+            "business_slug",
+            "business_name",
+            "category_id",
+            "commune_id",
+            "business_id",
+            "occurrences",
+            "meta_title",
+            "meta_description",
+            "published_at",
+            "created_at",
+            "source_image_url",
+            "source_image_hash",
+            "image_credit",
+            "source_sync_enabled",
         )
 
     def get_occurrences(self, obj: Event):
         return EventOccurrenceSerializer(obj.occurrences.all(), many=True).data
-
-    def get_latitude(self, obj: Event) -> float | None:
-        return obj.location.y if obj.location else None
-
-    def get_longitude(self, obj: Event) -> float | None:
-        return obj.location.x if obj.location else None
 
 
 class EventOccurrenceWriteSerializer(serializers.ModelSerializer):
@@ -123,12 +179,34 @@ class EventWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = (
-            "id", "title", "slug", "short_description", "description",
-            "cover_image", "kind", "category", "commune", "venue_name",
-            "address", "latitude", "longitude", "price", "booking_url",
-            "contact_phone", "contact_email", "organizer", "official_url",
-            "business", "related_articles", "status", "is_featured",
-            "meta_title", "meta_description", "occurrences_json",
+            "id",
+            "title",
+            "slug",
+            "short_description",
+            "description",
+            "cover_image",
+            "kind",
+            "category",
+            "commune",
+            "venue_name",
+            "address",
+            "latitude",
+            "longitude",
+            "price",
+            "booking_url",
+            "contact_phone",
+            "contact_email",
+            "organizer",
+            "official_url",
+            "business",
+            "related_articles",
+            "status",
+            "is_featured",
+            "meta_title",
+            "meta_description",
+            "image_credit",
+            "source_sync_enabled",
+            "occurrences_json",
         )
         read_only_fields = ("id",)
         extra_kwargs = {"slug": {"required": False, "allow_blank": True}}
@@ -168,11 +246,13 @@ class EventWriteSerializer(serializers.ModelSerializer):
                     for row in occurrences
                 )
             if not has_upcoming:
-                raise serializers.ValidationError({
-                    "occurrences_json": (
-                        "Un événement publié doit avoir au moins une date à venir."
-                    ),
-                })
+                raise serializers.ValidationError(
+                    {
+                        "occurrences_json": (
+                            "Un événement publié doit avoir au moins une date à venir."
+                        ),
+                    }
+                )
         return attrs
 
     def _set_location(self, validated_data: dict) -> None:
@@ -228,3 +308,160 @@ class EventWriteSerializer(serializers.ModelSerializer):
                 starts_at__gte=timezone.now(),
             ).delete()
         return event
+
+
+class EventImportRunSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventImportRun
+        fields = (
+            "id",
+            "status",
+            "started_at",
+            "finished_at",
+            "discovered_count",
+            "created_count",
+            "updated_count",
+            "imported_count",
+            "ai_extraction_count",
+            "duplicate_count",
+            "error_count",
+            "error_details",
+        )
+
+
+class EventSourceSerializer(serializers.ModelSerializer):
+    commune_name = serializers.CharField(source="commune.name", read_only=True, default=None)
+    default_category_name = serializers.CharField(
+        source="default_category.name",
+        read_only=True,
+        default=None,
+    )
+    pending_count = serializers.SerializerMethodField()
+    last_run = serializers.SerializerMethodField()
+    crawl4ai_available = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventSource
+        fields = (
+            "id",
+            "label",
+            "connector",
+            "source_url",
+            "website_url",
+            "commune",
+            "commune_name",
+            "default_category",
+            "default_category_name",
+            "default_kind",
+            "max_pages",
+            "is_active",
+            "sync_images",
+            "rights_note",
+            "last_synced_at",
+            "last_status",
+            "last_error",
+            "pending_count",
+            "last_run",
+            "crawl4ai_available",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "last_synced_at",
+            "last_status",
+            "last_error",
+            "pending_count",
+            "last_run",
+            "crawl4ai_available",
+            "created_at",
+            "updated_at",
+        )
+
+    def get_crawl4ai_available(self, obj: EventSource) -> bool:
+        from django.conf import settings
+
+        return bool(settings.CRAWL4AI_URL)
+
+    def get_pending_count(self, obj: EventSource) -> int:
+        return obj.candidates.filter(
+            status__in=(
+                EventImportCandidate.Status.PENDING,
+                EventImportCandidate.Status.INVALID,
+            ),
+        ).count()
+
+    def get_last_run(self, obj: EventSource):
+        run = obj.runs.first()
+        return EventImportRunSerializer(run).data if run else None
+
+
+class EventImportCandidateSerializer(serializers.ModelSerializer):
+    source_label = serializers.CharField(source="source.label", read_only=True)
+    commune_name = serializers.CharField(source="commune.name", read_only=True, default=None)
+    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    matched_event_slug = serializers.CharField(
+        source="matched_event.slug",
+        read_only=True,
+        default=None,
+    )
+    extraction_evidence = serializers.SerializerMethodField()
+    generation_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventImportCandidate
+        fields = (
+            "id",
+            "source",
+            "source_label",
+            "source_uid",
+            "extraction_method",
+            "source_url",
+            "title",
+            "short_description",
+            "description",
+            "image_url",
+            "image_credit",
+            "starts_at",
+            "ends_at",
+            "occurrences",
+            "is_all_day",
+            "venue_name",
+            "address",
+            "latitude",
+            "longitude",
+            "price",
+            "booking_url",
+            "organizer",
+            "commune",
+            "commune_name",
+            "category",
+            "category_name",
+            "kind",
+            "status",
+            "validation_errors",
+            "extraction_evidence",
+            "generation_id",
+            "matched_event",
+            "matched_event_slug",
+            "first_seen_at",
+            "last_seen_at",
+            "imported_at",
+        )
+        read_only_fields = (
+            "id",
+            "source_uid",
+            "extraction_method",
+            "status",
+            "matched_event",
+            "first_seen_at",
+            "last_seen_at",
+            "imported_at",
+        )
+
+    def get_extraction_evidence(self, obj: EventImportCandidate) -> list[str]:
+        return obj.raw_payload.get("verified_evidence") or []
+
+    def get_generation_id(self, obj: EventImportCandidate) -> int | None:
+        raw = obj.raw_payload.get("mistral") or {}
+        return raw.get("_generation_id") if isinstance(raw, dict) else None

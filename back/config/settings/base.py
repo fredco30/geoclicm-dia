@@ -227,6 +227,11 @@ MISTRAL_API_KEY = env("MISTRAL_API_KEY", default="")
 MISTRAL_MODEL = env("MISTRAL_MODEL", default="mistral-small-latest")
 MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 
+# Navigateur Chromium isolé pour les sources Agenda rendues en JavaScript.
+# Vide = moteur standard uniquement, avec comportement inchangé.
+CRAWL4AI_URL = env("CRAWL4AI_URL", default="")
+CRAWL4AI_TOKEN = env("CRAWL4AI_TOKEN", default="")
+
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
 ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default=20)

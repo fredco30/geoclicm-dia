@@ -45,7 +45,9 @@ export default async function AgendaAdminPage() {
             Événements et marchés partagent les mêmes dates, filtres et règles de publication.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/agenda/imports"><Button variant="secondary" size="sm">À valider</Button></Link>
+          <Link href="/admin/agenda/sources"><Button variant="secondary" size="sm">Sources</Button></Link>
           <Link href="/admin/agenda/categories"><Button variant="secondary" size="sm">Catégories</Button></Link>
           <Link href="/admin/agenda/new"><Button size="sm"><Plus className="h-4 w-4" /> Nouvel événement</Button></Link>
         </div>

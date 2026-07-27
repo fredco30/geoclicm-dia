@@ -176,7 +176,14 @@ export type EventListItem = {
   commune_name: string;
   commune_slug: string;
   venue_name: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
   price: string;
+  organizer: string;
+  official_url: string;
+  source_label: string | null;
+  source_cover_image: ImageVariants | null;
   status: EventStatus;
   is_featured: boolean;
   next_occurrence: EventOccurrence | null;
@@ -185,9 +192,6 @@ export type EventListItem = {
 
 export type EventDetail = EventListItem & {
   description: string;
-  address: string;
-  latitude: number | null;
-  longitude: number | null;
   booking_url: string;
   contact_phone: string;
   contact_email: string;
@@ -203,6 +207,66 @@ export type EventDetail = EventListItem & {
   meta_description: string;
   published_at: string | null;
   created_at: string;
+  source_image_url: string;
+  source_image_hash: string;
+  image_credit: string;
+  source_sync_enabled: boolean;
+};
+
+export type EventSource = {
+  id: number;
+  label: string;
+  connector: "json_ld" | "crawl4ai" | "ics";
+  source_url: string;
+  website_url: string;
+  commune: number | null;
+  commune_name: string | null;
+  default_category: number | null;
+  default_category_name: string | null;
+  default_kind: EventKind;
+  max_pages: number;
+  is_active: boolean;
+  sync_images: boolean;
+  rights_note: string;
+  last_synced_at: string | null;
+  last_status: "never" | "running" | "ok" | "partial" | "error";
+  last_error: string;
+  pending_count: number;
+  crawl4ai_available: boolean;
+};
+
+export type EventImportCandidate = {
+  id: number;
+  source: number;
+  source_label: string;
+  source_url: string;
+  extraction_method: "json_ld" | "mistral" | "ics";
+  title: string;
+  short_description: string;
+  description: string;
+  image_url: string;
+  image_credit: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  venue_name: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  price: string;
+  booking_url: string;
+  organizer: string;
+  commune: number | null;
+  commune_name: string | null;
+  category: number | null;
+  category_name: string | null;
+  kind: EventKind;
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  validation_errors: string[];
+  extraction_evidence: string[];
+  generation_id: number | null;
+  matched_event_slug: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
 };
 
 // ============================================================================

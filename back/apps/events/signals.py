@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 
 from apps.core.services.images import (
@@ -19,10 +19,35 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Event)
 def event_post_save_resize(sender, instance: Event, **kwargs) -> None:
-    if not instance.cover_image:
+    for image_field in (instance.cover_image, instance.source_cover_image):
+        if not image_field:
+            continue
+        try:
+            cap_original_image(image_field, COVER_MAX_SIZE)
+            generate_resized_versions(image_field)
+        except Exception:
+            logger.exception("Failed to process Event image %s for %s", image_field.name, instance.pk)
+
+
+@receiver(post_migrate)
+def ensure_event_sync_schedule(sender, **kwargs) -> None:
+    """Synchronise les sources Agenda actives toutes les six heures."""
+    if getattr(sender, "name", None) != "apps.events":
         return
     try:
-        cap_original_image(instance.cover_image, COVER_MAX_SIZE)
-        generate_resized_versions(instance.cover_image)
-    except Exception:
-        logger.exception("Failed to process Event cover %s", instance.pk)
+        from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=6,
+            period=IntervalSchedule.HOURS,
+        )
+        PeriodicTask.objects.update_or_create(
+            name="Agenda — synchronisation des sources toutes les 6 h",
+            defaults={
+                "interval": schedule,
+                "task": "events.sync_all_sources",
+                "enabled": True,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Création de la tâche périodique Agenda impossible : %s", exc)

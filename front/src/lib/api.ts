@@ -127,6 +127,13 @@ export const api = {
         revalidate: 300,
         tags: ["events", `event:${slug}`],
       }),
+    map: (params: Record<string, string | number | boolean | undefined> = {}) => {
+      const qs = buildQuery(params);
+      return apiGet<EventListItem[]>(`/api/events/map/${qs}`, {
+        revalidate: 60,
+        tags: ["events"],
+      });
+    },
     categories: () =>
       apiGet<EventCategory[]>("/api/event-categories/", {
         revalidate: 3600,

@@ -3,7 +3,6 @@ from django.utils.text import slugify
 
 from apps.events.models import EventCategory
 
-
 CATEGORIES = [
     ("Marché", "ShoppingBasket", "#4d7c3f"),
     ("Festival", "PartyPopper", "#a8533a"),
