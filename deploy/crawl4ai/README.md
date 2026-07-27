@@ -20,7 +20,7 @@ Dans `back/.env` :
 CRAWL4AI_URL=http://127.0.0.1:11235
 CRAWL4AI_TOKEN=<secret aléatoire long pour POST /token>
 CRAWL4AI_JWT_SECRET=<secret aléatoire distinct pour signer les JWT>
-CRAWL4AI_EMAIL=crawl4ai@geoclic.fr
+CRAWL4AI_EMAIL=crawl4ai@gestia.ovh
 ```
 
 Le backend échange automatiquement `CRAWL4AI_TOKEN` contre un JWT valable une heure,
@@ -34,8 +34,8 @@ Créer le fichier à partir du modèle sans versionner le secret :
 sudo install -d -m 750 -o root -g ubuntu /var/lib/geoclicmedia-crawl4ai
 sed "s/__CRAWL4AI_TOKEN__/$CRAWL4AI_TOKEN/" config.yml.template \
   | sudo tee /var/lib/geoclicmedia-crawl4ai/config.yml >/dev/null
-sudo chown root:ubuntu /var/lib/geoclicmedia-crawl4ai/config.yml
-sudo chmod 640 /var/lib/geoclicmedia-crawl4ai/config.yml
+sudo chown 999:999 /var/lib/geoclicmedia-crawl4ai/config.yml
+sudo chmod 600 /var/lib/geoclicmedia-crawl4ai/config.yml
 ```
 
 ## Démarrage

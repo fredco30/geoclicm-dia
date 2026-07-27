@@ -27,7 +27,7 @@ class Crawl4AIClientUnitTests(unittest.TestCase):
             "https://example.test",
             base_url="http://127.0.0.1:11235",
             api_token="api-secret",
-            email="crawl4ai@geoclic.fr",
+            email="crawl4ai@gestia.ovh",
         )
 
         self.assertEqual(html, "<main>OK</main>")
@@ -47,7 +47,7 @@ class Crawl4AIClientUnitTests(unittest.TestCase):
         kwargs = {
             "base_url": "http://127.0.0.1:11235",
             "api_token": "api-secret",
-            "email": "crawl4ai@geoclic.fr",
+            "email": "crawl4ai@gestia.ovh",
         }
 
         self.assertEqual(fetch_rendered_html("https://one.test", **kwargs), "premier")
@@ -70,7 +70,7 @@ class Crawl4AIClientUnitTests(unittest.TestCase):
             "https://example.test",
             base_url="http://127.0.0.1:11235",
             api_token="api-secret",
-            email="crawl4ai@geoclic.fr",
+            email="crawl4ai@gestia.ovh",
         )
 
         self.assertEqual(html, "renouvelé")

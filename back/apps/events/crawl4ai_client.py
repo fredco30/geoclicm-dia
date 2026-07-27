@@ -61,7 +61,7 @@ def fetch_rendered_html(
     *,
     base_url: str,
     api_token: str = "",
-    email: str = "crawl4ai@geoclic.fr",
+    email: str = "crawl4ai@gestia.ovh",
 ) -> str | None:
     """Retourne le HTML rendu, avec renouvellement unique du JWT sur 401."""
     endpoint = base_url.rstrip("/") + "/crawl"

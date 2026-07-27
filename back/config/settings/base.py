@@ -231,7 +231,7 @@ MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 # Vide = moteur standard uniquement, avec comportement inchangé.
 CRAWL4AI_URL = env("CRAWL4AI_URL", default="")
 CRAWL4AI_TOKEN = env("CRAWL4AI_TOKEN", default="")
-CRAWL4AI_EMAIL = env("CRAWL4AI_EMAIL", default="crawl4ai@geoclic.fr")
+CRAWL4AI_EMAIL = env("CRAWL4AI_EMAIL", default="crawl4ai@gestia.ovh")
 
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
