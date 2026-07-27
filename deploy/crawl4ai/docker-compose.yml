@@ -4,8 +4,10 @@ services:
     container_name: geoclicmedia-crawl4ai
     restart: unless-stopped
     environment:
-      CRAWL4AI_API_TOKEN: ${CRAWL4AI_TOKEN:?CRAWL4AI_TOKEN requis}
+      SECRET_KEY: ${CRAWL4AI_JWT_SECRET:?CRAWL4AI_JWT_SECRET requis}
       CRAWL4AI_HOOKS_ENABLED: "false"
+    volumes:
+      - "${CRAWL4AI_CONFIG_PATH:-/var/lib/geoclicmedia-crawl4ai/config.yml}:/app/config.yml:ro"
     shm_size: "1gb"
     mem_limit: 1500m
     cpus: 1.0

@@ -28,6 +28,7 @@ from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
 
 from .ai_extraction import extract_events as extract_events_with_mistral
+from .crawl4ai_client import fetch_rendered_html
 from .models import (
     Event,
     EventCategory,
@@ -143,60 +144,16 @@ def _same_domain(url: str, expected: str) -> bool:
 
 
 def _crawl4ai_fetch_html(url: str) -> str | None:
-    """Rend une page avec Chromium via le service isolé de GeoClic City."""
+    """Rend une page via le service Chromium isolé de GeoClic Media."""
     if not settings.CRAWL4AI_URL:
         return None
     _assert_public_http_url(url)
-    endpoint = settings.CRAWL4AI_URL.rstrip("/") + "/crawl"
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
-    if settings.CRAWL4AI_TOKEN:
-        headers["Authorization"] = f"Bearer {settings.CRAWL4AI_TOKEN}"
-    payloads = (
-        {
-            "urls": [url],
-            "crawler_config": {
-                "type": "CrawlerRunConfig",
-                "params": {
-                    "remove_overlay_elements": True,
-                    "word_count_threshold": 5,
-                    "exclude_external_links": True,
-                },
-            },
-        },
-        {"urls": [url]},
+    return fetch_rendered_html(
+        url,
+        base_url=settings.CRAWL4AI_URL,
+        api_token=settings.CRAWL4AI_TOKEN,
+        email=settings.CRAWL4AI_EMAIL,
     )
-    for payload in payloads:
-        try:
-            response = requests.post(
-                endpoint,
-                json=payload,
-                headers=headers,
-                timeout=90,
-            )
-            response.raise_for_status()
-            body = response.json()
-            results = body.get("results") or body.get("data") or []
-            if not results:
-                continue
-            result = results[0]
-            if not result.get("success", True):
-                continue
-            status_code = result.get("status_code")
-            if isinstance(status_code, int) and status_code >= 400:
-                continue
-            html = result.get("html") or result.get("cleaned_html") or result.get("fit_html")
-            if isinstance(html, str) and html.strip():
-                return html
-        except (requests.RequestException, ValueError, TypeError):
-            logger.warning(
-                "Crawl4AI impossible pour %s",
-                url,
-                exc_info=True,
-            )
-    return None
 
 
 def _fetch_event_html(
