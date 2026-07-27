@@ -1,0 +1,21 @@
+services:
+  crawl4ai:
+    image: unclecode/crawl4ai:0.8.5
+    container_name: geoclicmedia-crawl4ai
+    restart: unless-stopped
+    environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_TOKEN:?CRAWL4AI_TOKEN requis}
+      CRAWL4AI_HOOKS_ENABLED: "false"
+    shm_size: "1gb"
+    mem_limit: 1500m
+    cpus: 1.0
+    pids_limit: 256
+    ports:
+      - "127.0.0.1:11235:11235"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
