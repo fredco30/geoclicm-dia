@@ -206,7 +206,7 @@ export function TileForm({ tile, rootTiles, communes }: Props) {
           </Select>
           <p className="mt-1 text-xs text-slate-500">
             Si tu choisis une tuile parente, celle-ci devient une <strong>sous-tuile</strong>{" "}
-            qui s'affiche au clic sur la racine.
+            qui s&apos;affiche au clic sur la racine.
           </p>
         </div>
 
@@ -279,7 +279,7 @@ export function TileForm({ tile, rootTiles, communes }: Props) {
               placeholder="https://www.le-grau-du-roi.fr"
             />
             <p className="mt-1 text-xs text-slate-500">
-              Le lien s'ouvrira dans un nouvel onglet, avec une icône
+              Le lien s&apos;ouvrira dans un nouvel onglet, avec une icône
               indiquant la sortie du site (transparence).
             </p>
           </div>

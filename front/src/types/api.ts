@@ -139,6 +139,138 @@ export type SearchResponse = {
 };
 
 // ============================================================================
+// Agenda et marchés
+// ============================================================================
+
+export type EventKind = "event" | "market";
+export type EventStatus = "draft" | "published" | "cancelled" | "archived";
+export type EventOccurrenceStatus = "scheduled" | "cancelled" | "postponed";
+
+export type EventCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  icon: string;
+  color: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export type EventOccurrence = {
+  id: number;
+  starts_at: string;
+  ends_at: string;
+  is_all_day: boolean;
+  status: EventOccurrenceStatus;
+  note: string;
+};
+
+export type EventListItem = {
+  id: number;
+  title: string;
+  slug: string;
+  short_description: string;
+  cover_image: ImageVariants | null;
+  kind: EventKind;
+  category: EventCategory;
+  commune_name: string;
+  commune_slug: string;
+  venue_name: string;
+  price: string;
+  status: EventStatus;
+  is_featured: boolean;
+  next_occurrence: EventOccurrence | null;
+  updated_at: string;
+};
+
+export type EventDetail = EventListItem & {
+  description: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  booking_url: string;
+  contact_phone: string;
+  contact_email: string;
+  organizer: string;
+  official_url: string;
+  business_slug: string | null;
+  business_name: string | null;
+  category_id: number;
+  commune_id: number;
+  business_id: number | null;
+  occurrences: EventOccurrence[];
+  meta_title: string;
+  meta_description: string;
+  published_at: string | null;
+  created_at: string;
+};
+
+// ============================================================================
+// Découvrir
+// ============================================================================
+
+export type PlaceStatus = "draft" | "published" | "archived";
+
+export type PlaceCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  color: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export type PlaceListItem = {
+  id: number;
+  title: string;
+  slug: string;
+  short_description: string;
+  cover_image: ImageVariants | null;
+  category: PlaceCategory;
+  commune_name: string;
+  commune_slug: string;
+  latitude: number | null;
+  longitude: number | null;
+  duration: string;
+  difficulty: string;
+  status: PlaceStatus;
+  is_featured: boolean;
+  sort_order: number;
+  updated_at: string;
+};
+
+export type PlaceRelatedItem = {
+  id: number;
+  title?: string;
+  name?: string;
+  slug: string;
+  short_description: string;
+};
+
+export type PlaceDetail = PlaceListItem & {
+  description: string;
+  address: string;
+  accessibility: string;
+  best_season: string;
+  practical_info: string;
+  official_url: string;
+  category_id: number;
+  commune_id: number;
+  related_articles: PlaceRelatedItem[];
+  related_businesses: PlaceRelatedItem[];
+  related_events: PlaceRelatedItem[];
+  related_article_ids: number[];
+  related_business_ids: number[];
+  related_event_ids: number[];
+  meta_title: string;
+  meta_description: string;
+  published_at: string | null;
+  created_at: string;
+};
+
+// ============================================================================
 // Assistant IA (Mistral + RAG via /api/assistant/ask/)
 // ============================================================================
 
@@ -220,6 +352,7 @@ export type BusinessListItem = {
   plan: BusinessPlan;
   is_published: boolean;
   is_featured: boolean;
+  is_local_producer: boolean;
 };
 
 export type BusinessDetail = {
@@ -255,6 +388,7 @@ export type BusinessDetail = {
   plan: BusinessPlan;
   is_published: boolean;
   is_featured: boolean;
+  is_local_producer: boolean;
   meta_description: string;
   view_count: number;
 };

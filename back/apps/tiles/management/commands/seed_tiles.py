@@ -1,4 +1,4 @@
-"""Seed initial des 10 tuiles racine validées au plan v2.
+"""Seed initial des tuiles racine du plan v2.
 
 Usage : python manage.py seed_tiles
 
@@ -112,8 +112,8 @@ class Command(BaseCommand):
                 parent=None,
                 defaults={
                     **{k: v for k, v in spec.items() if k != "label"},
-                    "is_active": True,
-                    "show_on_home": True,
+                    "is_active": spec.get("is_active", True),
+                    "show_on_home": spec.get("show_on_home", True),
                 },
             )
             if was_created:

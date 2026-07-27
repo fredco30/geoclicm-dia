@@ -1,9 +1,23 @@
 """Settings dev — debug ON, BrowsableAPI activé, mails en console."""
 from .base import *  # noqa: F401,F403
-from .base import REST_FRAMEWORK, INSTALLED_APPS, MIDDLEWARE
+from .base import DATABASES, REST_FRAMEWORK, INSTALLED_APPS, MIDDLEWARE
 
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
+
+# Évite qu'une commande locale (check, makemigrations…) reste bloquée plusieurs
+# minutes lorsqu'aucun tunnel PostgreSQL n'est ouvert.
+DATABASES["default"].setdefault("OPTIONS", {})["connect_timeout"] = 3
+
+# GeoDjango sous Windows : permet de pointer vers les DLL QGIS/OSGeo sans
+# figer un chemin propre à une machine dans le dépôt.
+_gdal_library_path = env("GDAL_LIBRARY_PATH", default="")
+if _gdal_library_path:
+    GDAL_LIBRARY_PATH = _gdal_library_path
+
+_geos_library_path = env("GEOS_LIBRARY_PATH", default="")
+if _geos_library_path:
+    GEOS_LIBRARY_PATH = _geos_library_path
 
 INSTALLED_APPS = INSTALLED_APPS + [
     "django_extensions",

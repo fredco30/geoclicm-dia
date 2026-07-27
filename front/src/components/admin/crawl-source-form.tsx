@@ -27,10 +27,15 @@ const KIND_OPTIONS: { value: CrawlSourceKind; label: string; placeholder: string
   { value: "mairie", label: "Site mairie", placeholder: "https://www.legrauduroi.fr/" },
   { value: "ot", label: "Office de tourisme", placeholder: "https://www.ot-aiguesmortes.fr/" },
   { value: "wikipedia", label: "Page Wikipedia", placeholder: "https://fr.wikipedia.org/wiki/..." },
-  { value: "datatourisme", label: "DataTourisme", placeholder: "https://www.datatourisme.fr/..." },
   { value: "business", label: "Site commerçant", placeholder: "https://www.lecommerce.fr/" },
   { value: "article", label: "Article externe", placeholder: "https://exemple.fr/article" },
 ];
+
+const DATATOURISME_OPTION = {
+  value: "datatourisme" as const,
+  label: "DataTourisme — non implémenté",
+  placeholder: "https://www.datatourisme.fr/...",
+};
 
 const STATUS_PRESETS: Record<string, { label: string; bg: string; text: string; icon: typeof CheckCircle2 }> = {
   ok: { label: "OK", bg: "bg-emerald-100", text: "text-emerald-800", icon: CheckCircle2 },
@@ -70,6 +75,10 @@ export function CrawlSourceForm({ source, communes }: Props) {
   const [isRunning, setIsRunning] = useState(false);
 
   const sortedCommunes = [...communes].sort((a, b) => a.sort_order - b.sort_order);
+  const kindOptions =
+    source?.kind === "datatourisme"
+      ? [...KIND_OPTIONS, DATATOURISME_OPTION]
+      : KIND_OPTIONS;
   const update = <K extends keyof AdminCrawlSourcePayload>(
     k: K,
     v: AdminCrawlSourcePayload[K],
@@ -100,6 +109,12 @@ export function CrawlSourceForm({ source, communes }: Props) {
     }
     if (!form.seed_url.trim()) {
       setError("L'URL à crawler est obligatoire.");
+      return;
+    }
+    if (form.kind === "datatourisme" && form.is_active) {
+      setError(
+        "L'indexeur DataTourisme n'est pas implémenté. Désactivez cette source avant de l'enregistrer.",
+      );
       return;
     }
 
@@ -161,6 +176,12 @@ export function CrawlSourceForm({ source, communes }: Props) {
 
   const handleRunNow = async () => {
     if (!isEdit) return;
+    if (source?.kind === "datatourisme") {
+      setError(
+        "L'indexeur DataTourisme n'est pas implémenté. Désactivez cette source ou choisissez un type pris en charge.",
+      );
+      return;
+    }
     setError(null);
     setInfo(null);
 
@@ -260,10 +281,14 @@ export function CrawlSourceForm({ source, communes }: Props) {
           <button
             type="button"
             onClick={handleRunNow}
-            disabled={isRunning || !source.is_active}
+            disabled={
+              isRunning || !source.is_active || source.kind === "datatourisme"
+            }
             className="inline-flex items-center gap-1.5 rounded-md bg-[#1a4d6e] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#13384f] disabled:opacity-50"
             title={
-              source.is_active
+              source.kind === "datatourisme"
+                ? "L'indexeur DataTourisme n'est pas encore implémenté"
+                : source.is_active
                 ? "Lance immédiatement un crawl en arrière-plan"
                 : "La source doit être active pour être crawlée"
             }
@@ -290,12 +315,18 @@ export function CrawlSourceForm({ source, communes }: Props) {
             value={form.kind}
             onChange={(e) => update("kind", e.target.value as CrawlSourceKind)}
           >
-            {KIND_OPTIONS.map((k) => (
+            {kindOptions.map((k) => (
               <option key={k.value} value={k.value}>
                 {k.label}
               </option>
             ))}
           </Select>
+          {form.kind === "datatourisme" ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Cette source est conservée pour compatibilité, mais son indexeur
+              est un no-op. Elle ne doit pas être activée avant implémentation.
+            </p>
+          ) : null}
         </div>
 
         <div>

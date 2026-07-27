@@ -18,6 +18,8 @@ Cette documentation regroupe toute la réflexion menée en amont du développeme
 10. **[10-espace-annonceurs.md](./10-espace-annonceurs.md)** — Vision et architecture du self-service
 11. **[11-equipe-organisation.md](./11-equipe-organisation.md)** — Rôles, répartition, points d'attention
 12. **[12-checklist-demarrage.md](./12-checklist-demarrage.md)** — TODO concret pour démarrer
+13. **[21-registre-routes-promesses.md](./21-registre-routes-promesses.md)** — état vérifié des routes, promesses et compatibilités
+14. **[22-architecture-agenda-marches-decouvrir.md](./22-architecture-agenda-marches-decouvrir.md)** — conception des trois modules confirmés
 
 ## Principes directeurs du projet
 

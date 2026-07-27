@@ -16,7 +16,13 @@ import type {
   Category,
   Commune,
   CurrentUser,
+  EventCategory,
+  EventDetail,
+  EventListItem,
   Paginated,
+  PlaceCategory,
+  PlaceDetail,
+  PlaceListItem,
   SearchResponse,
   Tag,
   Tile,
@@ -104,6 +110,47 @@ export const api = {
       apiGet<ArticleDetail>(`/api/articles/${slug}/`, {
         revalidate: 3600,
         tags: ["articles", `article:${slug}`],
+      }),
+  },
+
+  // Agenda (les marchés utilisent le même endpoint avec kind=market)
+  events: {
+    list: (params: Record<string, string | number | boolean | undefined> = {}) => {
+      const qs = buildQuery(params);
+      return apiGet<Paginated<EventListItem>>(`/api/events/${qs}`, {
+        revalidate: 60,
+        tags: ["events"],
+      });
+    },
+    detail: (slug: string) =>
+      apiGet<EventDetail>(`/api/events/${slug}/`, {
+        revalidate: 300,
+        tags: ["events", `event:${slug}`],
+      }),
+    categories: () =>
+      apiGet<EventCategory[]>("/api/event-categories/", {
+        revalidate: 3600,
+        tags: ["event-categories"],
+      }),
+  },
+
+  discovery: {
+    list: (params: Record<string, string | number | boolean | undefined> = {}) => {
+      const qs = buildQuery(params);
+      return apiGet<Paginated<PlaceListItem>>(`/api/places/${qs}`, {
+        revalidate: 300,
+        tags: ["places"],
+      });
+    },
+    detail: (slug: string) =>
+      apiGet<PlaceDetail>(`/api/places/${slug}/`, {
+        revalidate: 600,
+        tags: ["places", `place:${slug}`],
+      }),
+    categories: () =>
+      apiGet<PlaceCategory[]>("/api/place-categories/", {
+        revalidate: 3600,
+        tags: ["place-categories"],
       }),
   },
 

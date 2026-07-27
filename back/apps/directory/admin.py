@@ -32,9 +32,9 @@ class BusinessAdmin(GISModelAdmin):
     }
     list_display = (
         "name", "category", "commune", "plan",
-        "is_published", "is_claimed", "owner",
+        "is_published", "is_local_producer", "is_claimed", "owner",
     )
-    list_filter = ("plan", "is_published", "is_claimed", "is_featured", "commune", "category")
+    list_filter = ("plan", "is_published", "is_local_producer", "is_claimed", "is_featured", "commune", "category")
     search_fields = ("name", "legal_name", "siret", "short_description", "description")
     prepopulated_fields = {"slug": ("name",)}
     raw_id_fields = ("commune", "owner", "category")
@@ -79,7 +79,7 @@ class BusinessAdmin(GISModelAdmin):
             "fields": ("owner", "is_claimed"),
         }),
         ("Workflow", {
-            "fields": ("is_published", "is_featured"),
+            "fields": ("is_published", "is_featured", "is_local_producer"),
         }),
         ("SEO", {
             "classes": ("collapse",),

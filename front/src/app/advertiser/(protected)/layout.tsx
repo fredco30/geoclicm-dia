@@ -68,7 +68,7 @@ export default async function AdvertiserProtectedLayout({
             disabled
           >
             Statistiques
-            <span className="ml-auto text-[10px] text-slate-400">bientôt</span>
+            <span className="ml-auto text-[10px] text-slate-400">prévu</span>
           </NavLink>
         </nav>
         <div className="mt-auto pt-4">

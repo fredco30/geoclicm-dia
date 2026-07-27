@@ -1,4 +1,4 @@
-import { describeWeatherCode, getWeatherIcon } from "@/lib/weather";
+import { describeWeatherCode, renderWeatherIcon } from "@/lib/weather";
 
 type Props = {
   code: number | null | undefined;
@@ -17,7 +17,11 @@ export function WeatherIcon({
   withLabel = false,
 }: Props) {
   const { label, iconKey } = describeWeatherCode(code, isDay);
-  const Icon = getWeatherIcon(iconKey);
+  const icon = renderWeatherIcon(iconKey, {
+    className,
+    size,
+    "aria-hidden": true,
+  });
 
   return (
     <span
@@ -25,7 +29,7 @@ export function WeatherIcon({
       title={label}
       aria-label={label}
     >
-      <Icon className={className} size={size} aria-hidden />
+      {icon}
       {withLabel ? <span className="text-sm">{label}</span> : null}
     </span>
   );

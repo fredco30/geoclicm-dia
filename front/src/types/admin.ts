@@ -1,10 +1,13 @@
 /** Types côté admin (back-office). */
 import type {
   ArticleStatus,
+  EventDetail,
   ImageVariants,
   UsefulContactKind,
   UsefulContactType,
 } from "./api";
+
+export type AdminEvent = EventDetail;
 
 // ============================================================================
 // Assistant IA — sources à crawler (admin only)
@@ -211,6 +214,7 @@ export type AdminBusinessListItem = {
   plan: BusinessPlan;
   is_published: boolean;
   is_featured: boolean;
+  is_local_producer: boolean;
   is_claimed: boolean;
   created_at: string;
   updated_at: string;
@@ -283,6 +287,7 @@ export type AdminBusinessPayload = {
   is_claimed: boolean;
   is_published: boolean;
   is_featured: boolean;
+  is_local_producer: boolean;
   meta_description: string;
 };
 

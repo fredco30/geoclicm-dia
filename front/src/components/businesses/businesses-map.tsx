@@ -43,10 +43,11 @@ export function BusinessesMap({
   );
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    const container = containerRef.current;
+    if (!container || mapRef.current) return;
 
     const map = new maplibregl.Map({
-      container: containerRef.current,
+      container,
       style: OSM_STYLE,
       center: defaultCenter,
       zoom: defaultZoom,
@@ -113,10 +114,10 @@ export function BusinessesMap({
         router.push(url.pathname);
       }
     };
-    container_addListener(containerRef.current, onClick);
+    container_addListener(container, onClick);
 
     return () => {
-      container_removeListener(containerRef.current, onClick);
+      container_removeListener(container, onClick);
       for (const m of markers) m.remove();
       map.remove();
       mapRef.current = null;

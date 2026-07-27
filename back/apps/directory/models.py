@@ -155,6 +155,11 @@ class Business(models.Model):
     # --- Workflow ---
     is_published = models.BooleanField(default=False, db_index=True)
     is_featured = models.BooleanField(default=False)
+    is_local_producer = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Affiche cette fiche dans le module Marchés & producteurs.",
+    )
 
     # --- SEO ---
     meta_description = models.CharField(max_length=160, blank=True)

@@ -51,6 +51,8 @@ export function ArticleBody({ content }: Props) {
             </blockquote>
           ),
           img: ({ src, alt }) => (
+            // Images éditoriales distantes : dimensions inconnues dans le Markdown.
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={src as string}
               alt={alt || ""}

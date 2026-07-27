@@ -111,8 +111,7 @@ function renderInline(text: string): React.ReactNode {
 
 function renderEmphasis(text: string, keyBase: number): React.ReactNode {
   // **gras** puis *italique* — passes successives
-  const segments: React.ReactNode[] = [];
-  let working = text;
+  const working = text;
   let counter = 0;
 
   // **gras**

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { AIAdHeadlineButton } from "@/components/admin/ai-ad-headline-button";
-import type { Commune } from "@/types/api";
+import type { AdPlacement, Commune } from "@/types/api";
 import type {
   AdminAdCampaignDetail,
   AdminAdCampaignPayload,
@@ -28,17 +28,22 @@ type Props = {
   mode?: "admin" | "advertiser";
 };
 
-const PLACEMENTS: { value: string; label: string; help: string }[] = [
-  { value: "home_hero", label: "Page d'accueil — Hero", help: "Bandeau principal en haut de la home." },
-  { value: "home_sidebar", label: "Page d'accueil — Sidebar", help: "Encart entre articles et commerces partenaires." },
-  { value: "article_inline", label: "Article — Inline", help: "Encart en fin d'article (avant les tags)." },
-  { value: "article_sidebar", label: "Article — Sidebar", help: "Sidebar des articles (réservé desktop)." },
-  { value: "directory_top", label: "Annuaire — Top", help: "Encart en haut de /commerces (sous filtres)." },
-  { value: "directory_inline", label: "Annuaire — Inline", help: "Encart entre les fiches commerçants." },
-  { value: "agenda_top", label: "Agenda — Top", help: "Encart en haut de l'agenda événements (futur)." },
-  { value: "weather_top", label: "Météo — Top", help: "Encart en haut de /meteo, au-dessus du bloc météo actuelle. Très haut trafic récurrent (locaux + touristes)." },
-  { value: "weather_sidebar", label: "Météo — Sidebar", help: "Sidebar de /meteo (desktop) / fin de page mobile. Visibilité prolongée pendant la lecture des prévisions 7 jours." },
-  { value: "newsletter", label: "Newsletter", help: "Encart inclus dans la newsletter mensuelle." },
+const PLACEMENTS: {
+  value: AdPlacement;
+  label: string;
+  help: string;
+  available: boolean;
+}[] = [
+  { value: "home_hero", label: "Page d'accueil — Hero", help: "Emplacement non intégré dans la page actuelle.", available: false },
+  { value: "home_sidebar", label: "Page d'accueil — Sidebar", help: "Encart entre articles et commerces partenaires.", available: true },
+  { value: "article_inline", label: "Article — Inline", help: "Encart en fin d'article (avant les tags).", available: true },
+  { value: "article_sidebar", label: "Article — Sidebar", help: "Emplacement non intégré dans la page article actuelle.", available: false },
+  { value: "directory_top", label: "Annuaire — Top", help: "Encart en haut de /commerces (sous filtres).", available: true },
+  { value: "directory_inline", label: "Annuaire — Inline", help: "Emplacement non intégré dans l'annuaire actuel.", available: false },
+  { value: "agenda_top", label: "Agenda — Top", help: "Encart sous les filtres de la page Agenda.", available: true },
+  { value: "weather_top", label: "Météo — Top", help: "Encart en haut de la page météo d'une commune.", available: true },
+  { value: "weather_sidebar", label: "Météo — Sidebar", help: "Encart en fin de page météo sur mobile et dans la colonne secondaire sur desktop.", available: true },
+  { value: "newsletter", label: "Newsletter", help: "Newsletter non livrée : cet emplacement ne diffuse rien.", available: false },
 ];
 
 function readCsrfToken(): string | null {
@@ -107,6 +112,16 @@ export function AdCampaignForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const selectedPlacement = PLACEMENTS.find(
+      (placement) => placement.value === form.placement,
+    );
+    if (!selectedPlacement?.available && form.is_active) {
+      setError(
+        "Cet emplacement n'est pas intégré dans le site actuel. Désactivez la campagne ou choisissez un emplacement diffusé.",
+      );
+      return;
+    }
 
     const startsIso = localToIso(form.starts_at);
     const endsIso = localToIso(form.ends_at);
@@ -306,13 +321,23 @@ export function AdCampaignForm({
                 update("placement", e.target.value as typeof form.placement)
               }
             >
-              {PLACEMENTS.map((p) => (
+              {PLACEMENTS.filter(
+                (placement) =>
+                  placement.available || placement.value === form.placement,
+              ).map((p) => (
                 <option key={p.value} value={p.value}>
                   {p.label}
+                  {p.available ? "" : " — non diffusé actuellement"}
                 </option>
               ))}
             </Select>
-            <p className="text-xs text-slate-500">
+            <p
+              className={`text-xs ${
+                PLACEMENTS.find((p) => p.value === form.placement)?.available
+                  ? "text-slate-500"
+                  : "text-amber-700"
+              }`}
+            >
               {PLACEMENTS.find((p) => p.value === form.placement)?.help}
             </p>
           </div>

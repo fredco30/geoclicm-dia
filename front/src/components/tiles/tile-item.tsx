@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 import { TILE_COLOR_PRESETS } from "@/lib/tile-presets";
-import { getTileIcon } from "@/lib/tile-icons";
+import { renderTileIcon } from "@/lib/tile-icons";
 import type { Tile, TileChild } from "@/types/api";
 
 type Props = {
@@ -28,7 +28,12 @@ type Props = {
  */
 export function TileItem({ tile, pathPrefix = "", className = "" }: Props) {
   const preset = TILE_COLOR_PRESETS[tile.color] ?? TILE_COLOR_PRESETS.camargue;
-  const Icon = tile.icon ? getTileIcon(tile.icon) : null;
+  const icon = tile.icon
+    ? renderTileIcon(tile.icon, {
+        className: "h-8 w-8 sm:h-10 sm:w-10",
+        "aria-hidden": true,
+      })
+    : null;
 
   // Aspect ratio adapté au span : une tuile span_2x doit faire 2 colonnes
   // de large mais 1 ligne de haut (rectangle 2:1) — sans ça, aspect-square
@@ -53,9 +58,7 @@ export function TileItem({ tile, pathPrefix = "", className = "" }: Props) {
       ) : null}
 
       <div className="relative flex flex-col items-center gap-2">
-        {Icon ? (
-          <Icon className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden />
-        ) : (
+        {icon ?? (
           <span className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden />
         )}
         <span className="px-1 text-sm font-medium leading-tight sm:text-base">

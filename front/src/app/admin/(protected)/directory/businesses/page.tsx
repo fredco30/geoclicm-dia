@@ -94,6 +94,11 @@ export default async function BusinessesPage() {
                             {b.is_featured ? (
                               <Star className="ml-1 inline h-3.5 w-3.5 text-amber-500" />
                             ) : null}
+                            {b.is_local_producer ? (
+                              <span className="ml-2 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-800">
+                                Producteur
+                              </span>
+                            ) : null}
                           </div>
                           <div className="text-xs text-slate-500">{b.city}</div>
                         </div>

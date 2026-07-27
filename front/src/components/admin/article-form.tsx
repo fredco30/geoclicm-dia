@@ -55,7 +55,6 @@ const ARTICLE_TYPES = [
 
 const STATUSES = [
   { value: "draft", label: "Brouillon" },
-  { value: "scheduled", label: "Programmé" },
   { value: "published", label: "Publié" },
   { value: "archived", label: "Archivé" },
 ];
@@ -98,6 +97,13 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (form.status === "scheduled") {
+      setError(
+        "La publication programmée n'est pas encore implémentée. Choisissez Brouillon ou Publié.",
+      );
+      return;
+    }
 
     // S'assurer d'avoir un csrftoken (le cookie est posé au login)
     let csrf = readCsrfToken();
@@ -143,7 +149,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
         const saved = (await res.json()) as { slug: string };
         router.push(`/admin/articles/${saved.slug}/edit`);
         router.refresh();
-      } catch (err) {
+      } catch {
         setError("Erreur réseau, réessaie.");
       }
     });
@@ -285,12 +291,24 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 value={form.status}
                 onChange={(e) => update("status", e.target.value)}
               >
+                {article?.status === "scheduled" ? (
+                  <option value="scheduled">
+                    Programmé (hérité — publication automatique indisponible)
+                  </option>
+                ) : null}
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.label}
                   </option>
                 ))}
               </Select>
+              {form.status === "scheduled" ? (
+                <p className="text-xs text-amber-700">
+                  Ce statut ancien ne possède ni date de programmation ni
+                  tâche de publication. Choisissez Brouillon ou Publié avant
+                  d&apos;enregistrer.
+                </p>
+              ) : null}
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-700">

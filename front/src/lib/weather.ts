@@ -7,7 +7,8 @@
  *
  * Doc complète : https://open-meteo.com/en/docs#weathervariables
  */
-import type { LucideIcon } from "lucide-react";
+import { createElement, type ReactElement } from "react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 import {
   Cloud,
   CloudDrizzle,
@@ -54,6 +55,13 @@ const ICON_MAP: Record<WeatherIconKey, LucideIcon> = {
 
 export function getWeatherIcon(key: WeatherIconKey): LucideIcon {
   return ICON_MAP[key];
+}
+
+export function renderWeatherIcon(
+  key: WeatherIconKey,
+  props: LucideProps,
+): ReactElement {
+  return createElement(getWeatherIcon(key), props);
 }
 
 export function describeWeatherCode(

@@ -12,7 +12,8 @@
  * Si un admin renseigne un nom non listé ici dans le champ icon, la tuile
  * affiche un fallback (?).
  */
-import type { LucideIcon } from "lucide-react";
+import { createElement, type ReactElement } from "react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 import {
   AlertTriangle,
   Anchor,
@@ -106,4 +107,12 @@ export const CURATED_ICON_NAMES = Object.keys(TILE_ICONS);
 
 export function getTileIcon(name: string): LucideIcon | null {
   return TILE_ICONS[name] ?? null;
+}
+
+export function renderTileIcon(
+  name: string,
+  props: LucideProps,
+): ReactElement | null {
+  const icon = getTileIcon(name);
+  return icon ? createElement(icon, props) : null;
 }

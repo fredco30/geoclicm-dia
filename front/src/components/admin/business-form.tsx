@@ -132,6 +132,7 @@ export function BusinessForm({
     is_claimed: business?.is_claimed ?? false,
     is_published: business?.is_published ?? false,
     is_featured: business?.is_featured ?? false,
+    is_local_producer: business?.is_local_producer ?? false,
     meta_description: business?.meta_description ?? "",
   });
 
@@ -224,6 +225,7 @@ export function BusinessForm({
           is_claimed: form.is_claimed,
           is_published: form.is_published,
           is_featured: form.is_featured,
+          is_local_producer: form.is_local_producer,
         };
 
     let csrf = readCsrfToken();
@@ -505,7 +507,6 @@ export function BusinessForm({
               getCurrentCategoryId={() => form.category}
               getCurrentCommuneId={() => form.commune}
               getExistingShortDescription={() => form.short_description}
-              getExistingDescription={() => form.description}
               getExistingSpecialties={() =>
                 form.specialties_text
                   .split(",")
@@ -885,6 +886,15 @@ export function BusinessForm({
                   className="h-4 w-4 rounded border-slate-300"
                 />
                 Mise en avant (homepage, listings)
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.is_local_producer}
+                  onChange={(e) => update("is_local_producer", e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                Producteur local (visible dans Marchés &amp; producteurs)
               </label>
               <label className="flex items-center gap-2 text-sm text-slate-700">
                 <input
