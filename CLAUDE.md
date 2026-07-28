@@ -6,6 +6,14 @@
 
 ---
 
+> **Reprise obligatoire** : lire d'abord
+> [`docs/24-continuite-projet.md`](docs/24-continuite-projet.md), puis le
+> registre `docs/21-registre-routes-promesses.md`. Le 28 juillet 2026, Agenda,
+> Marchés, Découvrir et le pipeline Crawl4AI → JSON-LD → repli Mistral → boîte
+> « À valider » sont déployés, mais aucune `EventSource` n'est encore configurée
+> et aucun crawl métier n'a été exécuté. Ne jamais présenter le moteur déployé
+> comme une collecte déjà active.
+
 ## Le projet en 30 secondes
 
 - **Quoi** : média local + annuaire commerces + assistant IA pour le

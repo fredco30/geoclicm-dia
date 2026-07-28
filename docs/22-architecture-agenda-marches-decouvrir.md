@@ -162,3 +162,23 @@ producteur ou revendeur.
   heure d'été/hiver ;
 - pages publiques, sitemap et JSON-LD sont validés ;
 - migrations et smoke tests passent avant activation du seed.
+
+## 6. Pipeline de collecte livré le 27 juillet 2026
+
+L'Agenda dispose maintenant de trois connecteurs administrables : JSON-LD,
+Crawl4AI et ICS. Pour les pages web, le JSON-LD `Event` est toujours prioritaire.
+Mistral n'intervient qu'en repli lorsque le connecteur Crawl4AI a réellement
+rendu des pages et qu'aucun événement JSON-LD n'a été trouvé sur le crawl.
+
+Chaque résultat devient un `EventImportCandidate`. Les nouveaux candidats
+restent dans `/admin/agenda/imports` jusqu'à approbation ou rejet humain. Une
+approbation exige catégorie, commune, début et fin. Chaque exécution est tracée
+dans `EventImportRun` avec ses compteurs et erreurs.
+
+L'image officielle est synchronisée dans `source_cover_image`. Une image
+chargée manuellement dans `cover_image` reste prioritaire à l'affichage.
+
+État de production au 28 juillet : infrastructure déployée et saine, tâche
+toutes les six heures active, mais `0` source et `0` import. Voir
+[`24-continuite-projet.md`](./24-continuite-projet.md) pour la procédure du
+premier crawl et les critères de validation.

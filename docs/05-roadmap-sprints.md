@@ -169,3 +169,7 @@ Une feature n'est livrée que si :
 - Tableau de bord audience consulté chaque lundi
 - Feedback annonceurs collecté systématiquement
 - Hypothèses business validées ou invalidées explicitement
+
+> **Mise à jour du 28 juillet 2026** : ce calendrier est historique. Plusieurs
+> lots ont été livrés dans un ordre différent. L'état réel et la feuille de
+> route active sont dans [`24-continuite-projet.md`](./24-continuite-projet.md).

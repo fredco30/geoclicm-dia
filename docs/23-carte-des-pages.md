@@ -183,3 +183,23 @@ plus `/api/ai-assist/`.
 - `21-registre-routes-promesses.md` — routes promises vs livrées
 - `22-architecture-agenda-marches-decouvrir.md` — détail de l'agenda
 - `19-plan-refonte-portail-v2.md` — chantier « pattern city »
+
+## Addendum routes Agenda — 28 juillet 2026
+
+Les routes suivantes ont été ajoutées après l'inventaire initial :
+
+| URL | Accès | Rôle |
+|---|---|---|
+| `/admin/agenda/sources` | éditeur/admin | Créer les sources officielles et lancer une collecte |
+| `/admin/agenda/imports` | éditeur/admin | Corriger, approuver ou rejeter les candidats |
+| `/api/events/map/` | public | Événements géolocalisés, filtre `bbox` facultatif |
+| `/api/events/<slug>/calendar.ics` | public | Export calendrier d'un événement |
+| `/api/admin/event-sources/` | éditeur/admin | CRUD des sources Agenda |
+| `/api/admin/event-sources/<id>/run/` | éditeur/admin | Lancement asynchrone via Celery |
+| `/api/admin/event-imports/` | éditeur/admin | Liste et correction des candidats |
+| `/api/admin/event-imports/<id>/approve/` | éditeur/admin | Approbation et publication |
+| `/api/admin/event-imports/<id>/reject/` | éditeur/admin | Rejet du candidat |
+
+Ces routes sont déployées sur le commit `7319f40`. Au 28 juillet, les deux
+routes admin redirigent normalement vers l'authentification sans session et la
+base ne contient encore aucune source Agenda.

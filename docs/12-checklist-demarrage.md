@@ -231,3 +231,7 @@ TODO concret pour passer de la réflexion à l'action. À cocher au fur et à me
 - **Au démarrage de chaque sprint** : revérifier les pré-requis
 - **À chaque milestone** : valider les critères de succès
 - **En cas de blocage** : retrouver le contexte rapidement
+
+> **Mise à jour du 28 juillet 2026** : cette checklist est historique. Une case
+> ne remplace pas une vérification du code ou de la production. Utiliser
+> [`24-continuite-projet.md`](./24-continuite-projet.md) pour la reprise.
