@@ -92,3 +92,29 @@ l'un d'eux reste éditable avec un avertissement « non diffusé actuellement »
   trois routes confirmées soient livrées dans le même déploiement.
 - Chaque passage **MASQUÉE → LIVRÉE** exige lint, typage, build, tests backend,
   migration contrôlée si nécessaire, puis smoke test sur l'interface cible.
+
+## Mise à jour de production — 28 juillet 2026
+
+Cette section remplace les mentions « livrée localement » de l'audit du
+26 juillet lorsque les éléments suivants sont concernés.
+
+| Élément | État vérifié | Décision actuelle |
+|---|---|---|
+| `/agenda`, `/agenda/[slug]` et ICS | Déployés, API et page à `200` | **LIVRÉS** |
+| `/marches` | Déployé et smoke test à `200` | **LIVRÉ** ; contenu métier à qualifier |
+| `/decouvrir` et détail | Déployés, API et page à `200` | **LIVRÉS** ; contenu métier à charger |
+| `/admin/agenda/sources` | Route déployée, redirection auth `307` attendue | **LIVRÉE**, mais aucune source configurée |
+| `/admin/agenda/imports` | Route déployée, redirection auth `307` attendue | **LIVRÉE**, boîte vide avant premier crawl |
+| Crawl4AI | Conteneur `running/healthy`, appel anonyme `/crawl` refusé `401` | **LIVRÉ et protégé par JWT** |
+| JSON-LD puis repli Mistral | Pipeline présent, Mistral configuré | **LIVRÉ**, à valider sur une vraie source |
+| Synchronisation toutes les 6 h | Tâche Celery Beat présente et activée | **LIVRÉE**, sans effet tant que `EventSource=0` |
+| Image officielle + remplacement admin | Deux champs source/manuelle et priorité manuelle présents | **LIVRÉ**, à tester sur une vraie image |
+
+État de données constaté : `0` source, `0` exécution d'import et `0` candidat.
+Le prochain lot n'est donc pas un nouveau moteur de crawl, mais l'activation
+contrôlée de sources officielles et la validation métier du premier cycle.
+
+Les décisions de conservation restent inchangées pour `/newsletter`, la
+programmation éditoriale, Meta, DataTourisme, les statistiques annonceur, les
+factures PDF et les compatibilités publicitaires. Aucun retrait ne doit être
+fait sans audit des données et des logs.

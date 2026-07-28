@@ -21,6 +21,11 @@ Cette documentation regroupe toute la réflexion menée en amont du développeme
 13. **[21-registre-routes-promesses.md](./21-registre-routes-promesses.md)** — état vérifié des routes, promesses et compatibilités
 14. **[22-architecture-agenda-marches-decouvrir.md](./22-architecture-agenda-marches-decouvrir.md)** — conception des trois modules confirmés
 
+## Reprise actuelle
+
+- **[23-carte-des-pages.md](./23-carte-des-pages.md)** — inventaire des routes web et API
+- **[24-continuite-projet.md](./24-continuite-projet.md)** — état courant, exploitation et feuille de route
+
 ## Principes directeurs du projet
 
 - **Indépendance** : ne plus dépendre uniquement de Facebook, capturer la valeur en propre
@@ -42,3 +47,11 @@ Django 5 + DRF + PostgreSQL/PostGIS + Celery + Redis (back) — Next.js 15 + Tai
 ## Statut documentation
 
 Document de référence rédigé en mai 2026 avant démarrage dev. À mettre à jour au fur et à mesure des décisions et changements pendant les sprints.
+
+Les documents `01` à `12` décrivent principalement la vision et le plan
+initial. Ils restent utiles comme historique, mais ne suffisent pas pour
+conclure qu'une fonctionnalité existe.
+
+Pour reprendre le développement, lire d'abord `24-continuite-projet.md`, puis
+consulter `21`, `22` et `23`. Le document `24` distingue le code déployé, la
+configuration de production et les actions métier encore à faire.

@@ -175,3 +175,53 @@ Si tu vois `Congratulations, all renewals succeeded`, tout est OK.
 - [ ] `ls /var/backups/geoclicmedia/ | wc -l` : 14 fichiers (1 par jour, rétention OK)
 - [ ] `sudo certbot certificates` : expire dans plus de 30 jours
 - [ ] `sudo journalctl -u geoclicmedia-django --since "7 days ago" -p err` : pas d'erreurs critiques
+
+## Mise à jour d'exploitation — 28 juillet 2026
+
+### Sauvegardes : correction importante
+
+Le script `/usr/local/bin/geoclicmedia-backup-pg` est installé et deux backups
+manuels du 27 juillet ont été constatés. En revanche, aucune crontab `ubuntu`,
+aucune crontab root et aucun timer systemd associé n'ont été trouvés.
+
+La sauvegarde quotidienne n'est donc **pas automatisée à ce jour**. Après mise
+en place de la planification, vérifier le lendemain la création réelle d'un
+nouveau fichier, puis tester une restauration dans une base séparée.
+
+Contrôle de la planification :
+
+```bash
+crontab -l
+sudo crontab -l
+sudo systemctl list-timers --all | grep -i geoclicmedia
+```
+
+### Agenda et Crawl4AI
+
+```bash
+# Services de collecte
+sudo systemctl is-active geoclicmedia-celery-worker
+sudo systemctl is-active geoclicmedia-celery-beat
+sudo docker inspect -f '{{.State.Status}}/{{if .State.Health}}{{.State.Health.Status}}{{end}}' geoclicmedia-crawl4ai
+
+# Logs des dernières 24 heures
+sudo journalctl -u geoclicmedia-celery-worker --since "24 hours ago" --no-pager
+sudo journalctl -u geoclicmedia-celery-beat --since "24 hours ago" --no-pager
+sudo docker logs --since 24h geoclicmedia-crawl4ai
+
+# Une requête anonyme doit être refusée
+curl -sS -o /dev/null -w "%{http_code}\n" \
+  -X POST http://127.0.0.1:11235/crawl \
+  -H 'Content-Type: application/json' \
+  -d '{"urls":["https://example.com"]}'
+```
+
+Le dernier code attendu est `401`. Ne jamais afficher les tokens ou secrets
+dans les logs, la documentation ou une commande copiée dans une conversation.
+
+### Risque système
+
+Le VPS a été vérifié sous Ubuntu 25.04, version hors support. Préparer une mise
+à niveau avec sauvegarde restaurable, inventaire des services, fenêtre de
+maintenance et smoke tests complets. Ne pas mélanger cette opération avec un
+lot fonctionnel Agenda.

@@ -509,3 +509,67 @@ Si OK, le projet entre en **mode maintenance / phase pilote** : pas de gros lot 
 - **Blocages/fixes** : utile pour ne pas refaire les mêmes erreurs sur les sprints suivants.
 - **Pas de secrets** ici (mots de passe, SECRET_KEY, tokens) — ce fichier est committé public-ready.
 - **Mise à jour à la fin de chaque ÉTAPE validée**, pas en cours d'étape.
+
+---
+
+## Agenda, Marchés, Découvrir et collecte officielle — juillet 2026
+
+**Lots mergés et déployés** : PR `#68` à `#73`
+**État de production vérifié** : 28 juillet 2026
+**Commit production** : `7319f4080b91da73a692135c9cd3dbb800e8d45d`
+
+### Fonctionnalités livrées
+
+- Agenda complet : catégories, événements, occurrences explicites, CRUD admin,
+  filtres publics, détail, carte et export ICS.
+- Marchés composés depuis les événements `kind=market` et les commerces marqués
+  `is_local_producer`.
+- Découvrir : catégories, lieux, relations éditoriales, CRUD et pages publiques.
+- Sources Agenda administrables avec connecteurs JSON-LD, Crawl4AI et ICS.
+- JSON-LD `Event` prioritaire ; repli Mistral structuré uniquement en absence de
+  JSON-LD sur des pages rendues par Crawl4AI.
+- Boîte admin **À valider** obligatoire avant toute publication.
+- Journal `EventImportRun`, dédoublonnage, statuts incomplet/doublon/rejeté/importé.
+- Image officielle synchronisée automatiquement, avec remplacement manuel
+  prioritaire depuis l'admin.
+- Service Crawl4AI isolé sur `127.0.0.1:11235`, image `0.8.5`, ressources
+  limitées et authentification JWT.
+- Tâche Celery Beat de synchronisation des sources actives toutes les six heures.
+
+### Validation production
+
+- Git VPS et `origin/main` alignés, écart `0/0`.
+- Migrations Agenda appliquées et `manage.py check` sans erreur.
+- Django, Next, Celery worker/beat, Nginx, PostgreSQL et Redis actifs.
+- Crawl4AI `running/healthy`, accès anonyme `/crawl` refusé en `401`.
+- `/healthz/`, `/api/events/`, `/agenda`, `/marches` et `/decouvrir` à `200`.
+- routes admin Agenda à `307` hors session, comportement attendu.
+- Mistral et l'identité technique Crawl4AI configurés.
+
+### Point non terminé
+
+La production contient `0` source Agenda, `0` candidat et `0` exécution
+d'import. Le code est déployé, mais le premier crawl d'un site officiel et la
+validation métier réelle restent à faire.
+
+MiaMapa reste une référence d'expérience utilisateur, pas une source intégrée.
+Les sources prévues sont les sites officiels des villes, offices de tourisme et
+organisateurs, sous réserve de droits de réutilisation documentés.
+
+### Exploitation constatée
+
+- Ubuntu 25.04 hors support : upgrade à préparer séparément.
+- Deux sauvegardes PostgreSQL manuelles présentes.
+- Script `/usr/local/bin/geoclicmedia-backup-pg` installé.
+- Aucune planification cron ou timer trouvée : la sauvegarde quotidienne reste
+  à automatiser et à tester par restauration.
+
+### Prochaine étape validée par la logique produit
+
+Configurer une première source officielle dans `/admin/agenda/sources`, lancer
+le crawl, examiner le journal, corriger les candidats dans **À valider**, tester
+l'image officielle et son remplacement, publier un événement, puis vérifier la
+carte et l'idempotence au second passage.
+
+La procédure complète et la feuille de route sont dans
+`24-continuite-projet.md`.
