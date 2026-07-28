@@ -1,6 +1,11 @@
 # 24 — Continuité du projet GeoClic Média
 
-**Document canonique de reprise — vérifié le 28 juillet 2026.**
+**Historique de continuité vérifié jusqu'au 28 juillet 2026.**
+
+> Pour une nouvelle session ou un autre LLM, lire d'abord
+> [`25-reprise-llm.md`](./25-reprise-llm.md). Il contient l'état Git et
+> production vérifié le 29 juillet 2026. Les mentions ci-dessous indiquant
+> qu'OVH n'est pas déployé ou qu'aucune source Agenda n'existe sont historiques.
 
 Ce document distingue ce qui existe dans le code, ce qui a été vérifié en
 production, ce qui est déployé mais pas encore configuré, ce qui reste à
@@ -15,7 +20,7 @@ Il ne contient aucun secret.
 | Domaine | `https://media.geoclic.fr` |
 | Répertoire VPS | `/var/www/geoclicmedia` |
 | Branche de production | `main` |
-| Commit déployé et `origin/main` | `7319f4080b91da73a692135c9cd3dbb800e8d45d` |
+| Commit déployé et `origin/main` | `4ee16d4` |
 | Écart Git constaté | `0` commit en avance, `0` en retard |
 | Système vérifié | Ubuntu 25.04 |
 | Stockage vérifié | 72 Gio, 23 Gio utilisés, 49 Gio disponibles |
@@ -63,17 +68,17 @@ anonyme à `POST /crawl` renvoie `401`, confirmant la protection JWT.
 - la tâche Celery Beat
   `Agenda — synchronisation des sources toutes les 6 h` existe et est activée.
 
-### Contenu Agenda encore absent
+### Contenu Agenda — état actualisé le 29 juillet 2026
 
-Au moment de la vérification :
+- `EventSource` : **1**, source `ot le grau du roi` ;
+- corpus partagé : **1045** pages actives ;
+- extraction OVH en cours lors du relevé : **386/510** segments ;
+- événements dans le cache intermédiaire : **378** ;
+- candidats et événements publiés : **0**.
 
-- `EventSource` : **0** ;
-- candidats en attente ou incomplets : **0** ;
-- exécutions d'import : **0**.
-
-Conclusion : le moteur et l'interface sont déployés, mais aucun site officiel
-n'a encore été enregistré et aucun crawl métier n'a été lancé. Ne pas confondre
-« fonctionnalité déployée » et « collecte initialisée ».
+La boîte **À valider** reste vide jusqu'à la consolidation finale dans
+l'architecture actuelle. Voir `25-reprise-llm.md` pour l'explication et le
+chantier de création progressive des candidats.
 
 ## 3. Architecture fonctionnelle actuelle
 
@@ -508,8 +513,8 @@ candidats **A valider**.
 
 ## 15. Passerelle OVHcloud et extraction Agenda reprenable
 
-Branche locale : `codex/feat-ovh-agenda-extraction`, base `b1be020`. Ce lot
-n'est ni pousse, ni merge, ni deploye tant que son diff n'a pas ete valide.
+Lot fusionné par les PR `#80` et `#81`, déployé sur `main` au commit
+`4ee16d4`. Les valeurs et mesures ci-dessous ont été vérifiées en production.
 
 Decision fournisseur :
 
@@ -544,7 +549,7 @@ Traitement retenu :
 - un timeout n'arrete plus les segments suivants ;
 - le délai OVH est borné à 100 secondes et 2 tentatives : les réponses riches
   observées autour de 87 secondes restent acceptées, tandis qu'un segment
-  indisponible ne bloque plus le pipeline pendant plus de 6 minutes ;
+  indisponible est abandonné après environ 203 secondes au maximum ;
 - la relance ne traite que les segments absents du cache ou modifies ;
 - les occurrences dupliquees par le chevauchement sont fusionnees ;
 - provenance URL et preuves textuelles restent verifiees ;

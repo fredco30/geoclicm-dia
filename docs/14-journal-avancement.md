@@ -580,13 +580,16 @@ La procédure complète et la feuille de route sont dans
 
 **Branche locale** : `codex/feat-ovh-agenda-extraction`
 **Base** : `b1be020`
-**Etat** : developpe et valide localement, non pousse, non merge, non deploye.
+**État historique au moment de l'écriture** : développé et validé localement.
+Le lot a ensuite été fusionné par les PR `#80` et `#81`, puis déployé au commit
+`4ee16d4`.
 
 - Passerelle compatible OpenAI reutilisable par les generations GeoClic.
 - OVHcloud `Qwen3.5-9B` retenu pour l'Agenda, sans migration des embeddings.
 - Cache par segment et reprise apres erreur sans retraiter les succes.
 - Segments de 12 000 caracteres avec chevauchement et fusion des occurrences.
-- Trois tentatives, timeout lecture 120 secondes et raisonnement desactive.
+- Réglage initial : trois tentatives et timeout lecture 120 secondes. La
+  production utilise désormais deux tentatives et 100 secondes.
 - Progression et erreurs visibles avec actualisation automatique dans l'admin.
 - Ancienne methode candidat `mistral` migree vers la methode generique `ai`.
 - Test reel OVH : HTTP 200, JSON valide en 2,07 secondes.
@@ -600,3 +603,24 @@ n'est ajoute au depot.
 - un segment indisponible a consommé 363,5 s avec `120 s x 3` ;
 - nouveau compromis : `100 s x 2`, soit environ 203 s au pire avec la pause
   entre les tentatives, sans exclure les réponses riches déjà observées.
+
+---
+
+## Reprise LLM et état live Agenda — 29 juillet 2026
+
+**Production vérifiée** : commit `4ee16d4`, PR `#80` et `#81` fusionnées.
+
+- services Django, Next.js, Celery worker et beat actifs ;
+- healthcheck public opérationnel ;
+- source `ot le grau du roi` reliée au corpus partagé de `1045` pages actives ;
+- extraction OVH `Qwen3.5-9B` en cours : `386/510` segments réussis,
+  `1` échec et `378` événements dans le cache au moment du relevé ;
+- aucun candidat ni événement publié à ce stade ;
+- cause du vide dans **À valider** confirmée : les candidats ne sont créés
+  qu'après la fin de l'extraction, la fusion et la normalisation ;
+- document prioritaire ajouté :
+  [`25-reprise-llm.md`](./25-reprise-llm.md).
+
+Prochain chantier recommandé : création progressive et idempotente des
+candidats, avec un statut provisoire jusqu'à la consolidation finale, sans
+affaiblir la validation humaine ni le dédoublonnage.

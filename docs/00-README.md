@@ -23,8 +23,12 @@ Cette documentation regroupe toute la réflexion menée en amont du développeme
 
 ## Reprise actuelle
 
+- **[25-reprise-llm.md](./25-reprise-llm.md)** — point d'entrée prioritaire
+  pour reprendre avec un LLM : état Git/production, crawl OVH, commandes,
+  limites connues et prochaines actions
 - **[23-carte-des-pages.md](./23-carte-des-pages.md)** — inventaire des routes web et API
-- **[24-continuite-projet.md](./24-continuite-projet.md)** — état courant, exploitation et feuille de route
+- **[24-continuite-projet.md](./24-continuite-projet.md)** — historique détaillé
+  de la continuité et des décisions précédentes
 
 ## Principes directeurs du projet
 
@@ -52,6 +56,6 @@ Les documents `01` à `12` décrivent principalement la vision et le plan
 initial. Ils restent utiles comme historique, mais ne suffisent pas pour
 conclure qu'une fonctionnalité existe.
 
-Pour reprendre le développement, lire d'abord `24-continuite-projet.md`, puis
-consulter `21`, `22` et `23`. Le document `24` distingue le code déployé, la
-configuration de production et les actions métier encore à faire.
+Pour reprendre le développement, lire d'abord `25-reprise-llm.md`, puis
+consulter `24`, `21`, `22` et `23`. En cas de contradiction temporelle, le
+document `25` prévaut, sous réserve d'une nouvelle vérification Git/VPS.
