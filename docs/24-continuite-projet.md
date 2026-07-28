@@ -528,8 +528,8 @@ Configuration de production, sans committer le secret :
 ```dotenv
 EVENT_AI_PROVIDER=ovh
 EVENT_AI_MODEL=Qwen3.5-9B
-EVENT_AI_HTTP_TIMEOUT=120
-EVENT_AI_MAX_ATTEMPTS=3
+EVENT_AI_HTTP_TIMEOUT=100
+EVENT_AI_MAX_ATTEMPTS=2
 OVH_AI_ENDPOINTS_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
 OVH_AI_ENDPOINTS_ACCESS_TOKEN=<secret uniquement dans le .env du VPS>
 ```
@@ -542,6 +542,9 @@ Traitement retenu :
   chevauchement de 1 000 caracteres ;
 - chaque succes, y compris une reponse vide, est sauvegarde immediatement ;
 - un timeout n'arrete plus les segments suivants ;
+- le délai OVH est borné à 100 secondes et 2 tentatives : les réponses riches
+  observées autour de 87 secondes restent acceptées, tandis qu'un segment
+  indisponible ne bloque plus le pipeline pendant plus de 6 minutes ;
 - la relance ne traite que les segments absents du cache ou modifies ;
 - les occurrences dupliquees par le chevauchement sont fusionnees ;
 - provenance URL et preuves textuelles restent verifiees ;
