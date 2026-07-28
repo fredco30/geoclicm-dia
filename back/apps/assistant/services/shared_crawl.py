@@ -94,9 +94,10 @@ def _allowed(source: CrawlSource, url: str) -> bool:
 
 
 def _parse_html(html: str, page_url: str, method: str, status: int | None, depth: int) -> dict:
+    page_url = canonicalize_url(page_url)
     soup = BeautifulSoup(html, "lxml")
     canonical = soup.find("link", rel=lambda value: value and "canonical" in value)
-    final_url = (
+    canonical_url = (
         canonicalize_url(urljoin(page_url, canonical.get("href")))
         if canonical and canonical.get("href")
         else page_url
@@ -132,7 +133,7 @@ def _parse_html(html: str, page_url: str, method: str, status: int | None, depth
     )
     return {
         "url": page_url,
-        "canonical_url": final_url,
+        "canonical_url": canonical_url,
         "title": title,
         "text": text,
         "html": html,
@@ -202,8 +203,17 @@ def _sitemap_urls(source: CrawlSource) -> set[str]:
     return pages
 
 
+def _page_identity_hash(page: dict) -> str:
+    return hashlib.sha256(page["url"].encode()).hexdigest()
+
+
 def _save_page(source: CrawlSource, page: dict, now) -> tuple[CrawledPage, bool]:
-    url_hash = hashlib.sha256(page["canonical_url"].encode()).hexdigest()
+    # La canonique declaree n'est pas toujours une identite de page fiable.
+    # Certains sites d'OT partagent une meme canonique generique entre toutes
+    # leurs fiches evenement, qui s'ecraseraient alors entre elles. L'URL mise
+    # en file est stable et conserve chaque fiche distincte ; la canonique
+    # reste disponible comme metadonnee.
+    url_hash = _page_identity_hash(page)
     content_hash = hashlib.sha256(page["html"].encode("utf-8", errors="replace")).hexdigest()
     current = CrawledPage.objects.filter(source=source, url_hash=url_hash).first()
     changed = current is None or current.content_hash != content_hash
@@ -277,9 +287,7 @@ def ensure_source_fresh(
 
     try:
         if not force and hasattr(source, "refresh_from_db"):
-            source.refresh_from_db(
-                fields=("last_status", "last_crawled_at", "last_truncated")
-            )
+            source.refresh_from_db(fields=("last_status", "last_crawled_at", "last_truncated"))
             if source_is_fresh(source):
                 return CrawlRefreshDecision(
                     refreshed=False,

@@ -1,6 +1,10 @@
 from unittest import TestCase
 
-from apps.assistant.services.shared_crawl import _parse_html, canonicalize_url
+from apps.assistant.services.shared_crawl import (
+    _page_identity_hash,
+    _parse_html,
+    canonicalize_url,
+)
 
 
 class SharedCrawlUnitTests(TestCase):
@@ -25,3 +29,19 @@ class SharedCrawlUnitTests(TestCase):
         self.assertEqual(page["json_ld"][0]["@type"], "Event")
         self.assertIn("https://example.test/reservation", page["links"])
         self.assertEqual(page["html"], html)
+
+    def test_pages_with_same_declared_canonical_keep_distinct_identities(self):
+        html = """
+        <html><head><title>Evenement</title>
+        <link rel="canonical" href="/agenda/fiche-evenement/">
+        </head><body><main><p>Programme officiel detaille.</p></main></body></html>
+        """
+        first = _parse_html(html, "https://example.test/evenement/concert", "http", 200, 1)
+        second = _parse_html(html, "https://example.test/evenement/exposition", "http", 200, 1)
+
+        self.assertEqual(first["canonical_url"], second["canonical_url"])
+        self.assertNotEqual(first["url"], second["url"])
+        self.assertNotEqual(
+            _page_identity_hash(first),
+            _page_identity_hash(second),
+        )
