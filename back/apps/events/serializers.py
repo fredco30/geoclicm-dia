@@ -345,6 +345,8 @@ class EventSourceSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "label",
+            "crawl_source",
+            "url_patterns",
             "connector",
             "source_url",
             "website_url",

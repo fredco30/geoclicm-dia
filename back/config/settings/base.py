@@ -232,6 +232,10 @@ MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 CRAWL4AI_URL = env("CRAWL4AI_URL", default="")
 CRAWL4AI_TOKEN = env("CRAWL4AI_TOKEN", default="")
 CRAWL4AI_EMAIL = env("CRAWL4AI_EMAIL", default="crawl4ai@gestia.ovh")
+# 0 sur une source signifie "sans plafond metier". Cette garde protege le
+# serveur d'une boucle de liens infinie et produit obligatoirement un statut
+# PARTIAL si elle est atteinte; elle peut etre relevee sans migration.
+SHARED_CRAWL_HARD_LIMIT = env.int("SHARED_CRAWL_HARD_LIMIT", default=5000)
 
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).

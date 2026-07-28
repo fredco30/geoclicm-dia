@@ -32,6 +32,11 @@ export type AdminCrawlSource = {
   kind_label: string;
   seed_url: string;
   max_depth: number;
+  max_pages: number;
+  render_mode: "auto" | "http" | "crawl4ai";
+  use_sitemaps: boolean;
+  include_patterns: string;
+  exclude_patterns: string;
   is_active: boolean;
   commune: number | null;
   commune_name: string | null;
@@ -40,6 +45,13 @@ export type AdminCrawlSource = {
   last_status: CrawlSourceStatus;
   last_error: string;
   chunk_count: number;
+  page_count: number;
+  last_discovered_count: number;
+  last_fetched_count: number;
+  last_stored_count: number;
+  last_failed_count: number;
+  last_changed_count: number;
+  last_truncated: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -49,6 +61,11 @@ export type AdminCrawlSourcePayload = {
   kind: CrawlSourceKind;
   seed_url: string;
   max_depth: number;
+  max_pages: number;
+  render_mode: "auto" | "http" | "crawl4ai";
+  use_sitemaps: boolean;
+  include_patterns: string;
+  exclude_patterns: string;
   is_active: boolean;
   commune: number | null;
 };

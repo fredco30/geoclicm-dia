@@ -133,7 +133,7 @@ export default async function CrawlSourcesPage() {
                 <th className="px-3 py-2">Commune</th>
                 <th className="px-3 py-2">Dernier crawl</th>
                 <th className="px-3 py-2">État</th>
-                <th className="px-3 py-2">Chunks</th>
+                <th className="px-3 py-2">Pages / chunks</th>
                 <th className="px-3 py-2">Active</th>
                 <th className="px-3 py-2 text-right">Actions</th>
               </tr>
@@ -170,7 +170,7 @@ export default async function CrawlSourcesPage() {
                   <td className="px-3 py-2">
                     <StatusBadge status={s.last_status} />
                   </td>
-                  <td className="px-3 py-2 text-slate-600">{s.chunk_count}</td>
+                  <td className="px-3 py-2 text-slate-600"><strong>{s.page_count}</strong> / {s.chunk_count}{s.last_truncated ? <span className="block text-xs text-amber-700">limite serveur atteinte</span> : null}{s.last_failed_count ? <span className="block text-xs text-red-700">{s.last_failed_count} echec(s)</span> : null}</td>
                   <td className="px-3 py-2">
                     {s.is_active ? (
                       <Eye className="h-4 w-4 text-green-600" />

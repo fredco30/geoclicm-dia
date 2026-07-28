@@ -65,6 +65,11 @@ export function CrawlSourceForm({ source, communes }: Props) {
     kind: source?.kind ?? "mairie",
     seed_url: source?.seed_url ?? "",
     max_depth: source?.max_depth ?? 2,
+    max_pages: source?.max_pages ?? 0,
+    render_mode: source?.render_mode ?? "auto",
+    use_sitemaps: source?.use_sitemaps ?? true,
+    include_patterns: source?.include_patterns ?? "",
+    exclude_patterns: source?.exclude_patterns ?? "",
     is_active: source?.is_active ?? true,
     commune: source?.commune ?? null,
   });
@@ -238,7 +243,7 @@ export function CrawlSourceForm({ source, communes }: Props) {
             Statut
           </legend>
 
-          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-slate-500">
                 Dernier crawl
@@ -269,6 +274,10 @@ export function CrawlSourceForm({ source, communes }: Props) {
                 Chunks indexés
               </p>
               <p className="mt-0.5 text-slate-800">{source.chunk_count}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-slate-500">Pages conservees</p>
+              <p className="mt-0.5 text-slate-800">{source.page_count}</p>
             </div>
           </div>
 
@@ -426,6 +435,24 @@ export function CrawlSourceForm({ source, communes }: Props) {
           </p>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="max_pages">Limite de pages</Label>
+            <Input id="max_pages" type="number" min={0} value={form.max_pages} onChange={(e) => update("max_pages", Number(e.target.value))} />
+            <p className="mt-1 text-xs text-slate-500"><strong>0 = toutes les pages</strong>. La garde serveur est signalee comme un crawl partiel, jamais comme un succes complet.</p>
+          </div>
+          <div>
+            <Label htmlFor="render_mode">Rendu</Label>
+            <Select id="render_mode" value={form.render_mode} onChange={(e) => update("render_mode", e.target.value as AdminCrawlSourcePayload["render_mode"])}>
+              <option value="auto">Automatique (HTTP puis JavaScript)</option>
+              <option value="http">HTTP uniquement</option>
+              <option value="crawl4ai">Toujours Crawl4AI</option>
+            </Select>
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.use_sitemaps} onChange={(e) => update("use_sitemaps", e.target.checked)} /><span>Decouvrir les URL via robots.txt et les sitemaps</span></label>
+        <div><Label htmlFor="include_patterns">URL a inclure (une sous-chaine par ligne)</Label><textarea id="include_patterns" className="min-h-20 w-full rounded-md border border-slate-300 p-2 text-sm" value={form.include_patterns} onChange={(e) => update("include_patterns", e.target.value)} placeholder="Laisser vide pour tout conserver" /></div>
+        <div><Label htmlFor="exclude_patterns">URL a exclure</Label><textarea id="exclude_patterns" className="min-h-20 w-full rounded-md border border-slate-300 p-2 text-sm" value={form.exclude_patterns} onChange={(e) => update("exclude_patterns", e.target.value)} placeholder="/connexion/" /></div>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

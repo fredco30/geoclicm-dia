@@ -33,6 +33,19 @@ class EventSource(models.Model):
         default=Connector.JSON_LD,
         db_index=True,
     )
+    crawl_source = models.ForeignKey(
+        "assistant.CrawlSource",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_sources",
+        help_text="Corpus partage a reutiliser pour les connecteurs web.",
+    )
+    url_patterns = models.TextField(
+        default="/agenda/\n/evenement/",
+        blank=True,
+        help_text="Une sous-chaine d URL d evenement par ligne.",
+    )
     source_url = models.URLField(
         help_text="Page agenda, flux ICS ou endpoint officiel à interroger.",
     )
@@ -59,9 +72,9 @@ class EventSource(models.Model):
         choices=(("event", "Événement"), ("market", "Marché")),
         default="event",
     )
-    max_pages = models.PositiveSmallIntegerField(
-        default=30,
-        help_text="Limite de pages inspectées pour un connecteur web.",
+    max_pages = models.PositiveIntegerField(
+        default=0,
+        help_text="Limite Agenda autonome. 0 = utiliser toute la source partagee.",
     )
     is_active = models.BooleanField(default=True, db_index=True)
     sync_images = models.BooleanField(
@@ -378,6 +391,19 @@ class EventImportCandidate(models.Model):
         choices=ExtractionMethod.choices,
         default=ExtractionMethod.JSON_LD,
         db_index=True,
+    )
+    crawl_source = models.ForeignKey(
+        "assistant.CrawlSource",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="event_sources",
+        help_text="Corpus partage a reutiliser pour les connecteurs web.",
+    )
+    url_patterns = models.TextField(
+        default="/agenda/\n/evenement/",
+        blank=True,
+        help_text="Une sous-chaine d URL d evenement par ligne.",
     )
     source_url = models.URLField()
     raw_payload = models.JSONField(default=dict, blank=True)
