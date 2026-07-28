@@ -216,7 +216,7 @@ export type EventDetail = EventListItem & {
 export type EventSource = {
   id: number;
   label: string;
-  connector: "json_ld" | "crawl4ai" | "ics";
+  connector: "auto" | "json_ld" | "crawl4ai" | "ics";
   crawl_source: number | null;
   url_patterns: string;
   source_url: string;
@@ -235,6 +235,7 @@ export type EventSource = {
   last_error: string;
   pending_count: number;
   crawl4ai_available: boolean;
+  detected_methods: Array<"json_ld" | "mistral" | "ics">;
 };
 
 export type EventImportCandidate = {

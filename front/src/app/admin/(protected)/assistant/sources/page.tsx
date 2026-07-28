@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
+import { CrawlAllButton } from "@/components/admin/crawl-all-button";
 import { Button } from "@/components/ui/button";
 import type { AdminCrawlSource, CrawlSourceStatus } from "@/types/admin";
 
@@ -99,19 +100,28 @@ export default async function CrawlSourcesPage() {
             ({sources.length})
           </span>
         </h1>
-        <Link href="/admin/assistant/sources/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4" /> Nouvelle source
-          </Button>
-        </Link>
+        <div className="flex items-start gap-2">
+          <CrawlAllButton
+            dueCount={
+              sources.filter((source) => source.is_active && !source.crawl_is_fresh)
+                .length
+            }
+          />
+          <Link href="/admin/assistant/sources/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Nouvelle source
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <p className="mb-4 max-w-2xl text-sm text-slate-600">
         Configure ici les sites web à indexer pour enrichir l&apos;assistant IA :
         sites des mairies, offices de tourisme, sites des commerçants
         partenaires. Le crawl tourne automatiquement <strong>1 fois par
-        semaine</strong> sur toutes les sources actives. Tu peux aussi forcer
-        un re-crawl à la demande sur la page d&apos;une source.
+        semaine</strong>. Une source encore fraîche est réutilisée sans contacter
+        de nouveau son site. Tu peux forcer un recrawl depuis la fiche d&apos;une
+        source lorsque c&apos;est réellement nécessaire.
       </p>
 
       {sources.length === 0 ? (

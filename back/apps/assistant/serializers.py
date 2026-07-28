@@ -86,6 +86,7 @@ class CrawlSourceAdminSerializer(serializers.ModelSerializer):
     )
     chunk_count = serializers.SerializerMethodField()
     page_count = serializers.SerializerMethodField()
+    crawl_is_fresh = serializers.SerializerMethodField()
 
     class Meta:
         model = CrawlSource
@@ -116,6 +117,7 @@ class CrawlSourceAdminSerializer(serializers.ModelSerializer):
             "last_truncated",
             "chunk_count",
             "page_count",
+            "crawl_is_fresh",
             "created_at",
             "updated_at",
         )
@@ -135,9 +137,15 @@ class CrawlSourceAdminSerializer(serializers.ModelSerializer):
             "last_truncated",
             "chunk_count",
             "page_count",
+            "crawl_is_fresh",
             "created_at",
             "updated_at",
         )
+
+    def get_crawl_is_fresh(self, obj: CrawlSource) -> bool:
+        from .services.shared_crawl import source_is_fresh
+
+        return source_is_fresh(obj)
 
     def get_page_count(self, obj: CrawlSource) -> int:
         return obj.pages.filter(is_active=True).count()

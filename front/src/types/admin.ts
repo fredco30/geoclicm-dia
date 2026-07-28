@@ -46,6 +46,7 @@ export type AdminCrawlSource = {
   last_error: string;
   chunk_count: number;
   page_count: number;
+  crawl_is_fresh: boolean;
   last_discovered_count: number;
   last_fetched_count: number;
   last_stored_count: number;

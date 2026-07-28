@@ -339,6 +339,7 @@ class EventSourceSerializer(serializers.ModelSerializer):
     pending_count = serializers.SerializerMethodField()
     last_run = serializers.SerializerMethodField()
     crawl4ai_available = serializers.SerializerMethodField()
+    detected_methods = serializers.SerializerMethodField()
 
     class Meta:
         model = EventSource
@@ -365,6 +366,7 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "pending_count",
             "last_run",
             "crawl4ai_available",
+            "detected_methods",
             "created_at",
             "updated_at",
         )
@@ -376,8 +378,14 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "pending_count",
             "last_run",
             "crawl4ai_available",
+            "detected_methods",
             "created_at",
             "updated_at",
+        )
+
+    def get_detected_methods(self, obj: EventSource) -> list[str]:
+        return sorted(
+            set(obj.candidates.values_list("extraction_method", flat=True))
         )
 
     def get_crawl4ai_available(self, obj: EventSource) -> bool:

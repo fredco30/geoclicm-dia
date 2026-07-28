@@ -441,8 +441,8 @@ Verification locale du lot :
 - Ruff cible : OK ;
 - compilation Python : OK ;
 - 10 tests unitaires extraction/Crawl4AI : OK, dont 125 evenements sans perte ;
-- `manage.py check` local non executable faute de bibliotheque GDAL Windows.
-  Ce point doit etre controle sur le VPS avant migration.
+- `manage.py check` local : OK avec les bibliotheques GDAL/GEOS de QGIS ;
+- l'historique PostgreSQL doit toujours etre controle sur le VPS ou via tunnel.
 
 Ordre de deploiement lorsque le lot sera approuve : sauvegarde PostgreSQL,
 pull, migration Django, `check --deploy`, redemarrage worker/beat/API, build et
@@ -461,3 +461,47 @@ toute publication.
 - `/api/admin/event-imports/<id>/reject/`.
 
 Ces routes exigent un éditeur ou administrateur authentifié.
+## 14. Collecte automatique sans recrawl inutile
+
+Branche locale : `feat/crawl-all-button`, base `2953afd`. Au 28 juillet 2026,
+ce lot n'est ni pousse, ni merge, ni deploye.
+
+Decisions fonctionnelles :
+
+- l'administrateur Agenda ne choisit plus JSON-LD, Crawl4AI ou ICS ; les
+  nouvelles sources utilisent `EventSource.connector=auto` ;
+- une URL ICS directe utilise le parseur ICS ; une page web utilise le corpus
+  partage, JSON-LD en priorite, Mistral en secours, puis les flux ICS detectes
+  dans les liens ;
+- les anciennes sources web JSON-LD/Crawl4AI sont converties vers `auto` par
+  `events.0005_eventsource_connector_auto`; les anciennes sources ICS restent
+  compatibles sans changement ;
+- les nouvelles sources ne recoivent plus de motifs URL implicites : toutes
+  les pages du corpus sont examinees tant qu'un expert n'ajoute pas de filtre ;
+- chaque candidat reste obligatoirement dans la boite admin **A valider**.
+
+Politique anti-recrawl :
+
+- `ensure_source_fresh()` est l'unique porte d'entree vers le rafraichissement
+  du corpus partage pour l'Assistant et l'Agenda ;
+- une collecte `ok` ou `partial`, contenant encore des pages actives et agee de
+  moins de `SHARED_CRAWL_FRESHNESS_SECONDS`, est reutilisee sans requete au
+  site officiel ;
+- la valeur par defaut est 21600 secondes (6 h), alignee sur la synchronisation
+  Agenda ; elle est configurable sans migration ;
+- Redis verrouille chaque `CrawlSource` et une seconde verification sous verrou
+  evite qu'un worker recrawle un corpus qu'un autre vient de terminer ;
+- **Actualiser les sources** ne traite que les sources dues ; le bouton d'une
+  fiche source et `reindex_all` restent des recrawls forces et explicites.
+
+Validations locales : build Next.js 16.2.4 OK, ESLint cible OK, Ruff cible OK,
+compilation Python OK, `manage.py check` OK, aucune migration manquante et 8/8
+tests cibles OK via le runner Django. La verification de l'historique des
+migrations en base n'a pas joint PostgreSQL local faute de tunnel ; elle reste
+obligatoire sur le VPS.
+
+Deploiement requis apres accord : sauvegarde PostgreSQL, pull Git, migration
+Django, `check --deploy`, redemarrage API + worker + beat, rebuild et
+redemarrage Next.js. Verifier ensuite qu'une synchronisation Agenda lancee
+moins de 6 h apres un crawl conserve le meme `CrawlRun` et cree seulement les
+candidats **A valider**.

@@ -189,6 +189,7 @@ class CrawlSourceAdminViewSet(viewsets.ModelViewSet):
     /api/admin/crawl-sources/        — list / create
     /api/admin/crawl-sources/<id>/   — retrieve / update / delete
     /api/admin/crawl-sources/<id>/run/  — POST : déclenche un crawl async
+    /api/admin/crawl-sources/run-all/  — POST : actualise seulement les sources dues
 
     Réservé editor/admin/superuser. Les CrawlSource ne sont pas du contenu
     public, juste de la config.
@@ -233,5 +234,60 @@ class CrawlSourceAdminViewSet(viewsets.ModelViewSet):
             )
         return Response(
             {"detail": "Crawl lancé en arrière-plan.", "source_id": source.id},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(detail=False, methods=["post"], url_path="run-all")
+    def run_all(self, request):
+        """Actualise uniquement les sources actives dont le corpus est du."""
+        from django.core.cache import cache
+
+        from .services.shared_crawl import source_is_fresh
+        from .tasks import crawl_external_sources
+
+        active_sources = list(CrawlSource.objects.filter(is_active=True))
+        due_count = sum(not source_is_fresh(source) for source in active_sources)
+        if not active_sources:
+            return Response(
+                {"detail": "Aucune source active à actualiser."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if due_count == 0:
+            return Response(
+                {
+                    "detail": "Tous les corpus sont encore à jour : aucun recrawl lancé.",
+                    "due_sources": 0,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        enqueue_lock = "assistant:crawl-all:enqueue"
+        if not cache.add(enqueue_lock, True, timeout=60):
+            return Response(
+                {"detail": "Une actualisation globale vient déjà d'être lancée."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        try:
+            crawl_external_sources.delay()
+        except Exception as exc:  # noqa: BLE001
+            cache.delete(enqueue_lock)
+            logger.warning("crawl_external_sources.delay() failed: %s", exc)
+            return Response(
+                {
+                    "detail": (
+                        "L'actualisation n'a pas pu être lancée "
+                        "(file Celery indisponible)."
+                    )
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response(
+            {
+                "detail": (
+                    f"Actualisation de {due_count} source(s) due(s) lancée "
+                    "en arrière-plan."
+                ),
+                "due_sources": due_count,
+            },
             status=status.HTTP_202_ACCEPTED,
         )

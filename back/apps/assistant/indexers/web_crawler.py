@@ -153,11 +153,12 @@ def crawl_site(
     return results
 
 
-def crawl_source(source: CrawlSource) -> dict[str, int]:
-    """Actualise le corpus partage puis indexe ses pages dans le RAG."""
-    from apps.assistant.services.shared_crawl import refresh_source
+def crawl_source(source: CrawlSource, *, force: bool = False) -> dict[str, int]:
+    """Indexe le corpus partage et ne rafraichit le site que s'il est du."""
+    from apps.assistant.services.shared_crawl import ensure_source_fresh
 
-    run = refresh_source(source)
+    decision = ensure_source_fresh(source, force=force)
+    run = decision.run
     chunk_inputs: list[ChunkInput] = []
     for page in source.pages.filter(is_active=True).iterator():
         if len(page.cleaned_text) < 200:
@@ -182,21 +183,31 @@ def crawl_source(source: CrawlSource) -> dict[str, int]:
     )
     result.update(
         {
-            "pages": run.stored_count,
-            "failed_pages": run.failed_count,
-            "truncated": int(run.truncated),
+            "pages": source.pages.filter(is_active=True).count(),
+            "failed_pages": run.failed_count if run else 0,
+            "truncated": int(run.truncated) if run else int(source.last_truncated),
+            "refreshed": int(decision.refreshed),
+            "reused": int(not decision.refreshed),
         }
     )
     return result
 
 
-def crawl_all_active_sources() -> dict[str, int]:
-    """Crawle toutes les CrawlSource actives. Lance en séquentiel pour
-    respecter le rate limit per-domaine."""
-    totals = {"created": 0, "updated": 0, "unchanged": 0, "deactivated": 0, "embedded": 0}
+def crawl_all_active_sources(*, force: bool = False) -> dict[str, int]:
+    """Actualise seulement les sources dues, en sequence par respect des sites."""
+    totals = {
+        "created": 0,
+        "updated": 0,
+        "unchanged": 0,
+        "deactivated": 0,
+        "embedded": 0,
+        "sources": 0,
+        "refreshed_sources": 0,
+        "reused_sources": 0,
+    }
     for source in CrawlSource.objects.filter(is_active=True):
         try:
-            result = crawl_source(source)
+            result = crawl_source(source, force=force)
         except Exception as exc:  # noqa: BLE001
             logger.exception("crawl_source failed for %s: %s", source.label, exc)
             from django.utils import timezone
@@ -206,8 +217,11 @@ def crawl_all_active_sources() -> dict[str, int]:
             source.last_crawled_at = timezone.now()
             source.save(update_fields=["last_status", "last_error", "last_crawled_at"])
             continue
-        for k in totals:
-            totals[k] += result.get(k, 0)
+        totals["sources"] += 1
+        totals["refreshed_sources"] += result.get("refreshed", 0)
+        totals["reused_sources"] += result.get("reused", 0)
+        for key in ("created", "updated", "unchanged", "deactivated", "embedded"):
+            totals[key] += result.get(key, 0)
     return totals
 
 
