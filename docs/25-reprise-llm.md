@@ -12,7 +12,7 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 |---|---|
 | Dépôt | `fredco30/geoclicm-dia` |
 | Branche de production | `main` |
-| Commit déployé | `7d9c51f` |
+| Version déployée | `main`, lot fonctionnel Agenda `7d9c51f` |
 | Domaine | `https://media.geoclic.fr` |
 | VPS | `135.125.159.142`, utilisateur `ubuntu` |
 | Dépôt serveur | `/var/www/geoclicmedia` |
@@ -473,8 +473,9 @@ la journée locale avant la comparaison.
 
 ## 16. Lot images et expiration — déployé le 29 juillet 2026
 
-**PR `#84`, `#85` et `#86` fusionnées. Production alignée sur `main` au commit
-`7d9c51f`. Migration `events.0007_event_expiration` appliquée.**
+**PR `#84`, `#85` et `#86` fusionnées. Lot fonctionnel déployé au commit
+`7d9c51f`, documentation de clôture fusionnée ensuite. Migration
+`events.0007_event_expiration` appliquée.**
 
 Implémentation locale :
 

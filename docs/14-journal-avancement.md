@@ -660,8 +660,9 @@ détaillés dans la section 15 de `25-reprise-llm.md`.
 
 ## Images Agenda et candidats expirés — déployé le 29 juillet 2026
 
-PR `#84`, `#85` et `#86` fusionnées. Production au commit `7d9c51f`,
-migration `events.0007_event_expiration` appliquée.
+PR `#84`, `#85` et `#86` fusionnées. Lot fonctionnel au commit `7d9c51f`,
+documentation de clôture fusionnée ensuite et migration
+`events.0007_event_expiration` appliquée.
 
 - ajout d'un sélecteur d'image local fondé sur `Event.image`, le titre et le
   conteneur DOM de la fiche ;
