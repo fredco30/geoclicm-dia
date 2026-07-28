@@ -624,3 +624,34 @@ n'est ajoute au depot.
 Prochain chantier recommandé : création progressive et idempotente des
 candidats, avec un statut provisoire jusqu'à la consolidation finale, sans
 affaiblir la validation humaine ni le dédoublonnage.
+
+---
+
+## Images candidates et tri automatique des dates — décision du 29 juillet 2026
+
+Diagnostic de production :
+
+- `481` candidats ont été créés ;
+- leurs `481` champs `image_url` contiennent la même image générique de dunes ;
+- les images propres aux événements existent dans le HTML officiel sauvegardé,
+  notamment sur `static.apidae-tourisme.com` ;
+- la cause est la reprise systématique du `og:image` générique par le crawler,
+  puis par `_normalize_ai()` ;
+- la réparation peut être réalisée depuis `CrawledPage.raw_html_gzip`, sans
+  recrawler les 1045 pages.
+
+Décisions pour le prochain lot :
+
+- sélectionner l'image de l'événement par priorité JSON-LD, contenu principal
+  et association DOM/titre ; refuser l'image générique ;
+- réparer les candidats existants de manière idempotente et auditée ;
+- ajouter un premier tri automatique des dates ;
+- retirer les occurrences déjà terminées d'une série ;
+- conserver les événements en cours et toute série ayant une occurrence
+  future ;
+- tracer les candidats entièrement passés avec un statut `expired` et les
+  exclure de la boîte courante **À valider** ;
+- ne rien publier automatiquement.
+
+Le cahier de reprise, les fichiers concernés, les tests et critères de fin sont
+détaillés dans la section 15 de `25-reprise-llm.md`.

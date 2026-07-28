@@ -337,13 +337,15 @@ finale dans l'architecture actuelle.
 
 ## 13. Priorités
 
-1. terminer et qualifier le premier import ;
-2. créer les candidats progressivement sans affaiblir le dédoublonnage ;
-3. réduire les 510 segments par de meilleurs signaux de pages événement, sans
+1. corriger les images événementielles et le tri automatique des dates selon
+   le prochain lot décrit en section 15 ;
+2. terminer et qualifier le premier import ;
+3. créer les candidats progressivement sans affaiblir le dédoublonnage ;
+4. réduire les 510 segments par de meilleurs signaux de pages événement, sans
    réintroduire une limite arbitraire ;
-4. automatiser et tester la restauration des sauvegardes ;
-5. préparer la mise à niveau de l'Ubuntu hors support ;
-6. documenter les droits de réutilisation des sources.
+5. automatiser et tester la restauration des sauvegardes ;
+6. préparer la mise à niveau de l'Ubuntu hors support ;
+7. documenter les droits de réutilisation des sources.
 
 ## 14. Ne pas affirmer sans nouvelle vérification
 
@@ -357,3 +359,111 @@ finale dans l'architecture actuelle.
 
 MiaMapa reste une référence UX. Les sources retenues sont les sites officiels,
 sous réserve de droits de réutilisation documentés.
+
+## 15. Prochain lot — images événementielles et tri des dates
+
+**Décision du 29 juillet 2026 : ce lot sera repris dans une nouvelle
+discussion. Ne publier aucun candidat avant sa réalisation et sa validation.**
+
+### 15.1 Diagnostic vérifié des images
+
+- la production contient `481` candidats issus de la première consolidation ;
+- les `481` candidats possèdent exactement la même `image_url` :
+  `https://letsgrau.com/app/uploads/2023/12/stationgrauduroi-1284-modifier-2172.jpg` ;
+- cette image de dunes est le `og:image` générique de la fiche ou du site ;
+- `shared_crawl._parse_html()` ne conserve actuellement que `og:image` dans
+  `CrawledPage.metadata.image_url` ;
+- `_normalize_ai()` recopie ensuite cette valeur générique dans le candidat ;
+- les pages officielles contiennent pourtant leurs images événementielles dans
+  le HTML, principalement sous `https://static.apidae-tourisme.com/...` ;
+- exemples vérifiés :
+  - `"Les Copains Twist"` :
+    `.../images/27/248/31193115.png` ;
+  - `Un livre à la plage` :
+    `.../images/107/234/42003051.jpg` ;
+- ces URL sont présentes dans `CrawledPage.raw_html_gzip` : une réparation est
+  donc possible depuis le corpus existant, sans recrawler les 1045 pages.
+
+### 15.2 Priorité de sélection d'image à implémenter
+
+1. image du nœud JSON-LD `Event.image`, lorsqu'elle correspond à l'événement ;
+2. image principale de la fiche événement dans le contenu HTML ;
+3. image Apidae associée au bloc ou au titre de l'événement ;
+4. `og:image` seulement s'il n'est pas identifié comme image générique ;
+5. aucune image plutôt qu'une image de site incorrecte.
+
+La sélection ne doit pas se limiter au domaine `static.apidae-tourisme.com` :
+elle doit reposer sur la proximité sémantique/DOM avec la fiche afin de rester
+réutilisable pour d'autres offices de tourisme.
+
+### 15.3 Réparation des données existantes
+
+- écrire une commande ou un service idempotent qui relit le HTML compressé ;
+- recalculer une image événementielle pour chaque candidat ;
+- mettre à jour uniquement `EventImportCandidate.image_url` lorsque la
+  correspondance est suffisamment sûre ;
+- conserver l'ancienne URL et la méthode de sélection dans un rapport
+  d'audit, sans exposer de secret ;
+- laisser l'image vide si aucune correspondance fiable n'est trouvée ;
+- ne pas télécharger l'image dans `Event.source_cover_image` avant
+  l'approbation du candidat ;
+- produire les compteurs : corrigés, inchangés, sans image, ambigus, erreurs.
+
+### 15.4 Premier tri automatique par date
+
+Règles retenues :
+
+- conserver un événement futur ;
+- conserver un événement déjà commencé si sa date de fin est future ;
+- pour une série, supprimer les occurrences dont `ends_at < timezone.now()` ;
+- conserver la série si au moins une occurrence non terminée subsiste ;
+- classer automatiquement le candidat comme expiré lorsque toutes ses
+  occurrences sont terminées ;
+- ne pas supprimer silencieusement les candidats expirés : conserver une trace
+  auditable ;
+- ne pas afficher les expirés dans la boîte courante **À valider** ;
+- permettre ultérieurement un filtre admin pour consulter les expirés.
+
+Le statut recommandé est `EventImportCandidate.Status.EXPIRED = "expired"`.
+Cela implique une migration, l'adaptation du serializer/API, des compteurs de
+run et, si le produit le souhaite, un filtre dans l'interface.
+
+La comparaison doit utiliser des datetimes Django conscientes du fuseau. Pour
+un événement à la journée, `ends_at` doit représenter correctement la fin de
+la journée locale avant la comparaison.
+
+### 15.5 Fichiers à examiner
+
+- `back/apps/assistant/services/shared_crawl.py` ;
+- `back/apps/assistant/models.py` ;
+- `back/apps/events/imports.py` ;
+- `back/apps/events/models.py` ;
+- `back/apps/events/views.py` ;
+- `back/apps/events/serializers.py` ;
+- `front/src/components/admin/event-imports-admin.tsx` ;
+- tests Assistant et Events concernés.
+
+### 15.6 Tests obligatoires
+
+- une fiche avec un `og:image` générique et une image événementielle Apidae ;
+- une fiche sans image spécifique : résultat vide, pas l'image générique ;
+- deux événements d'une même page avec deux images distinctes ;
+- JSON-LD `Event.image` prioritaire ;
+- événement entièrement passé classé `expired` ;
+- événement en cours conservé ;
+- série mixte : occurrences passées retirées, futures conservées ;
+- série entièrement passée classée `expired` ;
+- relance de la réparation sans nouvelle modification ni doublon ;
+- candidats existants réparés sans recrawl ;
+- aucune approbation ou publication automatique.
+
+### 15.7 Critères de fin
+
+- les candidats ne partagent plus artificiellement l'image des dunes ;
+- chaque image affichée est reliée de façon démontrable à sa fiche officielle ;
+- les événements 2024 et les autres événements définitivement passés ne sont
+  plus proposés dans la boîte courante ;
+- les événements en cours et récurrences futures restent disponibles ;
+- un rapport chiffre les images réparées et les candidats expirés ;
+- migrations, tests Django, lint/build frontend et smoke tests passent ;
+- la documentation est mise à jour avant push et déploiement.
