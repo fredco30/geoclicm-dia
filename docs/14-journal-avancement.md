@@ -594,3 +594,9 @@ La procédure complète et la feuille de route sont dans
 
 Le token OVH reste exclusivement dans les environnements serveur. Aucun secret
 n'est ajoute au depot.
+### 28 juillet 2026 — Ajustement des délais OVH Agenda
+
+- retour du test de production : une réponse riche Qwen a abouti en 87 s ;
+- un segment indisponible a consommé 363,5 s avec `120 s x 3` ;
+- nouveau compromis : `100 s x 2`, soit environ 203 s au pire avec la pause
+  entre les tentatives, sans exclure les réponses riches déjà observées.

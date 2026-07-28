@@ -231,8 +231,11 @@ MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 # installations existantes ; la production bascule explicitement sur OVH.
 EVENT_AI_PROVIDER = env("EVENT_AI_PROVIDER", default="mistral").lower()
 EVENT_AI_MODEL = env("EVENT_AI_MODEL", default="Qwen3.5-9B")
-EVENT_AI_HTTP_TIMEOUT = env.int("EVENT_AI_HTTP_TIMEOUT", default=120)
-EVENT_AI_MAX_ATTEMPTS = env.int("EVENT_AI_MAX_ATTEMPTS", default=3)
+# Les pages riches observées en production peuvent répondre en ~90 s.
+# Deux tentatives de 100 s bornent néanmoins un segment défaillant à ~203 s,
+# contre ~363 s avec l'ancien réglage 120 s x 3.
+EVENT_AI_HTTP_TIMEOUT = env.int("EVENT_AI_HTTP_TIMEOUT", default=100)
+EVENT_AI_MAX_ATTEMPTS = env.int("EVENT_AI_MAX_ATTEMPTS", default=2)
 OVH_AI_ENDPOINTS_BASE_URL = env(
     "OVH_AI_ENDPOINTS_BASE_URL",
     default="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
