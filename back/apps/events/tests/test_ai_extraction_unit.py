@@ -49,7 +49,7 @@ class AiExtractionUnitTests(unittest.TestCase):
         payload = {
             "events": [
                 {
-                    "source_page_url": "https://example.test/agenda",
+                    "source_page_url": "https://example.test/agenda/?utm_source=ai#programme",
                     "title": "Concert",
                     "occurrences": [],
                     "evidence": ["Concert le 12 août"],
@@ -70,6 +70,7 @@ class AiExtractionUnitTests(unittest.TestCase):
         events, errors, called = extract_events(source, pages)
         self.assertTrue(called)
         self.assertFalse(errors)
+        self.assertEqual(events[0]["source_page_url"], "https://example.test/agenda")
         self.assertEqual(events[0]["_generation_id"], 42)
         self.assertTrue(source.saved)
 

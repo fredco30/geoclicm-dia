@@ -152,6 +152,19 @@ def _shared_source(source: EventSource):
     return shared
 
 
+def _event_page_url(page) -> str:
+    return page.final_url or page.canonical_url
+
+
+def _matches_url_patterns(page, patterns: list[str]) -> bool:
+    return not patterns or any(
+        pattern in candidate.lower()
+        for pattern in patterns
+        for candidate in (page.final_url, page.canonical_url)
+        if candidate
+    )
+
+
 def _discover_json_ld(
     source: EventSource,
 ) -> tuple[list[dict], list[str], bool]:
@@ -162,26 +175,22 @@ def _discover_json_ld(
     ensure_source_fresh(shared)
     patterns = [line.strip().lower() for line in source.url_patterns.splitlines() if line.strip()]
     pages = list(shared.pages.filter(is_active=True).order_by("canonical_url"))
-    if patterns:
-        pages = [
-            page
-            for page in pages
-            if any(pattern in page.canonical_url.lower() for pattern in patterns)
-        ]
+    pages = [page for page in pages if _matches_url_patterns(page, patterns)]
 
     events: list[dict] = []
     ai_pages: list[dict] = []
     for page in pages:
+        page_url = _event_page_url(page)
         page_event_count = 0
         for payload in page.json_ld:
             for node in _jsonld_nodes(payload):
                 if _is_event_node(node):
-                    events.append({"node": node, "page_url": page.canonical_url})
+                    events.append({"node": node, "page_url": page_url})
                     page_event_count += 1
         if page_event_count == 0 and len(page.cleaned_text) >= 200:
             ai_pages.append(
                 {
-                    "url": page.canonical_url,
+                    "url": page_url,
                     "title": page.title,
                     "image_url": (page.metadata or {}).get("image_url", ""),
                     "links": page.links,
@@ -782,8 +791,7 @@ def _looks_like_ics_url(url: str) -> bool:
     parsed = urlparse(url)
     lower = url.lower()
     return parsed.path.lower().endswith(".ics") or any(
-        token in lower
-        for token in ("format=ics", "export=ics", "ical=", "/ical/", "/ics/")
+        token in lower for token in ("format=ics", "export=ics", "ical=", "/ical/", "/ics/")
     )
 
 
@@ -821,8 +829,7 @@ def _discover_automatic(
     for feed_url in sorted(feed_urls)[:MAX_DISCOVERED_ICS_FEEDS]:
         try:
             normalized.extend(
-                _normalize_ics(source, item)
-                for item in _discover_ics(source, feed_url)
+                _normalize_ics(source, item) for item in _discover_ics(source, feed_url)
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Flux ICS detecte mais inexploitable : %s", feed_url)

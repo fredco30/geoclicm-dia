@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from urllib.parse import parse_qsl, urldefrag, urlencode, urlparse, urlunparse
 
 logger = logging.getLogger(__name__)
 MAX_PAGE_CHARS = 12_000
@@ -13,6 +14,23 @@ MAX_INPUT_CHARS = 60_000
 
 class ExtractionUnavailable(RuntimeError):
     pass
+
+
+def _provenance_key(url: str) -> str:
+    """Normalise uniquement les variantes equivalentes d'une URL fournie."""
+    raw = urldefrag(str(url or "").strip())[0]
+    parsed = urlparse(raw)
+    path = parsed.path or "/"
+    if path != "/":
+        path = path.rstrip("/")
+    query = urlencode(
+        sorted(
+            (key, value)
+            for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+            if not key.lower().startswith("utm_")
+        )
+    )
+    return urlunparse((parsed.scheme.lower(), parsed.netloc.lower(), path, "", query, ""))
 
 
 def _call_mistral(source, prompt: str) -> dict:
@@ -150,14 +168,21 @@ def extract_events(source, pages: list[dict]) -> tuple[list[dict], list[str], bo
             errors.append("Réponse Mistral invalide : tableau events absent.")
             break
 
-        allowed_urls = {page["url"] for page in batch}
+        allowed_urls = {_provenance_key(page["url"]): page["url"] for page in batch}
         accepted = []
         for item in raw_events:
             if not isinstance(item, dict):
                 continue
-            if item.get("source_page_url") not in allowed_urls:
+            source_page_url = allowed_urls.get(_provenance_key(item.get("source_page_url", "")))
+            if not source_page_url:
                 continue
-            accepted.append({**item, "_generation_id": result["generation_id"]})
+            accepted.append(
+                {
+                    **item,
+                    "source_page_url": source_page_url,
+                    "_generation_id": result["generation_id"],
+                }
+            )
         if raw_events and not accepted:
             errors.append("Réponse Mistral refusée : provenance de page invalide.")
             break
