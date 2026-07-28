@@ -467,3 +467,51 @@ la journée locale avant la comparaison.
 - un rapport chiffre les images réparées et les candidats expirés ;
 - migrations, tests Django, lint/build frontend et smoke tests passent ;
 - la documentation est mise à jour avant push et déploiement.
+
+## 16. Lot images et expiration — état local du 29 juillet 2026
+
+**Branche locale : `codex/agenda-event-images-expiration`. Ce lot n'est ni
+poussé, ni fusionné, ni déployé. Les 481 candidats de production n'ont pas été
+modifiés.**
+
+Implémentation locale :
+
+- sélection d'image depuis `CrawledPage.raw_html_gzip`, sans requête au site ;
+- priorité à `Event.image`, puis association titre/bloc DOM, puis OG seulement
+  s'il n'est pas générique ;
+- détection des images de chrome répétées sur au moins 20 % du corpus ;
+- commande `repair_event_candidates`, en dry-run par défaut, avec rapport JSON
+  et application seulement via `--apply` ;
+- statut auditable `expired` et compteur `EventImportRun.expired_count` ;
+- exclusion des événements terminés avant le début du run de la boîte
+  **À valider** ;
+- conservation des événements en cours et des occurrences futures ;
+- retrait des seules occurrences terminées dans une série mixte ;
+- filtre admin séparé pour consulter les incomplets et les expirés ;
+- interdiction API d'approuver un candidat expiré ;
+- respect de la fin de journée Europe/Paris et du `DTEND` exclusif ICS.
+
+Contrôle en lecture seule du sélecteur local contre les 481 HTML de production :
+
+- `465` images spécifiques sélectionnées ;
+- `16` fiches laissées sans image fiable ;
+- `0` image générique retenue ;
+- `0` ambiguïté restante sur ce corpus ;
+- les exemples Copains Twist, Un livre à la plage, Halloween et Nouvel an
+  retrouvent leurs images officielles.
+
+Ces nombres décrivent le résultat du sélecteur en dry-run contre les HTML
+stockés. Ils ne constituent pas une réparation déjà appliquée.
+
+Validation locale :
+
+- tests ciblés Events/Assistant : OK ;
+- Ruff : OK ;
+- `makemigrations --check --dry-run` : aucune migration manquante ;
+- ESLint : OK ;
+- build Next.js 16.2.4 : OK.
+
+Avant toute application en production : relire le diff, sauvegarder PostgreSQL,
+déployer la migration après accord explicite, exécuter la commande sans
+`--apply`, examiner le rapport complet, puis demander un second accord avant
+de modifier les candidats.

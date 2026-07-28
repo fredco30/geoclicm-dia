@@ -26,6 +26,8 @@ from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
 
 from .ai_extraction import extract_events as extract_events_with_ai
+from .event_dates import apply_occurrence_filter
+from .event_images import generic_image_urls, select_event_image
 from .models import (
     Event,
     EventCategory,
@@ -63,6 +65,13 @@ def _aware(value: object, *, end: bool = False) -> datetime | None:
             PARIS,
         )
     return timezone.make_aware(parsed, PARIS) if timezone.is_naive(parsed) else parsed
+
+
+def _aware_ics_end(value: object) -> datetime | None:
+    """ICS DTEND est exclusif pour une date all-day."""
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return timezone.make_aware(datetime.combine(value, time.min), PARIS)
+    return _aware(value)
 
 
 def _compact_text(value: object, limit: int | None = None) -> str:
@@ -176,6 +185,7 @@ def _discover_json_ld(
     patterns = [line.strip().lower() for line in source.url_patterns.splitlines() if line.strip()]
     pages = list(shared.pages.filter(is_active=True).order_by("canonical_url"))
     pages = [page for page in pages if _matches_url_patterns(page, patterns)]
+    page_record_by_url = {_event_page_url(page): page for page in pages}
 
     events: list[dict] = []
     ai_pages: list[dict] = []
@@ -185,7 +195,7 @@ def _discover_json_ld(
         for payload in page.json_ld:
             for node in _jsonld_nodes(payload):
                 if _is_event_node(node):
-                    events.append({"node": node, "page_url": page_url})
+                    events.append({"node": node, "page_url": page_url, "crawl_page": page})
                     page_event_count += 1
         if page_event_count == 0 and len(page.cleaned_text) >= 200:
             ai_pages.append(
@@ -206,7 +216,11 @@ def _discover_json_ld(
         for raw_event in ai_events:
             page_url = raw_event.get("source_page_url")
             if page_url in page_by_url:
-                events.append({"ai_event": raw_event, "page": page_by_url[page_url]})
+                events.append({
+                    "ai_event": raw_event,
+                    "page": page_by_url[page_url],
+                    "crawl_page": page_record_by_url[page_url],
+                })
     return events, extraction_errors, ai_called
 
 
@@ -251,7 +265,12 @@ def _geocode(address: str, commune: Commune | None) -> tuple[float | None, float
     return None, None
 
 
-def _normalize_json_ld(source: EventSource, item: dict) -> dict:
+def _normalize_json_ld(
+    source: EventSource,
+    item: dict,
+    *,
+    generic_urls: set[str] | None = None,
+) -> dict:
     node = item["node"]
     page_url = item["page_url"]
     title = _compact_text(node.get("name"), 200)
@@ -308,6 +327,12 @@ def _normalize_json_ld(source: EventSource, item: dict) -> dict:
     category = _guess_category(source, f"{title} {description}")
     if not category:
         errors.append("Catégorie non déterminée")
+    image = select_event_image(
+        item["crawl_page"],
+        title=title,
+        json_ld_image=node.get("image"),
+        generic_urls=generic_urls,
+    )
     return {
         "source_uid": source_uid,
         "extraction_method": EventImportCandidate.ExtractionMethod.JSON_LD,
@@ -317,7 +342,7 @@ def _normalize_json_ld(source: EventSource, item: dict) -> dict:
         "title": title or "Événement sans titre",
         "short_description": description[:240],
         "description": description,
-        "image_url": _absolute_http_url(page_url, node.get("image")),
+        "image_url": image.url,
         "image_credit": _image_credit(node.get("image")),
         "starts_at": start,
         "ends_at": end,
@@ -352,7 +377,12 @@ def _optional_float(value: object) -> float | None:
         return None
 
 
-def _normalize_ai_event(source: EventSource, item: dict) -> dict:
+def _normalize_ai_event(
+    source: EventSource,
+    item: dict,
+    *,
+    generic_urls: set[str] | None = None,
+) -> dict:
     raw = item["ai_event"]
     page = item["page"]
     page_url = page["url"]
@@ -418,6 +448,11 @@ def _normalize_ai_event(source: EventSource, item: dict) -> dict:
     fingerprint = hashlib.sha256(
         f"{slugify(title)}|{start.isoformat() if start else ''}|{commune_id(commune)}".encode()
     ).hexdigest()
+    image = select_event_image(
+        item["crawl_page"],
+        title=title,
+        generic_urls=generic_urls,
+    )
     return {
         "source_uid": source_uid,
         "extraction_method": EventImportCandidate.ExtractionMethod.AI,
@@ -431,7 +466,7 @@ def _normalize_ai_event(source: EventSource, item: dict) -> dict:
         "title": title or "Événement sans titre",
         "short_description": short_description or description[:240],
         "description": description or short_description,
-        "image_url": str(page.get("image_url") or ""),
+        "image_url": image.url,
         "image_credit": "",
         "starts_at": start,
         "ends_at": end,
@@ -488,7 +523,7 @@ def _normalize_ics(source: EventSource, item: dict) -> dict:
         all_day = isinstance(component.decoded("dtstart"), date) and not isinstance(
             component.decoded("dtstart"), datetime
         )
-        end = _aware(end_value, end=True) if end_value else None
+        end = _aware_ics_end(end_value) if end_value else None
         if start and not end:
             end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
         if start and end:
@@ -723,6 +758,9 @@ def import_candidate(candidate: EventImportCandidate, *, publish: bool = True) -
 
 
 def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandidate, bool, bool]:
+    data = dict(data)
+    expired = bool(data.pop("_expired", False))
+    data.pop("_removed_occurrence_count", None)
     existing = EventImportCandidate.objects.filter(
         source=source,
         source_uid=data["source_uid"],
@@ -743,7 +781,9 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
     previous_payload = existing.raw_payload if existing else None
     payload_changed = previous_payload != data["raw_payload"]
     status = (
-        EventImportCandidate.Status.INVALID
+        EventImportCandidate.Status.EXPIRED
+        if expired
+        else EventImportCandidate.Status.INVALID
         if data["validation_errors"]
         else (
             EventImportCandidate.Status.DUPLICATE
@@ -799,11 +839,13 @@ def _normalize_web_source(
     source: EventSource,
 ) -> tuple[list[dict], list[str], bool]:
     raw_items, errors, ai_called = _discover_json_ld(source)
+    shared = _shared_source(source)
+    generic_urls = generic_image_urls(shared)
     normalized = [
         (
-            _normalize_ai_event(source, item)
+            _normalize_ai_event(source, item, generic_urls=generic_urls)
             if "ai_event" in item
-            else _normalize_json_ld(source, item)
+            else _normalize_json_ld(source, item, generic_urls=generic_urls)
         )
         for item in raw_items
     ]
@@ -860,6 +902,12 @@ def sync_event_source(source: EventSource) -> EventImportRun:
         else:
             raise ValueError(f"Connecteur non pris en charge : {source.connector}")
 
+        # Le run porte l'instant de référence auditable : rien de déjà terminé
+        # au démarrage de cette collecte ne rejoint la boîte « À valider ».
+        cutoff = run.started_at
+        normalized = [
+            apply_occurrence_filter(item, cutoff=cutoff) for item in normalized
+        ]
         run.ai_extraction_count = sum(
             item["extraction_method"] == EventImportCandidate.ExtractionMethod.AI
             for item in normalized
@@ -887,6 +935,7 @@ def sync_event_source(source: EventSource) -> EventImportRun:
                     candidate.status == EventImportCandidate.Status.DUPLICATE
                 )
                 run.imported_count += int(candidate.status == EventImportCandidate.Status.IMPORTED)
+                run.expired_count += int(candidate.status == EventImportCandidate.Status.EXPIRED)
             except Exception as exc:  # noqa: BLE001
                 logger.exception("Candidat Agenda impossible pour %s", source.label)
                 errors.append(str(exc)[:500])

@@ -268,7 +268,7 @@ export type EventImportCandidate = {
   category: number | null;
   category_name: string | null;
   kind: EventKind;
-  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid" | "expired";
   validation_errors: string[];
   extraction_evidence: string[];
   generation_id: number | null;

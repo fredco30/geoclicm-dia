@@ -360,6 +360,7 @@ class EventImportRun(models.Model):
     imported_count = models.PositiveIntegerField(default=0)
     ai_extraction_count = models.PositiveIntegerField(default=0)
     duplicate_count = models.PositiveIntegerField(default=0)
+    expired_count = models.PositiveIntegerField(default=0)
     error_count = models.PositiveIntegerField(default=0)
     error_details = models.JSONField(default=list, blank=True)
 
@@ -386,6 +387,7 @@ class EventImportCandidate(models.Model):
         REJECTED = "rejected", "Rejeté"
         DUPLICATE = "duplicate", "Doublon"
         INVALID = "invalid", "Incomplet"
+        EXPIRED = "expired", "Expiré"
 
     source = models.ForeignKey(
         EventSource,
