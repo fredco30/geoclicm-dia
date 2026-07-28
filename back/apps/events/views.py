@@ -268,6 +268,13 @@ class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
                 EventImportCandidate.Status.PENDING,
                 EventImportCandidate.Status.INVALID,
             ))
+        if self.action == "list" and "limit" in self.request.query_params:
+            try:
+                limit = min(max(int(self.request.query_params["limit"]), 1), 100)
+                offset = max(int(self.request.query_params.get("offset", 0)), 0)
+            except (TypeError, ValueError):
+                limit, offset = 50, 0
+            qs = qs[offset : offset + limit]
         return qs
 
     @action(detail=True, methods=["post"])
