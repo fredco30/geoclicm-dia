@@ -18,13 +18,13 @@ Embeddings : Mistral `mistral-embed` produit des vecteurs de 1024 dims.
 Si on change de provider plus tard (ex: OpenAI text-embedding-3-small =
 1536 dims), il faudra réindexer.
 """
+
 from __future__ import annotations
 
 from django.db import models
 from pgvector.django import VectorField
 
 from apps.core.models import Commune
-
 
 # Dimensions de l'embedding Mistral. Si on change de modèle plus tard,
 # ajuster cette constante ET réindexer toute la base.
@@ -108,11 +108,17 @@ class KnowledgeChunk(models.Model):
     # lat/lng) et Business (PointField). NULL pour les chunks textuels
     # (mairies/OT crawlés, articles sans location, Wikipedia générique).
     latitude = models.DecimalField(
-        max_digits=10, decimal_places=7, null=True, blank=True,
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
         help_text="Latitude WGS84. Active les boutons Maps/Waze côté widget.",
     )
     longitude = models.DecimalField(
-        max_digits=10, decimal_places=7, null=True, blank=True,
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
         help_text="Longitude WGS84. Active les boutons Maps/Waze côté widget.",
     )
     is_active = models.BooleanField(
@@ -224,6 +230,11 @@ class CrawlSource(models.Model):
     au démarrage de chaque cycle.
     """
 
+    class RenderMode(models.TextChoices):
+        AUTO = "auto", "Automatique (HTTP puis navigateur si necessaire)"
+        HTTP = "http", "HTTP uniquement"
+        CRAWL4AI = "crawl4ai", "Navigateur Crawl4AI"
+
     label = models.CharField(
         max_length=120,
         help_text="Nom lisible, ex: « Mairie Le Grau-du-Roi ».",
@@ -247,6 +258,28 @@ class CrawlSource(models.Model):
         help_text="Profondeur maximum du crawl en partant de seed_url.",
     )
     is_active = models.BooleanField(default=True, db_index=True)
+    max_pages = models.PositiveIntegerField(
+        default=0,
+        help_text="Nombre maximal de pages. 0 = sans limite fonctionnelle.",
+    )
+    render_mode = models.CharField(
+        max_length=20,
+        choices=RenderMode.choices,
+        default=RenderMode.AUTO,
+    )
+    use_sitemaps = models.BooleanField(
+        default=True,
+        help_text="Decouvrir les pages via robots.txt et les sitemaps XML.",
+    )
+    include_patterns = models.TextField(
+        blank=True,
+        help_text="Une sous-chaine d'URL par ligne. Vide = toutes les pages.",
+    )
+    exclude_patterns = models.TextField(
+        blank=True,
+        help_text="Une sous-chaine d'URL a exclure par ligne.",
+    )
+
     last_crawled_at = models.DateTimeField(null=True, blank=True)
     last_status = models.CharField(
         max_length=20,
@@ -258,6 +291,12 @@ class CrawlSource(models.Model):
         help_text="Détail de l'erreur si last_status=error/partial.",
     )
 
+    last_discovered_count = models.PositiveIntegerField(default=0, editable=False)
+    last_fetched_count = models.PositiveIntegerField(default=0, editable=False)
+    last_stored_count = models.PositiveIntegerField(default=0, editable=False)
+    last_failed_count = models.PositiveIntegerField(default=0, editable=False)
+    last_changed_count = models.PositiveIntegerField(default=0, editable=False)
+    last_truncated = models.BooleanField(default=False, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -268,3 +307,72 @@ class CrawlSource(models.Model):
 
     def __str__(self) -> str:
         return f"{self.label} [{self.kind}]"
+
+
+class CrawlRun(models.Model):
+    """Execution tracee du crawler partage."""
+
+    class Status(models.TextChoices):
+        RUNNING = "running", "En cours"
+        OK = "ok", "OK"
+        PARTIAL = "partial", "Partiel"
+        ERROR = "error", "Erreur"
+
+    source = models.ForeignKey(CrawlSource, on_delete=models.CASCADE, related_name="runs")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.RUNNING)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    discovered_count = models.PositiveIntegerField(default=0)
+    fetched_count = models.PositiveIntegerField(default=0)
+    stored_count = models.PositiveIntegerField(default=0)
+    changed_count = models.PositiveIntegerField(default=0)
+    failed_count = models.PositiveIntegerField(default=0)
+    truncated = models.BooleanField(default=False)
+    error_details = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self) -> str:
+        return f"{self.source}: {self.status} ({self.started_at})"
+
+
+class CrawledPage(models.Model):
+    """Snapshot durable d'une page, commun a l'assistant et a l'agenda."""
+
+    class FetchMethod(models.TextChoices):
+        HTTP = "http", "HTTP"
+        CRAWL4AI = "crawl4ai", "Crawl4AI"
+
+    source = models.ForeignKey(CrawlSource, on_delete=models.CASCADE, related_name="pages")
+    canonical_url = models.URLField(max_length=1000)
+    url_hash = models.CharField(max_length=64)
+    final_url = models.URLField(max_length=1000, blank=True)
+    title = models.CharField(max_length=500, blank=True)
+    cleaned_text = models.TextField(blank=True)
+    raw_html_gzip = models.BinaryField(null=True, blank=True, editable=False)
+    metadata = models.JSONField(default=dict, blank=True)
+    links = models.JSONField(default=list, blank=True)
+    json_ld = models.JSONField(default=list, blank=True)
+    content_hash = models.CharField(max_length=64, db_index=True)
+    fetch_method = models.CharField(max_length=20, choices=FetchMethod.choices)
+    http_status = models.PositiveSmallIntegerField(null=True, blank=True)
+    depth = models.PositiveSmallIntegerField(default=0)
+    is_active = models.BooleanField(default=True, db_index=True)
+    fetched_at = models.DateTimeField()
+    changed_at = models.DateTimeField()
+    last_error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["canonical_url"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("source", "url_hash"), name="crawl_page_source_url_hash_uniq"
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("source", "is_active"), name="crawl_page_source_active_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return self.title or self.canonical_url

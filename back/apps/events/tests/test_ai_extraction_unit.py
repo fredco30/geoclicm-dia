@@ -190,6 +190,37 @@ class AiExtractionUnitTests(unittest.TestCase):
         self.assertIn("provenance", errors[0].lower())
         self.assertFalse(source.saved)
 
+    @patch("apps.events.ai_extraction._call_mistral")
+    def test_more_than_one_hundred_events_are_not_silently_dropped(self, call_mistral):
+        url = "https://example.test/agenda"
+        call_mistral.return_value = {
+            "answer": json.dumps(
+                {
+                    "events": [
+                        {"source_page_url": url, "title": f"Evenement {index}"}
+                        for index in range(125)
+                    ]
+                }
+            ),
+            "generation_id": 99,
+        }
+        source = FakeSource()
+        events, errors, called = extract_events(
+            source,
+            [
+                {
+                    "url": url,
+                    "title": "Agenda",
+                    "image_url": "",
+                    "links": [],
+                    "content": "Programme complet",
+                }
+            ],
+        )
+        self.assertTrue(called)
+        self.assertFalse(errors)
+        self.assertEqual(len(events), 125)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,14 +15,13 @@ Volontairement minimaliste : pas de queue distribuée, pas de gestion
 JavaScript, pas de form login. Pour les sites de mairies / OT / TPE,
 c'est largement suffisant.
 """
+
 from __future__ import annotations
 
 import logging
 from urllib.parse import urldefrag, urljoin, urlparse
 
 from bs4 import BeautifulSoup
-
-from apps.core.models import Commune
 
 from ..models import CrawlSource, KnowledgeChunk
 from .base import ChunkInput, build_source_id_from_url, chunk_text, save_chunks
@@ -34,9 +33,23 @@ logger = logging.getLogger(__name__)
 # Pages typiques à exclure (login, panier, recherche). Une URL qui matche
 # une de ces patterns dans son path est ignorée.
 SKIP_URL_KEYWORDS = (
-    "/login", "/connexion", "/cart", "/panier", "/wp-admin",
-    "/account", "/recherche?", "/search?", "/feed", "/rss",
-    ".pdf", ".doc", ".xls", ".zip", ".jpg", ".png", ".gif",
+    "/login",
+    "/connexion",
+    "/cart",
+    "/panier",
+    "/wp-admin",
+    "/account",
+    "/recherche?",
+    "/search?",
+    "/feed",
+    "/rss",
+    ".pdf",
+    ".doc",
+    ".xls",
+    ".zip",
+    ".jpg",
+    ".png",
+    ".gif",
 )
 
 
@@ -86,7 +99,7 @@ def _extract_text(html: str) -> tuple[str, str]:
 def crawl_site(
     seed_url: str,
     max_depth: int = 2,
-    max_pages: int = 30,
+    max_pages: int = 0,
 ) -> list[tuple[str, str, str]]:
     """
     Crawle un site à partir de seed_url. Renvoie une liste de tuples
@@ -103,7 +116,7 @@ def crawl_site(
     queue: list[tuple[str, int]] = [(seed_url, 0)]
     results: list[tuple[str, str, str]] = []
 
-    while queue and len(results) < max_pages:
+    while queue and (max_pages == 0 or len(results) < max_pages):
         url, depth = queue.pop(0)
         if url in visited:
             continue
@@ -141,43 +154,39 @@ def crawl_site(
 
 
 def crawl_source(source: CrawlSource) -> dict[str, int]:
-    """Crawle une CrawlSource et indexe les pages collectées."""
-    pages = crawl_site(source.seed_url, max_depth=source.max_depth)
-    if not pages:
-        source.last_status = "error"
-        source.last_error = "Aucune page collectée (robots.txt, réseau, ou site vide)"
-        from django.utils import timezone
-        source.last_crawled_at = timezone.now()
-        source.save(update_fields=["last_status", "last_error", "last_crawled_at"])
-        return {"created": 0, "updated": 0, "unchanged": 0, "deactivated": 0, "embedded": 0}
+    """Actualise le corpus partage puis indexe ses pages dans le RAG."""
+    from apps.assistant.services.shared_crawl import refresh_source
 
+    run = refresh_source(source)
     chunk_inputs: list[ChunkInput] = []
-    for url, title, body in pages:
-        # Découpe les longs textes — chaque tranche devient un chunk distinct
-        for i, ct in enumerate(chunk_text(body)):
-            url_id = build_source_id_from_url(url)
-            chunk_inputs.append(ChunkInput(
-                source_kind=source.kind,
-                source_id=f"src{source.id}:{url_id}#{i}",
-                source_url=url,
-                title=title if i == 0 else f"{title} (suite)",
-                content=ct,
-                commune=source.commune,
-                is_premium=False,
-            ))
-
+    for page in source.pages.filter(is_active=True).iterator():
+        if len(page.cleaned_text) < 200:
+            continue
+        for i, content in enumerate(chunk_text(page.cleaned_text)):
+            url_id = build_source_id_from_url(page.canonical_url)
+            chunk_inputs.append(
+                ChunkInput(
+                    source_kind=source.kind,
+                    source_id=f"src{source.id}:{url_id}#{i}",
+                    source_url=page.canonical_url,
+                    title=page.title if i == 0 else f"{page.title} (suite)",
+                    content=content,
+                    commune=source.commune,
+                    is_premium=False,
+                )
+            )
     result = save_chunks(
         chunk_inputs,
         source_kind=source.kind,
         deactivate_others_for_source_prefix=f"src{source.id}:",
     )
-
-    from django.utils import timezone
-    source.last_status = "ok"
-    source.last_error = ""
-    source.last_crawled_at = timezone.now()
-    source.save(update_fields=["last_status", "last_error", "last_crawled_at"])
-
+    result.update(
+        {
+            "pages": run.stored_count,
+            "failed_pages": run.failed_count,
+            "truncated": int(run.truncated),
+        }
+    )
     return result
 
 
@@ -191,6 +200,7 @@ def crawl_all_active_sources() -> dict[str, int]:
         except Exception as exc:  # noqa: BLE001
             logger.exception("crawl_source failed for %s: %s", source.label, exc)
             from django.utils import timezone
+
             source.last_status = "error"
             source.last_error = str(exc)[:500]
             source.last_crawled_at = timezone.now()
@@ -210,18 +220,14 @@ def crawl_business_websites() -> dict[str, int]:
     from apps.directory.models import Business
 
     totals = {"created": 0, "updated": 0, "unchanged": 0, "deactivated": 0, "embedded": 0}
-    qs = (
-        Business.objects
-        .filter(is_published=True)
-        .exclude(website="")
-        .select_related("commune")
-    )
+    qs = Business.objects.filter(is_published=True).exclude(website="").select_related("commune")
     for business in qs:
         try:
             pages = crawl_site(business.website, max_depth=1, max_pages=3)
         except Exception as exc:  # noqa: BLE001
-            logger.warning("crawl_site failed for %s (%s): %s",
-                           business.slug, business.website, exc)
+            logger.warning(
+                "crawl_site failed for %s (%s): %s", business.slug, business.website, exc
+            )
             continue
 
         is_premium = business.plan in ("basic", "premium")
@@ -229,15 +235,17 @@ def crawl_business_websites() -> dict[str, int]:
         for url, title, body in pages:
             for i, ct in enumerate(chunk_text(body)):
                 url_id = build_source_id_from_url(url)
-                chunk_inputs.append(ChunkInput(
-                    source_kind=KnowledgeChunk.SourceKind.BUSINESS,
-                    source_id=f"web:{business.slug}:{url_id}#{i}",
-                    source_url=url,
-                    title=f"{business.name} — {title}" if title else business.name,
-                    content=ct,
-                    commune=business.commune,
-                    is_premium=is_premium,
-                ))
+                chunk_inputs.append(
+                    ChunkInput(
+                        source_kind=KnowledgeChunk.SourceKind.BUSINESS,
+                        source_id=f"web:{business.slug}:{url_id}#{i}",
+                        source_url=url,
+                        title=f"{business.name} — {title}" if title else business.name,
+                        content=ct,
+                        commune=business.commune,
+                        is_premium=is_premium,
+                    )
+                )
 
         result = save_chunks(
             chunk_inputs,

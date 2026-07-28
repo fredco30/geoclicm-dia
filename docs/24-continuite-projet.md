@@ -204,15 +204,6 @@ rester un outil de découverte ou de comparaison manuelle.
 
 ### API protégée
 
-- `/api/admin/events/` ;
-- `/api/admin/event-categories/` ;
-- `/api/admin/event-sources/` ;
-- `/api/admin/event-sources/<id>/run/` ;
-- `/api/admin/event-imports/` ;
-- `/api/admin/event-imports/<id>/approve/` ;
-- `/api/admin/event-imports/<id>/reject/`.
-
-Ces routes exigent un éditeur ou administrateur authentifié.
 
 ## 6. Exploitation et déploiement
 
@@ -418,3 +409,55 @@ Le lot « activation de la collecte Agenda » n'est terminé que si :
 - PR `#73` : identité et permissions runtime Crawl4AI.
 
 Toujours revérifier GitHub et le VPS avant une nouvelle livraison.
+
+## 13. Lot en cours : corpus de crawl mutualise
+
+Branche de livraison : `codex/shared-crawl-pipeline`. Toujours verifier le
+commit present sur GitHub et le VPS avant de considerer ce lot comme deploye.
+
+Architecture retenue :
+
+- `CrawlSource` porte une configuration unique pour le rendu HTTP/Crawl4AI,
+  les sitemaps, la profondeur, les inclusions/exclusions et la limite ;
+- `max_pages=0` supprime le plafond metier historique de 30 pages ;
+- `SHARED_CRAWL_HARD_LIMIT` (5000 par defaut) reste une garde d'exploitation
+  configurable. Si elle est atteinte, le crawl est `partial` et jamais `ok` ;
+- `CrawlRun` trace pages decouvertes, recuperees, conservees, modifiees,
+  echouees et la troncature ;
+- `CrawledPage` conserve URL canonique, HTML complet compresse, texte complet,
+  liens, image/metadonnees, JSON-LD, empreinte et mode de rendu ;
+- les anciennes pages ne sont desactivees qu'apres un cycle complet sans
+  troncature ni echec, afin qu'un incident ne vide jamais le corpus ;
+- l'assistant genere ses chunks depuis `CrawledPage` ;
+- une `EventSource` peut selectionner ce meme `CrawlSource` et filtrer les
+  pages avec `url_patterns` ;
+- l'Agenda extrait d'abord les `Event` JSON-LD, puis envoie a Mistral toutes
+  les pages evenement sans JSON-LD, par segments et sans plafond de 100 ;
+- chaque resultat reste obligatoirement dans la boite admin **A valider**.
+
+Verification locale du lot :
+
+- build Next.js 16.2.4 : OK ;
+- Ruff cible : OK ;
+- compilation Python : OK ;
+- 10 tests unitaires extraction/Crawl4AI : OK, dont 125 evenements sans perte ;
+- `manage.py check` local non executable faute de bibliotheque GDAL Windows.
+  Ce point doit etre controle sur le VPS avant migration.
+
+Ordre de deploiement lorsque le lot sera approuve : sauvegarde PostgreSQL,
+pull, migration Django, `check --deploy`, redemarrage worker/beat/API, build et
+redemarrage front, puis crawl manuel de l'OT et controle des compteurs/pages.
+
+Le premier crawl mutualise de `letsgrau.com` doit utiliser la source Assistant
+existante. Dans `/admin/agenda/sources`, selectionner ce corpus, conserver les
+motifs `/agenda/` et `/evenement/`, puis verifier la boite **A valider** avant
+toute publication.
+- `/api/admin/events/` ;
+- `/api/admin/event-categories/` ;
+- `/api/admin/event-sources/` ;
+- `/api/admin/event-sources/<id>/run/` ;
+- `/api/admin/event-imports/` ;
+- `/api/admin/event-imports/<id>/approve/` ;
+- `/api/admin/event-imports/<id>/reject/`.
+
+Ces routes exigent un éditeur ou administrateur authentifié.

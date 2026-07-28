@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
-import json
 import logging
 import socket
 from datetime import date, datetime, time, timedelta
 from io import BytesIO
-from urllib.parse import urldefrag, urljoin, urlparse
+from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
 import recurring_ical_events
 import requests
 from bs4 import BeautifulSoup
-from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -28,7 +26,6 @@ from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
 
 from .ai_extraction import extract_events as extract_events_with_mistral
-from .crawl4ai_client import fetch_rendered_html
 from .models import (
     Event,
     EventCategory,
@@ -42,21 +39,6 @@ logger = logging.getLogger(__name__)
 PARIS = ZoneInfo("Europe/Paris")
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 USER_AGENT = "geoclicmedia-events-bot/1.0 (+https://media.geoclic.fr; contact@geoclic.fr)"
-SKIP_SUFFIXES = (
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-    ".svg",
-    ".pdf",
-    ".doc",
-    ".docx",
-    ".xls",
-    ".xlsx",
-    ".zip",
-    ".ics",
-)
 
 
 def _aware(value: object, *, end: bool = False) -> datetime | None:
@@ -138,136 +120,87 @@ def _is_event_node(node: dict) -> bool:
     return any(str(item).lower() == "event" for item in kinds)
 
 
-def _same_domain(url: str, expected: str) -> bool:
-    actual = urlparse(url).netloc.lower().removeprefix("www.")
-    return actual == expected.lower().removeprefix("www.")
+def _shared_source(source: EventSource):
+    """Retourne ou cree le corpus web reutilise par l Agenda."""
+    from apps.assistant.models import CrawlSource, KnowledgeChunk
 
-
-def _crawl4ai_fetch_html(url: str) -> str | None:
-    """Rend une page via le service Chromium isolé de GeoClic Media."""
-    if not settings.CRAWL4AI_URL:
-        return None
-    _assert_public_http_url(url)
-    return fetch_rendered_html(
-        url,
-        base_url=settings.CRAWL4AI_URL,
-        api_token=settings.CRAWL4AI_TOKEN,
-        email=settings.CRAWL4AI_EMAIL,
+    if source.crawl_source_id:
+        return source.crawl_source
+    domain = urlparse(source.source_url).netloc.lower().removeprefix("www.")
+    shared = next(
+        (
+            item
+            for item in CrawlSource.objects.filter(is_active=True)
+            if urlparse(item.seed_url).netloc.lower().removeprefix("www.") == domain
+        ),
+        None,
     )
-
-
-def _fetch_event_html(
-    source: EventSource,
-    url: str,
-) -> tuple[str | None, bool]:
-    if source.connector == EventSource.Connector.CRAWL4AI:
-        if rendered := _crawl4ai_fetch_html(url):
-            return rendered, True
-        logger.info("Repli sur le crawler standard pour %s", url)
-    response = fetcher.fetch(url, accept="text/html")
-    return (response.text if response is not None else None), False
-
-
-def _page_for_ai(soup: BeautifulSoup, page_url: str) -> dict:
-    title = _compact_text(soup.title.get_text(" ", strip=True) if soup.title else "", 200)
-    image_meta = soup.find("meta", attrs={"property": "og:image"})
-    image_value = image_meta.get("content") if image_meta else ""
-    links = []
-    for link in soup.find_all("a", href=True):
-        absolute = _absolute_http_url(page_url, link.get("href"))
-        if absolute and absolute not in links:
-            links.append(absolute)
-        if len(links) >= 100:
-            break
-    visible = BeautifulSoup(str(soup), "lxml")
-    for tag in visible.find_all(
-        ["script", "style", "noscript", "svg", "nav", "footer", "header", "form"]
-    ):
-        tag.decompose()
-    content = _compact_text(visible.get_text("\n", strip=True))
-    return {
-        "url": page_url,
-        "title": title,
-        "image_url": _absolute_http_url(page_url, image_value),
-        "links": links,
-        "content": content,
-    }
+    if shared is None:
+        shared = CrawlSource.objects.create(
+            label=f"{source.label} - corpus partage",
+            kind=KnowledgeChunk.SourceKind.OT,
+            seed_url=source.website_url or source.source_url,
+            commune=source.commune,
+            max_depth=2,
+            max_pages=source.max_pages,
+            render_mode=(
+                CrawlSource.RenderMode.CRAWL4AI
+                if source.connector == EventSource.Connector.CRAWL4AI
+                else CrawlSource.RenderMode.AUTO
+            ),
+            use_sitemaps=True,
+        )
+    source.crawl_source = shared
+    source.save(update_fields=["crawl_source", "updated_at"])
+    return shared
 
 
 def _discover_json_ld(
     source: EventSource,
 ) -> tuple[list[dict], list[str], bool]:
-    base_domain = urlparse(source.source_url).netloc
-    queue: list[tuple[str, int]] = [(source.source_url, 0)]
-    visited: set[str] = set()
+    """JSON-LD prioritaire, puis Mistral sur chaque page sans Event structure."""
+    from apps.assistant.services.shared_crawl import refresh_source
+
+    shared = _shared_source(source)
+    refresh_source(shared)
+    patterns = [line.strip().lower() for line in source.url_patterns.splitlines() if line.strip()]
+    pages = list(shared.pages.filter(is_active=True).order_by("canonical_url"))
+    if patterns:
+        pages = [
+            page
+            for page in pages
+            if any(pattern in page.canonical_url.lower() for pattern in patterns)
+        ]
+
     events: list[dict] = []
     ai_pages: list[dict] = []
-
-    while queue and len(visited) < source.max_pages:
-        current_url, depth = queue.pop(0)
-        current_url = urldefrag(current_url)[0]
-        if current_url in visited or not _same_domain(current_url, base_domain):
-            continue
-        if urlparse(current_url).path.lower().endswith(SKIP_SUFFIXES):
-            continue
-        try:
-            _assert_public_http_url(current_url)
-        except (OSError, ValueError):
-            logger.warning("URL de crawl refusée : %s", current_url)
-            continue
-        visited.add(current_url)
-        html, was_rendered = _fetch_event_html(source, current_url)
-        if not html:
-            continue
-        soup = BeautifulSoup(html, "lxml")
+    for page in pages:
         page_event_count = 0
-        for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
-            try:
-                payload = json.loads(script.string or script.get_text())
-            except (TypeError, json.JSONDecodeError):
-                continue
+        for payload in page.json_ld:
             for node in _jsonld_nodes(payload):
                 if _is_event_node(node):
-                    events.append({"node": node, "page_url": current_url})
+                    events.append({"node": node, "page_url": page.canonical_url})
                     page_event_count += 1
-
-        if (
-            page_event_count == 0
-            and source.connector == EventSource.Connector.CRAWL4AI
-            and was_rendered
-        ):
-            page = _page_for_ai(soup, current_url)
-            if len(page["content"]) >= 200:
-                ai_pages.append(page)
-
-        if depth >= 2:
-            continue
-        for link in soup.find_all("a", href=True):
-            next_url = urldefrag(urljoin(current_url, link["href"]))[0]
-            if (
-                next_url not in visited
-                and _same_domain(next_url, base_domain)
-                and not urlparse(next_url).path.lower().endswith(SKIP_SUFFIXES)
-            ):
-                queue.append((next_url, depth + 1))
+        if page_event_count == 0 and len(page.cleaned_text) >= 200:
+            ai_pages.append(
+                {
+                    "url": page.canonical_url,
+                    "title": page.title,
+                    "image_url": (page.metadata or {}).get("image_url", ""),
+                    "links": page.links,
+                    "content": page.cleaned_text,
+                }
+            )
 
     extraction_errors: list[str] = []
     ai_called = False
-    if ai_pages and not events:
-        ai_events, extraction_errors, ai_called = extract_events_with_mistral(
-            source,
-            ai_pages,
-        )
+    if ai_pages:
+        ai_events, extraction_errors, ai_called = extract_events_with_mistral(source, ai_pages)
         page_by_url = {page["url"]: page for page in ai_pages}
         for raw_event in ai_events:
             page_url = raw_event.get("source_page_url")
             if page_url in page_by_url:
-                events.append(
-                    {
-                        "ai_event": raw_event,
-                        "page": page_by_url[page_url],
-                    }
-                )
+                events.append({"ai_event": raw_event, "page": page_by_url[page_url]})
     return events, extraction_errors, ai_called
 
 
@@ -766,7 +699,9 @@ def import_candidate(candidate: EventImportCandidate, *, publish: bool = True) -
             seen_starts.append(starts_at)
         event.occurrences.filter(
             starts_at__gte=timezone.now(),
-        ).exclude(starts_at__in=seen_starts).update(status=EventOccurrence.Status.CANCELLED)
+        ).exclude(
+            starts_at__in=seen_starts
+        ).update(status=EventOccurrence.Status.CANCELLED)
 
     if candidate.image_url:
         try:
@@ -803,9 +738,11 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
     status = (
         EventImportCandidate.Status.INVALID
         if data["validation_errors"]
-        else EventImportCandidate.Status.DUPLICATE
-        if duplicate
-        else EventImportCandidate.Status.PENDING
+        else (
+            EventImportCandidate.Status.DUPLICATE
+            if duplicate
+            else EventImportCandidate.Status.PENDING
+        )
     )
     candidate, _ = EventImportCandidate.objects.update_or_create(
         source=source,
@@ -815,24 +752,24 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
             "matched_event": (
                 existing.matched_event
                 if existing
-                else duplicate.matched_event
-                if duplicate
-                else None
+                else duplicate.matched_event if duplicate else None
             ),
-            "status": existing.status
-            if (
-                existing
-                and existing.status
-                in {
-                    EventImportCandidate.Status.REJECTED,
-                    EventImportCandidate.Status.IMPORTED,
-                }
-                and not (
-                    data["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
-                    and payload_changed
+            "status": (
+                existing.status
+                if (
+                    existing
+                    and existing.status
+                    in {
+                        EventImportCandidate.Status.REJECTED,
+                        EventImportCandidate.Status.IMPORTED,
+                    }
+                    and not (
+                        data["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
+                        and payload_changed
+                    )
                 )
-            )
-            else status,
+                else status
+            ),
         },
     )
     updated = not created and previous_payload != data["raw_payload"]
@@ -857,9 +794,11 @@ def sync_event_source(source: EventSource) -> EventImportRun:
             raw_items, extraction_errors, ai_called = _discover_json_ld(source)
             errors.extend(extraction_errors)
             normalized = [
-                _normalize_ai_event(source, item)
-                if "ai_event" in item
-                else _normalize_json_ld(source, item)
+                (
+                    _normalize_ai_event(source, item)
+                    if "ai_event" in item
+                    else _normalize_json_ld(source, item)
+                )
                 for item in raw_items
             ]
             run.ai_extraction_count = sum(
@@ -904,9 +843,7 @@ def sync_event_source(source: EventSource) -> EventImportRun:
         run.status = (
             EventImportRun.Status.ERROR
             if not normalized
-            else EventImportRun.Status.PARTIAL
-            if errors
-            else EventImportRun.Status.SUCCESS
+            else EventImportRun.Status.PARTIAL if errors else EventImportRun.Status.SUCCESS
         )
     except Exception as exc:  # noqa: BLE001
         logger.exception("Synchronisation Agenda échouée pour %s", source.label)

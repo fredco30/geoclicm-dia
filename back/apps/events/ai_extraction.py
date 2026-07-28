@@ -9,7 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 MAX_PAGE_CHARS = 12_000
 MAX_INPUT_CHARS = 60_000
-MAX_EVENTS = 100
 
 
 class ExtractionUnavailable(RuntimeError):
@@ -76,18 +75,24 @@ def _parse_json_object(raw: str) -> dict | None:
 def _prepared_pages(pages: list[dict]) -> list[dict]:
     prepared = []
     for page in pages:
-        content = str(page.get("content") or "")[:MAX_PAGE_CHARS]
-        if not content.strip():
+        full_content = str(page.get("content") or "")
+        if not full_content.strip():
             continue
-        prepared.append(
-            {
-                "url": page["url"],
-                "title": str(page.get("title") or ""),
-                "detected_image_url": str(page.get("image_url") or ""),
-                "links": list(page.get("links") or [])[:100],
-                "content": content,
-            }
-        )
+        segments = [
+            full_content[start : start + MAX_PAGE_CHARS]
+            for start in range(0, len(full_content), MAX_PAGE_CHARS)
+        ]
+        for index, content in enumerate(segments, start=1):
+            prepared.append(
+                {
+                    "url": page["url"],
+                    "title": str(page.get("title") or ""),
+                    "content_part": f"{index}/{len(segments)}",
+                    "detected_image_url": str(page.get("image_url") or ""),
+                    "links": list(page.get("links") or [])[:100],
+                    "content": content,
+                }
+            )
     return prepared
 
 
@@ -129,7 +134,9 @@ def extract_events(source, pages: list[dict]) -> tuple[list[dict], list[str], bo
     all_events = []
     errors = []
     for batch in _page_batches(pages):
-        prompt = "Documents rendus par Crawl4AI :\n" + json.dumps(batch, ensure_ascii=False)
+        prompt = "Documents officiels collectes par GeoClic :\n" + json.dumps(
+            batch, ensure_ascii=False
+        )
         try:
             result = _call_mistral(source, prompt)
         except ExtractionUnavailable as exc:
@@ -151,14 +158,10 @@ def extract_events(source, pages: list[dict]) -> tuple[list[dict], list[str], bo
             if item.get("source_page_url") not in allowed_urls:
                 continue
             accepted.append({**item, "_generation_id": result["generation_id"]})
-            if len(all_events) + len(accepted) >= MAX_EVENTS:
-                break
         if raw_events and not accepted:
             errors.append("Réponse Mistral refusée : provenance de page invalide.")
             break
         all_events.extend(accepted)
-        if len(all_events) >= MAX_EVENTS:
-            break
 
     if errors:
         return all_events, errors, True

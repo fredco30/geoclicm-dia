@@ -217,6 +217,8 @@ export type EventSource = {
   id: number;
   label: string;
   connector: "json_ld" | "crawl4ai" | "ics";
+  crawl_source: number | null;
+  url_patterns: string;
   source_url: string;
   website_url: string;
   commune: number | null;

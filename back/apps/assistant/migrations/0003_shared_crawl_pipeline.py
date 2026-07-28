@@ -1,0 +1,23 @@
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+    dependencies = [("assistant", "0002_chunk_lat_lng")]
+    operations = [
+        migrations.AddField(model_name="crawlsource", name="max_pages", field=models.PositiveIntegerField(default=0, help_text="Nombre maximal de pages. 0 = sans limite fonctionnelle.")),
+        migrations.AddField(model_name="crawlsource", name="render_mode", field=models.CharField(choices=[("auto", "Automatique (HTTP puis navigateur si necessaire)"), ("http", "HTTP uniquement"), ("crawl4ai", "Navigateur Crawl4AI")], default="auto", max_length=20)),
+        migrations.AddField(model_name="crawlsource", name="use_sitemaps", field=models.BooleanField(default=True, help_text="Decouvrir les pages via robots.txt et les sitemaps XML.")),
+        migrations.AddField(model_name="crawlsource", name="include_patterns", field=models.TextField(blank=True, help_text="Une sous-chaine d'URL par ligne. Vide = toutes les pages.")),
+        migrations.AddField(model_name="crawlsource", name="exclude_patterns", field=models.TextField(blank=True, help_text="Une sous-chaine d'URL a exclure par ligne.")),
+        migrations.AddField(model_name="crawlsource", name="last_discovered_count", field=models.PositiveIntegerField(default=0, editable=False)),
+        migrations.AddField(model_name="crawlsource", name="last_fetched_count", field=models.PositiveIntegerField(default=0, editable=False)),
+        migrations.AddField(model_name="crawlsource", name="last_stored_count", field=models.PositiveIntegerField(default=0, editable=False)),
+        migrations.AddField(model_name="crawlsource", name="last_failed_count", field=models.PositiveIntegerField(default=0, editable=False)),
+        migrations.AddField(model_name="crawlsource", name="last_changed_count", field=models.PositiveIntegerField(default=0, editable=False)),
+        migrations.AddField(model_name="crawlsource", name="last_truncated", field=models.BooleanField(default=False, editable=False)),
+        migrations.CreateModel(name="CrawlRun", fields=[("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")), ("status", models.CharField(choices=[("running", "En cours"), ("ok", "OK"), ("partial", "Partiel"), ("error", "Erreur")], default="running", max_length=20)), ("started_at", models.DateTimeField(auto_now_add=True)), ("finished_at", models.DateTimeField(blank=True, null=True)), ("discovered_count", models.PositiveIntegerField(default=0)), ("fetched_count", models.PositiveIntegerField(default=0)), ("stored_count", models.PositiveIntegerField(default=0)), ("changed_count", models.PositiveIntegerField(default=0)), ("failed_count", models.PositiveIntegerField(default=0)), ("truncated", models.BooleanField(default=False)), ("error_details", models.JSONField(blank=True, default=list)), ("source", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="runs", to="assistant.crawlsource"))], options={"ordering": ["-started_at"]}),
+        migrations.CreateModel(name="CrawledPage", fields=[("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")), ("canonical_url", models.URLField(max_length=1000)), ("url_hash", models.CharField(max_length=64)), ("final_url", models.URLField(blank=True, max_length=1000)), ("title", models.CharField(blank=True, max_length=500)), ("cleaned_text", models.TextField(blank=True)), ("raw_html_gzip", models.BinaryField(blank=True, editable=False, null=True)), ("metadata", models.JSONField(blank=True, default=dict)), ("links", models.JSONField(blank=True, default=list)), ("json_ld", models.JSONField(blank=True, default=list)), ("content_hash", models.CharField(db_index=True, max_length=64)), ("fetch_method", models.CharField(choices=[("http", "HTTP"), ("crawl4ai", "Crawl4AI")], max_length=20)), ("http_status", models.PositiveSmallIntegerField(blank=True, null=True)), ("depth", models.PositiveSmallIntegerField(default=0)), ("is_active", models.BooleanField(db_index=True, default=True)), ("fetched_at", models.DateTimeField()), ("changed_at", models.DateTimeField()), ("last_error", models.TextField(blank=True)), ("source", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="pages", to="assistant.crawlsource"))], options={"ordering": ["canonical_url"]}),
+        migrations.AddConstraint(model_name="crawledpage", constraint=models.UniqueConstraint(fields=("source", "url_hash"), name="crawl_page_source_url_hash_uniq")),
+        migrations.AddIndex(model_name="crawledpage", index=models.Index(fields=["source", "is_active"], name="crawl_page_source_active_idx")),
+    ]
