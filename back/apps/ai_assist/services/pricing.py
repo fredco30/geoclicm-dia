@@ -23,6 +23,9 @@ MODEL_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     "mistral-small-latest": (Decimal("0.20"), Decimal("0.60")),
     "mistral-large-latest": (Decimal("2.00"), Decimal("6.00")),
     "mistral-tiny": (Decimal("0.14"), Decimal("0.42")),
+    "Qwen3.5-9B": (Decimal("0.10"), Decimal("0.15")),
+    "gpt-oss-20b": (Decimal("0.04"), Decimal("0.15")),
+    "gpt-oss-120b": (Decimal("0.08"), Decimal("0.40")),
     # Embeddings — input only, pas d'output
     "mistral-embed": (Decimal("0.10"), Decimal("0.00")),
 }

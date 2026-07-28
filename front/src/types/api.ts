@@ -233,9 +233,14 @@ export type EventSource = {
   last_synced_at: string | null;
   last_status: "never" | "running" | "ok" | "partial" | "error";
   last_error: string;
+  ai_provider: string;
+  ai_model: string;
+  ai_total_parts: number;
+  ai_completed_parts: number;
+  ai_failed_parts: number;
   pending_count: number;
   crawl4ai_available: boolean;
-  detected_methods: Array<"json_ld" | "mistral" | "ics">;
+  detected_methods: Array<"json_ld" | "ai" | "ics">;
 };
 
 export type EventImportCandidate = {
@@ -243,7 +248,7 @@ export type EventImportCandidate = {
   source: number;
   source_label: string;
   source_url: string;
-  extraction_method: "json_ld" | "mistral" | "ics";
+  extraction_method: "json_ld" | "ai" | "ics";
   title: string;
   short_description: string;
   description: string;

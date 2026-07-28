@@ -97,6 +97,12 @@ class EventSource(models.Model):
     last_error = models.TextField(blank=True)
     ai_content_hash = models.CharField(max_length=64, blank=True, editable=False)
     ai_cached_events = models.JSONField(default=list, blank=True, editable=False)
+    ai_extraction_cache = models.JSONField(default=dict, blank=True, editable=False)
+    ai_provider = models.CharField(max_length=40, blank=True, editable=False)
+    ai_model = models.CharField(max_length=100, blank=True, editable=False)
+    ai_total_parts = models.PositiveIntegerField(default=0, editable=False)
+    ai_completed_parts = models.PositiveIntegerField(default=0, editable=False)
+    ai_failed_parts = models.PositiveIntegerField(default=0, editable=False)
     created_by = models.ForeignKey(
         User,
         null=True,
@@ -371,7 +377,7 @@ class EventImportCandidate(models.Model):
 
     class ExtractionMethod(models.TextChoices):
         JSON_LD = "json_ld", "JSON-LD officiel"
-        MISTRAL = "mistral", "Extraction Mistral à valider"
+        AI = "ai", "Extraction IA à valider"
         ICS = "ics", "Flux ICS officiel"
 
     class Status(models.TextChoices):

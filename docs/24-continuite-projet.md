@@ -505,3 +505,59 @@ Django, `check --deploy`, redemarrage API + worker + beat, rebuild et
 redemarrage Next.js. Verifier ensuite qu'une synchronisation Agenda lancee
 moins de 6 h apres un crawl conserve le meme `CrawlRun` et cree seulement les
 candidats **A valider**.
+
+## 15. Passerelle OVHcloud et extraction Agenda reprenable
+
+Branche locale : `codex/feat-ovh-agenda-extraction`, base `b1be020`. Ce lot
+n'est ni pousse, ni merge, ni deploye tant que son diff n'a pas ete valide.
+
+Decision fournisseur :
+
+- le crawl HTTP/Crawl4AI reste independant de toute IA et ne change pas ;
+- les embeddings restent provisoirement sur `mistral-embed` (1024 dimensions),
+  afin d'eviter une migration pgvector et une reindexation non mesurees ;
+- une passerelle compatible OpenAI permet aux futures generations GeoClic
+  d'utiliser OVHcloud sans dupliquer budget, cout, audit, timeout et reprises ;
+- l'Agenda est le premier usage active avec `Qwen3.5-9B` et
+  `reasoning_effort=none` ;
+- le fournisseur reste `mistral` par defaut tant que la production n'active
+  pas explicitement OVH.
+
+Configuration de production, sans committer le secret :
+
+```dotenv
+EVENT_AI_PROVIDER=ovh
+EVENT_AI_MODEL=Qwen3.5-9B
+EVENT_AI_HTTP_TIMEOUT=120
+EVENT_AI_MAX_ATTEMPTS=3
+OVH_AI_ENDPOINTS_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
+OVH_AI_ENDPOINTS_ACCESS_TOKEN=<secret uniquement dans le .env du VPS>
+```
+
+Traitement retenu :
+
+- JSON-LD et ICS restent prioritaires et gratuits ;
+- seules les pages evenement sans structure sont envoyees a l'IA ;
+- les pages longues sont decoupees en segments de 12 000 caracteres avec
+  chevauchement de 1 000 caracteres ;
+- chaque succes, y compris une reponse vide, est sauvegarde immediatement ;
+- un timeout n'arrete plus les segments suivants ;
+- la relance ne traite que les segments absents du cache ou modifies ;
+- les occurrences dupliquees par le chevauchement sont fusionnees ;
+- provenance URL et preuves textuelles restent verifiees ;
+- tous les candidats IA restent obligatoirement dans **A valider**.
+
+L'admin expose fournisseur, modele, progression, echecs et erreur finale. Il
+interroge l'API toutes les quatre secondes tant qu'une source est en cours.
+
+Essai reel limite du compte OVH existant le 28 juillet 2026 :
+
+- endpoint unifie accessible et `Qwen3.5-9B` autorise, HTTP 200 ;
+- raisonnement implicite : 13,39 s, 512 tokens, aucun contenu final ;
+- `reasoning_effort=none` : 2,07 s, JSON valide, un evenement extrait,
+  77 tokens d'entree et 80 de sortie.
+
+Validation locale : 23 tests Django cibles OK, migration stable, compilation
+Python OK, ESLint OK et build Next.js 16.2.4 OK. PostgreSQL local n'etait pas
+joignable sans tunnel ; migration et historique devront etre verifies sur le
+VPS avant redemarrage.
