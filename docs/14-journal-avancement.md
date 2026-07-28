@@ -573,3 +573,24 @@ carte et l'idempotence au second passage.
 
 La procédure complète et la feuille de route sont dans
 `24-continuite-projet.md`.
+
+---
+
+## Extraction Agenda OVHcloud reprenable — 28 juillet 2026
+
+**Branche locale** : `codex/feat-ovh-agenda-extraction`
+**Base** : `b1be020`
+**Etat** : developpe et valide localement, non pousse, non merge, non deploye.
+
+- Passerelle compatible OpenAI reutilisable par les generations GeoClic.
+- OVHcloud `Qwen3.5-9B` retenu pour l'Agenda, sans migration des embeddings.
+- Cache par segment et reprise apres erreur sans retraiter les succes.
+- Segments de 12 000 caracteres avec chevauchement et fusion des occurrences.
+- Trois tentatives, timeout lecture 120 secondes et raisonnement desactive.
+- Progression et erreurs visibles avec actualisation automatique dans l'admin.
+- Ancienne methode candidat `mistral` migree vers la methode generique `ai`.
+- Test reel OVH : HTTP 200, JSON valide en 2,07 secondes.
+- 23 tests cibles, ESLint et build Next.js : OK.
+
+Le token OVH reste exclusivement dans les environnements serveur. Aucun secret
+n'est ajoute au depot.

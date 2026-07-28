@@ -25,7 +25,7 @@ from PIL import Image, UnidentifiedImageError
 from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
 
-from .ai_extraction import extract_events as extract_events_with_mistral
+from .ai_extraction import extract_events as extract_events_with_ai
 from .models import (
     Event,
     EventCategory,
@@ -168,7 +168,7 @@ def _matches_url_patterns(page, patterns: list[str]) -> bool:
 def _discover_json_ld(
     source: EventSource,
 ) -> tuple[list[dict], list[str], bool]:
-    """JSON-LD prioritaire, puis Mistral sur chaque page sans Event structure."""
+    """JSON-LD prioritaire, puis IA sur chaque page sans Event structure."""
     from apps.assistant.services.shared_crawl import ensure_source_fresh
 
     shared = _shared_source(source)
@@ -201,7 +201,7 @@ def _discover_json_ld(
     extraction_errors: list[str] = []
     ai_called = False
     if ai_pages:
-        ai_events, extraction_errors, ai_called = extract_events_with_mistral(source, ai_pages)
+        ai_events, extraction_errors, ai_called = extract_events_with_ai(source, ai_pages)
         page_by_url = {page["url"]: page for page in ai_pages}
         for raw_event in ai_events:
             page_url = raw_event.get("source_page_url")
@@ -408,7 +408,7 @@ def _normalize_ai_event(source: EventSource, item: dict) -> dict:
     if not category:
         errors.append("Catégorie non déterminée")
     if not verified_evidence:
-        errors.append("Preuve textuelle Mistral non vérifiable dans la page")
+        errors.append("Preuve textuelle IA non vérifiable dans la page")
 
     links = set(page.get("links") or [])
     booking_candidate = _absolute_http_url(page_url, raw.get("booking_url"))
@@ -420,10 +420,10 @@ def _normalize_ai_event(source: EventSource, item: dict) -> dict:
     ).hexdigest()
     return {
         "source_uid": source_uid,
-        "extraction_method": EventImportCandidate.ExtractionMethod.MISTRAL,
+        "extraction_method": EventImportCandidate.ExtractionMethod.AI,
         "source_url": page_url,
         "raw_payload": {
-            "mistral": raw,
+            "ai": raw,
             "verified_evidence": verified_evidence,
             "page_url": page_url,
         },
@@ -771,7 +771,7 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
                         EventImportCandidate.Status.IMPORTED,
                     }
                     and not (
-                        data["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
+                        data["extraction_method"] == EventImportCandidate.ExtractionMethod.AI
                         and payload_changed
                     )
                 )
@@ -861,11 +861,11 @@ def sync_event_source(source: EventSource) -> EventImportRun:
             raise ValueError(f"Connecteur non pris en charge : {source.connector}")
 
         run.ai_extraction_count = sum(
-            item["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
+            item["extraction_method"] == EventImportCandidate.ExtractionMethod.AI
             for item in normalized
         )
         if ai_called and run.ai_extraction_count == 0 and not errors:
-            errors.append("Mistral n’a détecté aucun événement explicite.")
+            errors.append("L’IA n’a détecté aucun événement explicite.")
 
         before_dedup = len(normalized)
         seen_fingerprints = set()

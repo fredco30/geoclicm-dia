@@ -227,6 +227,21 @@ MISTRAL_API_KEY = env("MISTRAL_API_KEY", default="")
 MISTRAL_MODEL = env("MISTRAL_MODEL", default="mistral-small-latest")
 MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 
+# Passerelle de génération Agenda. Le défaut Mistral préserve les
+# installations existantes ; la production bascule explicitement sur OVH.
+EVENT_AI_PROVIDER = env("EVENT_AI_PROVIDER", default="mistral").lower()
+EVENT_AI_MODEL = env("EVENT_AI_MODEL", default="Qwen3.5-9B")
+EVENT_AI_HTTP_TIMEOUT = env.int("EVENT_AI_HTTP_TIMEOUT", default=120)
+EVENT_AI_MAX_ATTEMPTS = env.int("EVENT_AI_MAX_ATTEMPTS", default=3)
+OVH_AI_ENDPOINTS_BASE_URL = env(
+    "OVH_AI_ENDPOINTS_BASE_URL",
+    default="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
+)
+OVH_AI_ENDPOINTS_ACCESS_TOKEN = env(
+    "OVH_AI_ENDPOINTS_ACCESS_TOKEN",
+    default="",
+)
+
 # Navigateur Chromium isolé pour les sources Agenda rendues en JavaScript.
 # Vide = moteur standard uniquement, avec comportement inchangé.
 CRAWL4AI_URL = env("CRAWL4AI_URL", default="")

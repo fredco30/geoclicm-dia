@@ -363,6 +363,11 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "last_synced_at",
             "last_status",
             "last_error",
+            "ai_provider",
+            "ai_model",
+            "ai_total_parts",
+            "ai_completed_parts",
+            "ai_failed_parts",
             "pending_count",
             "last_run",
             "crawl4ai_available",
@@ -375,6 +380,11 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "last_synced_at",
             "last_status",
             "last_error",
+            "ai_provider",
+            "ai_model",
+            "ai_total_parts",
+            "ai_completed_parts",
+            "ai_failed_parts",
             "pending_count",
             "last_run",
             "crawl4ai_available",
@@ -473,5 +483,5 @@ class EventImportCandidateSerializer(serializers.ModelSerializer):
         return obj.raw_payload.get("verified_evidence") or []
 
     def get_generation_id(self, obj: EventImportCandidate) -> int | None:
-        raw = obj.raw_payload.get("mistral") or {}
+        raw = obj.raw_payload.get("ai") or obj.raw_payload.get("mistral") or {}
         return raw.get("_generation_id") if isinstance(raw, dict) else None
