@@ -10,10 +10,13 @@ import logging
 import re
 import socket
 from collections import deque
+from dataclasses import dataclass
+from datetime import timedelta
 from urllib.parse import parse_qsl, urldefrag, urlencode, urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 from django.conf import settings
+from django.core.cache import cache
 from django.utils import timezone
 
 from apps.assistant.indexers.http_fetcher import fetcher
@@ -224,6 +227,68 @@ def _save_page(source: CrawlSource, page: dict, now) -> tuple[CrawledPage, bool]
     }
     obj, _ = CrawledPage.objects.update_or_create(source=source, url_hash=url_hash, defaults=values)
     return obj, changed
+
+
+@dataclass(frozen=True)
+class CrawlRefreshDecision:
+    """Decision tracee : rafraichir le site ou reutiliser ses pages stockees."""
+
+    refreshed: bool
+    reason: str
+    run: CrawlRun | None = None
+
+
+def source_is_fresh(source: CrawlSource, *, at=None) -> bool:
+    """Vrai si un corpus exploitable a ete collecte dans la fenetre configuree."""
+    if source.last_status not in {CrawlRun.Status.OK, CrawlRun.Status.PARTIAL}:
+        return False
+    if source.last_crawled_at is None:
+        return False
+    freshness_seconds = max(
+        0,
+        int(getattr(settings, "SHARED_CRAWL_FRESHNESS_SECONDS", 6 * 60 * 60)),
+    )
+    if freshness_seconds == 0:
+        return False
+    now = at or timezone.now()
+    if source.last_crawled_at < now - timedelta(seconds=freshness_seconds):
+        return False
+    return source.pages.filter(is_active=True).exists()
+
+
+def ensure_source_fresh(
+    source: CrawlSource,
+    *,
+    force: bool = False,
+) -> CrawlRefreshDecision:
+    """Rafraichit seulement un corpus du ou explicitement force."""
+    if not force and source_is_fresh(source):
+        return CrawlRefreshDecision(refreshed=False, reason="fresh")
+
+    lock_key = f"assistant:crawl-source:{source.pk}:running"
+    lock_timeout = max(
+        300,
+        int(getattr(settings, "SHARED_CRAWL_LOCK_SECONDS", 6 * 60 * 60)),
+    )
+    if not cache.add(lock_key, True, timeout=lock_timeout):
+        if source.pages.filter(is_active=True).exists():
+            return CrawlRefreshDecision(refreshed=False, reason="already_running")
+        raise RuntimeError(f"Crawl de la source {source.pk} deja en cours")
+
+    try:
+        if not force and hasattr(source, "refresh_from_db"):
+            source.refresh_from_db(
+                fields=("last_status", "last_crawled_at", "last_truncated")
+            )
+            if source_is_fresh(source):
+                return CrawlRefreshDecision(
+                    refreshed=False,
+                    reason="fresh_after_lock",
+                )
+        run = refresh_source(source)
+        return CrawlRefreshDecision(refreshed=True, reason="refreshed", run=run)
+    finally:
+        cache.delete(lock_key)
 
 
 def refresh_source(source: CrawlSource) -> CrawlRun:

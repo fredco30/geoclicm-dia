@@ -79,9 +79,18 @@ def reindex_datatourisme() -> dict[str, int]:
 @shared_task(name="assistant.crawl_external_sources", ignore_result=True)
 def crawl_external_sources() -> dict[str, int]:
     """Crawle toutes les CrawlSource actives (mairies, OT). Hebdo."""
+    from django.core.cache import cache
+
     from .indexers.web_crawler import crawl_all_active_sources
 
-    return crawl_all_active_sources()
+    lock_key = "assistant:crawl-all:running"
+    if not cache.add(lock_key, True, timeout=6 * 60 * 60):
+        logger.warning("crawl_external_sources ignore : un crawl global est deja en cours")
+        return {"skipped": 1}
+    try:
+        return crawl_all_active_sources()
+    finally:
+        cache.delete(lock_key)
 
 
 @shared_task(name="assistant.crawl_source_now", ignore_result=True)
@@ -96,7 +105,7 @@ def crawl_external_source_now(source_id: int) -> dict[str, int]:
         logger.warning("crawl_external_source_now: source %s introuvable", source_id)
         return {"created": 0, "updated": 0, "unchanged": 0, "deactivated": 0, "embedded": 0}
 
-    return crawl_source(source)
+    return crawl_source(source, force=True)
 
 
 @shared_task(name="assistant.crawl_business_websites", ignore_result=True)
@@ -122,6 +131,6 @@ def reindex_all_task() -> dict[str, dict[str, int]]:
         "articles": index_all_articles(),
         "wikipedia": index_all_wikipedia(),
         "osm": index_all_osm(),
-        "external_sources": crawl_all_active_sources(),
+        "external_sources": crawl_all_active_sources(force=True),
         "business_websites": crawl_business_websites(),
     }

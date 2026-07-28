@@ -15,6 +15,7 @@ class EventSource(models.Model):
     """Source officielle synchronisée vers la boîte d'import Agenda."""
 
     class Connector(models.TextChoices):
+        AUTO = "auto", "Détection automatique"
         JSON_LD = "json_ld", "Pages web avec JSON-LD Event"
         CRAWL4AI = "crawl4ai", "Pages JavaScript via Crawl4AI"
         ICS = "ics", "Flux calendrier ICS"
@@ -30,7 +31,7 @@ class EventSource(models.Model):
     connector = models.CharField(
         max_length=20,
         choices=Connector.choices,
-        default=Connector.JSON_LD,
+        default=Connector.AUTO,
         db_index=True,
     )
     crawl_source = models.ForeignKey(
@@ -42,7 +43,7 @@ class EventSource(models.Model):
         help_text="Corpus partage a reutiliser pour les connecteurs web.",
     )
     url_patterns = models.TextField(
-        default="/agenda/\n/evenement/",
+        default="",
         blank=True,
         help_text="Une sous-chaine d URL d evenement par ligne.",
     )

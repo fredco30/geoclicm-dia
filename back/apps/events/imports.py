@@ -38,6 +38,7 @@ from .models import (
 logger = logging.getLogger(__name__)
 PARIS = ZoneInfo("Europe/Paris")
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+MAX_DISCOVERED_ICS_FEEDS = 20
 USER_AGENT = "geoclicmedia-events-bot/1.0 (+https://media.geoclic.fr; contact@geoclic.fr)"
 
 
@@ -143,11 +144,7 @@ def _shared_source(source: EventSource):
             commune=source.commune,
             max_depth=2,
             max_pages=source.max_pages,
-            render_mode=(
-                CrawlSource.RenderMode.CRAWL4AI
-                if source.connector == EventSource.Connector.CRAWL4AI
-                else CrawlSource.RenderMode.AUTO
-            ),
+            render_mode=CrawlSource.RenderMode.AUTO,
             use_sitemaps=True,
         )
     source.crawl_source = shared
@@ -159,10 +156,10 @@ def _discover_json_ld(
     source: EventSource,
 ) -> tuple[list[dict], list[str], bool]:
     """JSON-LD prioritaire, puis Mistral sur chaque page sans Event structure."""
-    from apps.assistant.services.shared_crawl import refresh_source
+    from apps.assistant.services.shared_crawl import ensure_source_fresh
 
     shared = _shared_source(source)
-    refresh_source(shared)
+    ensure_source_fresh(shared)
     patterns = [line.strip().lower() for line in source.url_patterns.splitlines() if line.strip()]
     pages = list(shared.pages.filter(is_active=True).order_by("canonical_url"))
     if patterns:
@@ -449,8 +446,9 @@ def commune_id(commune: Commune | None) -> str:
     return str(commune.pk) if commune else ""
 
 
-def _discover_ics(source: EventSource) -> list[dict]:
-    response = fetcher.fetch(source.source_url, accept="text/calendar")
+def _discover_ics(source: EventSource, source_url: str | None = None) -> list[dict]:
+    target_url = source_url or source.source_url
+    response = fetcher.fetch(target_url, accept="text/calendar")
     if response is None:
         return []
     calendar = Calendar.from_ical(response.content)
@@ -780,6 +778,58 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
     return candidate, created, updated
 
 
+def _looks_like_ics_url(url: str) -> bool:
+    parsed = urlparse(url)
+    lower = url.lower()
+    return parsed.path.lower().endswith(".ics") or any(
+        token in lower
+        for token in ("format=ics", "export=ics", "ical=", "/ical/", "/ics/")
+    )
+
+
+def _normalize_web_source(
+    source: EventSource,
+) -> tuple[list[dict], list[str], bool]:
+    raw_items, errors, ai_called = _discover_json_ld(source)
+    normalized = [
+        (
+            _normalize_ai_event(source, item)
+            if "ai_event" in item
+            else _normalize_json_ld(source, item)
+        )
+        for item in raw_items
+    ]
+    return normalized, errors, ai_called
+
+
+def _discover_automatic(
+    source: EventSource,
+) -> tuple[list[dict], list[str], bool]:
+    """Orchestre ICS direct ou corpus web, puis les flux ICS decouverts."""
+    if _looks_like_ics_url(source.source_url):
+        raw_items = _discover_ics(source)
+        return [_normalize_ics(source, item) for item in raw_items], [], False
+
+    normalized, errors, ai_called = _normalize_web_source(source)
+    shared = _shared_source(source)
+    feed_urls = {
+        link
+        for links in shared.pages.filter(is_active=True).values_list("links", flat=True)
+        for link in (links or [])
+        if _looks_like_ics_url(link)
+    }
+    for feed_url in sorted(feed_urls)[:MAX_DISCOVERED_ICS_FEEDS]:
+        try:
+            normalized.extend(
+                _normalize_ics(source, item)
+                for item in _discover_ics(source, feed_url)
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Flux ICS detecte mais inexploitable : %s", feed_url)
+            errors.append(f"{feed_url}: {str(exc)[:300]}")
+    return normalized, errors, ai_called
+
+
 def sync_event_source(source: EventSource) -> EventImportRun:
     run = EventImportRun.objects.create(source=source)
     source.last_status = EventSource.SyncStatus.RUNNING
@@ -787,31 +837,28 @@ def sync_event_source(source: EventSource) -> EventImportRun:
     source.save(update_fields=["last_status", "last_error", "updated_at"])
     errors: list[str] = []
     try:
-        if source.connector in {
+        ai_called = False
+        if source.connector == EventSource.Connector.AUTO:
+            normalized, extraction_errors, ai_called = _discover_automatic(source)
+            errors.extend(extraction_errors)
+        elif source.connector in {
             EventSource.Connector.JSON_LD,
             EventSource.Connector.CRAWL4AI,
         }:
-            raw_items, extraction_errors, ai_called = _discover_json_ld(source)
+            normalized, extraction_errors, ai_called = _normalize_web_source(source)
             errors.extend(extraction_errors)
-            normalized = [
-                (
-                    _normalize_ai_event(source, item)
-                    if "ai_event" in item
-                    else _normalize_json_ld(source, item)
-                )
-                for item in raw_items
-            ]
-            run.ai_extraction_count = sum(
-                item["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
-                for item in normalized
-            )
-            if ai_called and run.ai_extraction_count == 0 and not extraction_errors:
-                errors.append("Mistral n’a détecté aucun événement explicite.")
         elif source.connector == EventSource.Connector.ICS:
             raw_items = _discover_ics(source)
             normalized = [_normalize_ics(source, item) for item in raw_items]
         else:
             raise ValueError(f"Connecteur non pris en charge : {source.connector}")
+
+        run.ai_extraction_count = sum(
+            item["extraction_method"] == EventImportCandidate.ExtractionMethod.MISTRAL
+            for item in normalized
+        )
+        if ai_called and run.ai_extraction_count == 0 and not errors:
+            errors.append("Mistral n’a détecté aucun événement explicite.")
 
         before_dedup = len(normalized)
         seen_fingerprints = set()

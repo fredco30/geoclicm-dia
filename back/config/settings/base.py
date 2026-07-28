@@ -236,6 +236,11 @@ CRAWL4AI_EMAIL = env("CRAWL4AI_EMAIL", default="crawl4ai@gestia.ovh")
 # serveur d'une boucle de liens infinie et produit obligatoirement un statut
 # PARTIAL si elle est atteinte; elle peut etre relevee sans migration.
 SHARED_CRAWL_HARD_LIMIT = env.int("SHARED_CRAWL_HARD_LIMIT", default=5000)
+# Une synchronisation Agenda reutilise le corpus pendant cette fenetre au lieu
+# de solliciter de nouveau le site officiel. 6 h = frequence de sync Agenda.
+SHARED_CRAWL_FRESHNESS_SECONDS = env.int(
+    "SHARED_CRAWL_FRESHNESS_SECONDS", default=6 * 60 * 60
+)
 
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
