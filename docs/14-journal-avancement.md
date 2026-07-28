@@ -658,10 +658,10 @@ détaillés dans la section 15 de `25-reprise-llm.md`.
 
 ---
 
-## Lot local images Agenda et candidats expirés — 29 juillet 2026
+## Images Agenda et candidats expirés — déployé le 29 juillet 2026
 
-Branche `codex/agenda-event-images-expiration`. Aucun push, aucune fusion,
-aucun déploiement et aucune modification des 481 candidats de production.
+PR `#84`, `#85` et `#86` fusionnées. Production au commit `7d9c51f`,
+migration `events.0007_event_expiration` appliquée.
 
 - ajout d'un sélecteur d'image local fondé sur `Event.image`, le titre et le
   conteneur DOM de la fiche ;
@@ -675,9 +675,13 @@ aucun déploiement et aucune modification des 481 candidats de production.
 - les expirés restent consultables dans un filtre admin, sans action publier ;
 - correction de la sémantique `DTEND` exclusive pour les journées ICS.
 
-Test en lecture seule sur les HTML stockés de production : 465 images
-spécifiques sélectionnées et 16 absences d'image assumées, sans reprise de
-l'image générique des dunes. Résultat non appliqué à la base.
+Réparation appliquée depuis les HTML stockés : 465 images spécifiques,
+16 absences d'image assumées, 125 candidats expirés et 77 occurrences passées
+retirées des séries mixtes. Aucun événement n'a été publié. Le second dry-run
+confirme l'idempotence.
 
 Validations locales : tests ciblés Django, Ruff, contrôle des migrations,
-ESLint et build Next.js réussis. Voir la section 16 de `25-reprise-llm.md`.
+ESLint et build Next.js réussis. Les tests navigateur desktop/mobile valident
+les images, les trois filtres, l'absence d'action sur les expirés et la
+pagination serveur de 50 candidats. Voir la section 16 de
+`25-reprise-llm.md`.
