@@ -392,19 +392,6 @@ class EventImportCandidate(models.Model):
         default=ExtractionMethod.JSON_LD,
         db_index=True,
     )
-    crawl_source = models.ForeignKey(
-        "assistant.CrawlSource",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="event_sources",
-        help_text="Corpus partage a reutiliser pour les connecteurs web.",
-    )
-    url_patterns = models.TextField(
-        default="/agenda/\n/evenement/",
-        blank=True,
-        help_text="Une sous-chaine d URL d evenement par ligne.",
-    )
     source_url = models.URLField()
     raw_payload = models.JSONField(default=dict, blank=True)
     fingerprint = models.CharField(max_length=64, db_index=True)
