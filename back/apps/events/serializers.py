@@ -324,6 +324,7 @@ class EventImportRunSerializer(serializers.ModelSerializer):
             "imported_count",
             "ai_extraction_count",
             "duplicate_count",
+            "expired_count",
             "error_count",
             "error_details",
         )

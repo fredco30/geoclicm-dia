@@ -655,3 +655,29 @@ Décisions pour le prochain lot :
 
 Le cahier de reprise, les fichiers concernés, les tests et critères de fin sont
 détaillés dans la section 15 de `25-reprise-llm.md`.
+
+---
+
+## Lot local images Agenda et candidats expirés — 29 juillet 2026
+
+Branche `codex/agenda-event-images-expiration`. Aucun push, aucune fusion,
+aucun déploiement et aucune modification des 481 candidats de production.
+
+- ajout d'un sélecteur d'image local fondé sur `Event.image`, le titre et le
+  conteneur DOM de la fiche ;
+- rejet des OG et images de chrome répétées dans le corpus ;
+- commande de réparation dry-run par défaut, idempotente et auditée ;
+- ajout du statut `expired` et d'un compteur de run ;
+- les événements terminés avant le début du crawl/import ne rejoignent plus
+  **À valider** ;
+- les séries mixtes conservent uniquement leurs occurrences non terminées ;
+- les événements en cours restent disponibles jusqu'à leur fin réelle ;
+- les expirés restent consultables dans un filtre admin, sans action publier ;
+- correction de la sémantique `DTEND` exclusive pour les journées ICS.
+
+Test en lecture seule sur les HTML stockés de production : 465 images
+spécifiques sélectionnées et 16 absences d'image assumées, sans reprise de
+l'image générique des dunes. Résultat non appliqué à la base.
+
+Validations locales : tests ciblés Django, Ruff, contrôle des migrations,
+ESLint et build Next.js réussis. Voir la section 16 de `25-reprise-llm.md`.

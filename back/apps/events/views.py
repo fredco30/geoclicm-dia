@@ -273,6 +273,11 @@ class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
         candidate = self.get_object()
+        if candidate.status == EventImportCandidate.Status.EXPIRED:
+            return Response(
+                {"detail": "Un événement expiré ne peut pas être publié."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = self.get_serializer(
             candidate, data=request.data or {}, partial=True,
         )
