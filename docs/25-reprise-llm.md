@@ -12,7 +12,7 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 |---|---|
 | Dépôt | `fredco30/geoclicm-dia` |
 | Branche de production | `main` |
-| Commit déployé | `4ee16d4` |
+| Commit déployé | `7d9c51f` |
 | Domaine | `https://media.geoclic.fr` |
 | VPS | `135.125.159.142`, utilisateur `ubuntu` |
 | Dépôt serveur | `/var/www/geoclicmedia` |
@@ -49,6 +49,9 @@ Le healthcheck répond :
 | `#79` | `b1be020` | identité des pages événement préservée |
 | `#80` | `8696639` | extraction OVH reprenable et progression admin |
 | `#81` | `4ee16d4` | timeout OVH ramené à 100 s et 2 tentatives |
+| `#84` | `06a84e9` | images événementielles et candidats expirés |
+| `#85` | `13c9afa` | chargement différé des images candidates |
+| `#86` | `7d9c51f` | pagination serveur des candidats admin |
 
 Commits fonctionnels associés :
 
@@ -468,11 +471,10 @@ la journée locale avant la comparaison.
 - migrations, tests Django, lint/build frontend et smoke tests passent ;
 - la documentation est mise à jour avant push et déploiement.
 
-## 16. Lot images et expiration — état local du 29 juillet 2026
+## 16. Lot images et expiration — déployé le 29 juillet 2026
 
-**Branche locale : `codex/agenda-event-images-expiration`. Ce lot n'est ni
-poussé, ni fusionné, ni déployé. Les 481 candidats de production n'ont pas été
-modifiés.**
+**PR `#84`, `#85` et `#86` fusionnées. Production alignée sur `main` au commit
+`7d9c51f`. Migration `events.0007_event_expiration` appliquée.**
 
 Implémentation locale :
 
@@ -491,17 +493,20 @@ Implémentation locale :
 - interdiction API d'approuver un candidat expiré ;
 - respect de la fin de journée Europe/Paris et du `DTEND` exclusif ICS.
 
-Contrôle en lecture seule du sélecteur local contre les 481 HTML de production :
+Résultat appliqué aux 481 candidats depuis le HTML stocké :
 
 - `465` images spécifiques sélectionnées ;
 - `16` fiches laissées sans image fiable ;
 - `0` image générique retenue ;
-- `0` ambiguïté restante sur ce corpus ;
+- `125` candidats classés `expired` ;
+- `77` occurrences terminées retirées des séries mixtes ;
+- `17` candidats `pending` et `339` candidats `invalid` restent consultables ;
 - les exemples Copains Twist, Un livre à la plage, Halloween et Nouvel an
   retrouvent leurs images officielles.
 
-Ces nombres décrivent le résultat du sélecteur en dry-run contre les HTML
-stockés. Ils ne constituent pas une réparation déjà appliquée.
+Une seconde exécution en dry-run a confirmé l'idempotence : `465` inchangés,
+`16` sans image et `0` occurrence supplémentaire retirée. Le rapport
+d'application est archivé avec les sauvegardes PostgreSQL.
 
 Validation locale :
 
@@ -510,8 +515,8 @@ Validation locale :
 - `makemigrations --check --dry-run` : aucune migration manquante ;
 - ESLint : OK ;
 - build Next.js 16.2.4 : OK.
-
-Avant toute application en production : relire le diff, sauvegarder PostgreSQL,
-déployer la migration après accord explicite, exécuter la commande sans
-`--apply`, examiner le rapport complet, puis demander un second accord avant
-de modifier les candidats.
+- tests navigateur desktop et mobile : OK ;
+- pagination admin de 50 candidats : OK, pages suivantes et dernière page
+  vérifiées ;
+- aucun candidat terminé ne reste dans `pending` ou `invalid` ;
+- aucun `Event` n'a été publié automatiquement.
