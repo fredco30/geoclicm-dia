@@ -760,3 +760,31 @@ catégories définies (événements, marchés, lieux, extensible). Voie A pruden
 traductions et à l'exclusion de la navigation pure. Validation humaine par
 boîte, aucune publication automatique. Premier chantier : les lieux
 (Découvrir). Voir `26-architecture-collecte-multisite.md` section 14.
+
+---
+
+## Session — Passe IA multi-catégories (30 juillet 2026, nuit)
+
+**Objectif** : alimenter Découvrir (lieux) et Marchés depuis le même corpus
+crawlé, en une seule passe IA (docs/26 §14), carte blanche de Fred.
+
+**Constat (lecture seule VPS)** : 3250 pages actives / 4 corpus ; aucun JSON-LD
+Place/Event → tout passe par l'IA (Voie A validée). Potentiel : restaurant
+913, hébergement 873, patrimoine 563, plage 562, marché 486 pages.
+
+**Livré (branche codex/lot-places-extraction, en attente de merge/déploiement)** :
+
+- Modèle PlaceImportCandidate + migration discovery.0002 (miroir Agenda).
+- multi_extraction.py : une passe IA/page → events/markets/places,
+  provenance validée, _call_ai rendu paramétrable en prompt (events/ai_extraction.py).
+- multi_sync.py : routage lieux→Découvrir, events+markets→Agenda (kind=market),
+  import Place + image officielle, résolution utilisateur IA.
+- API dmin/place-imports/ (approve/reject) + boîte « Candidats » au front Découvrir.
+- Tâches Celery discovery.multi_extract_source / multi_extract_all.
+
+**Validation locale** : manage.py check 0 issue ; 8 tests discovery + 32 tests
+events passent ; ruff propre ; lint + build Next.js OK. Migration  002 générée.
+
+**Reste au réveil** : revue du diff par Fred, merge, déploiement (backup +
+migration + rebuild front), tests réels Chromium, lancement d'une passe pilote
+et mesure coût/durée/qualité avant toute planification automatique.

@@ -322,6 +322,39 @@ export type PlaceRelatedItem = {
   short_description: string;
 };
 
+export type PlaceImportCandidate = {
+  id: number;
+  crawl_source: number;
+  crawl_source_label: string;
+  source_uid: string;
+  extraction_method: "ai" | "json_ld";
+  source_url: string;
+  title: string;
+  short_description: string;
+  description: string;
+  image_url: string;
+  image_credit: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  duration: string;
+  difficulty: string;
+  accessibility: string;
+  best_season: string;
+  practical_info: string;
+  official_url: string;
+  commune: number | null;
+  commune_name: string | null;
+  category: number | null;
+  category_name: string | null;
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  validation_errors: string[];
+  extraction_evidence: string[];
+  matched_place_slug: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+};
+
 export type PlaceDetail = PlaceListItem & {
   description: string;
   address: string;

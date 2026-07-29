@@ -282,3 +282,38 @@ Principes :
 
 Ordre de mise en œuvre : commencer par les **lieux** (Découvrir), seul module
 non alimenté, puis généraliser la passe multi-catégories.
+
+## 15. Mise en œuvre — passe multi-catégories (30 juillet 2026)
+
+Implémentation de la section 14, en cours de validation avant déploiement.
+
+**Constat d'entrée (vérifié en lecture seule sur le VPS)** : 3250 pages actives
+sur 4 corpus (Le Grau-du-Roi 1051, Saint-Laurent 1015, Aigues-Mortes 696,
+La Grande-Motte 488), **aucun JSON-LD Place/Event** — l'extraction gratuite
+est impossible, tout passe par l'IA (Voie A). Potentiel mesuré par mots-clés :
+restaurant 913 pages, hébergement 873, patrimoine 563, plage 562, marché 486.
+
+**Composants livrés** :
+
+- discovery.PlaceImportCandidate (migration  002) : miroir du candidat
+  Agenda pour les lieux, avec provenance, preuve vérifiée et statuts.
+- discovery/multi_extraction.py : une passe IA par page classant son contenu
+  en events / markets / places (prompt dédié, version multi-v1),
+  provenance validée, doublons de segments fusionnés. Réutilise _call_ai
+  (budget + audit) rendu paramétrable en prompt système.
+- discovery/multi_sync.py : routage — lieux vers la boîte Découvrir,
+  événements et marchés vers la boîte Agenda existante (kind=market pour les
+  marchés, lot 3 résolu par le même passage). Import Place + image officielle.
+- API dmin/place-imports/ (approve/reject), miroir de dmin/event-imports/.
+- Boîte « Candidats » Découvrir au front (validation humaine commune/catégorie).
+- Tâches Celery discovery.multi_extract_source / multi_extract_all.
+
+**Règles conservées** : le pipeline Agenda existant (EventSource) tourne
+inchangé ; l'assistant indexe tout le corpus ; aucune publication automatique ;
+provenance obligatoire. La résolution de l'utilisateur porteur de l'appel IA
+réutilise le créateur de la source Agenda adossée, sinon le premier superuser.
+
+**À valider au réveil** : coût/durée d'une passe complète sur 3250 pages
+(Qwen3.5-9B, ~1 requête/page), qualité des candidats lieux et marchés produits,
+puis décision de planification automatique (tâche périodique) ou déclenchement
+manuel par source.

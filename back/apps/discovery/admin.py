@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 
-from .models import Place, PlaceCategory
+from .models import Place, PlaceCategory, PlaceImportCandidate
 
 
 @admin.register(PlaceCategory)
@@ -18,3 +18,11 @@ class PlaceAdmin(GISModelAdmin):
     search_fields = ("title", "short_description", "description", "address")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("gallery", "related_articles", "related_businesses", "related_events")
+
+
+@admin.register(PlaceImportCandidate)
+class PlaceImportCandidateAdmin(admin.ModelAdmin):
+    list_display = ("title", "crawl_source", "category", "commune", "status", "extraction_method")
+    list_filter = ("status", "extraction_method", "category", "commune")
+    search_fields = ("title", "short_description", "description", "address")
+    readonly_fields = ("source_uid", "fingerprint", "raw_payload", "first_seen_at", "last_seen_at")
