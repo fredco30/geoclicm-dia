@@ -1,4 +1,4 @@
-# 25 — Reprise GeoClic Média par un LLM
+﻿# 25 — Reprise GeoClic Média par un LLM
 
 **Document prioritaire de reprise. État vérifié le 29 juillet 2026.**
 
@@ -521,3 +521,44 @@ Validation locale :
   vérifiées ;
 - aucun candidat terminé ne reste dans `pending` ou `invalid` ;
 - aucun `Event` n'a été publié automatiquement.
+
+## 17. Lot 1 signaux et décision Lot 2 — 29 juillet 2026
+
+**Lot 1 (signaux structurels) : mergé et déployé.** PR `#89`, commit
+`ac1ff38`, migration `assistant.0004_crawledpage_signals` appliquée.
+
+- champ JSON `signals` sur `CrawledPage`, calculé sans LLM ;
+- service `page_signals` : `jsonld_types`, `has_ics_link`, `has_iso_date`,
+  `has_readable_date`, `has_structured_facts`, `text_length`, `low_density`,
+  `canonical_shared`, `depth` ;
+- calcul incrémental dans `_save_page` + commande `refresh_page_signals` ;
+- vue dédupliquée par canonique : `1051` pages, `124` canoniques distinctes,
+  `945` en canonique partagée (dont `512` fiches événement derrière une
+  canonique d'agrégation) ;
+- aucun changement public ; l'assistant IA conserve l'intégralité du corpus ;
+- validé : migration cohérente, `check`, 12 tests unitaires, Ruff, testé sur
+  Chromium (agenda 17 événements, assistant fonctionnel).
+
+**Décision Lot 2 (pré-filtre IA) : patterns d'URL en levier principal, signaux
+en complément, système de filtres reporté.**
+
+Constat mesuré sur le corpus : aucun signal structurel ne distingue une fiche
+événement d'une fiche commerce sur ce CMS (gabarits identiques ; dates souvent
+hors du HTML nettoyé pour les événements permanents). Un pré-filtre par
+signaux seuls est donc soit trop laxiste (12 % de gain), soit destructeur
+(perte de 355 événements sur 512). Il est abandonné comme mécanisme principal.
+
+Règles retenues :
+
+1. **Levier principal** : `EventSource.url_patterns` (existant, par source,
+   générique) pour restreindre les pages envoyées à l'IA. Sur ce corpus,
+   `/evenement/` réduit d'environ 50 % sans perdre un événement.
+2. **Complément** : les signaux (JSON-LD, ICS) pour l'extraction gratuite quand
+   disponible, et la **déduplication par canonique** pour ne pas traiter N fois
+   la même page d'agrégation.
+3. **Report** : le système de filtres intelligent sera conçu **après** le crawl
+   des ~15 sites prévus, fondé sur l'observation de leurs structures réelles
+   (patterns d'URL, JSON-LD, gabarits), jamais sur des suppositions.
+
+Voir `26-architecture-collecte-multisite.md` et sa section 9 pour les
+décisions de session.

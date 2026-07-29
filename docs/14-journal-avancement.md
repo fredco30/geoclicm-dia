@@ -686,3 +686,35 @@ ESLint et build Next.js réussis. Les tests navigateur desktop/mobile valident
 les images, les trois filtres, l'absence d'action sur les expirés et la
 pagination serveur de 50 candidats. Voir la section 16 de
 `25-reprise-llm.md`.
+
+---
+
+## Lot 1 signaux structurels — mergé et déployé le 29 juillet 2026
+
+PR `#89`, commit `ac1ff38`, migration `assistant.0004_crawledpage_signals`.
+
+- champ JSON `signals` sur `CrawledPage` calculé sans LLM (types JSON-LD,
+  liens ICS, dates lisibles, bloc factuel, densité, déduplication canonique) ;
+- vue dédupliquée : 1051 pages, 124 canoniques distinctes, 512 fiches
+  événement derrière une canonique d'agrégation ;
+- aucun changement public ; l'assistant IA conserve l'intégralité du corpus ;
+- validé : migration, `check`, 12 tests, Ruff, testé sur Chromium (agenda et
+  assistant fonctionnels).
+
+## Décision Lot 2 — patterns d'URL d'abord (29 juillet 2026)
+
+Constat mesuré : aucun signal structurel ne distingue une fiche événement d'une
+fiche commerce sur le CMS de référence (gabarits identiques, dates souvent
+hors HTML nettoyé). Le pré-filtre IA par signaux seuls est abandonné comme
+mécanisme principal.
+
+Décision validée avec Fred :
+
+1. **levier principal** : `EventSource.url_patterns` (par source, générique),
+   gain ~50 % immédiat sans perdre d'événement ;
+2. **complément** : signaux (JSON-LD, ICS) pour l'extraction gratuite, et
+   déduplication par canonique contre le re-traitement des pages d'agrégation ;
+3. **report** : système de filtres intelligent conçu après le crawl des ~15
+   sites, fondé sur l'observation de leurs structures réelles.
+
+Voir `docs/26-architecture-collecte-multisite.md` (sections 9 et 10).

@@ -239,6 +239,7 @@ export type EventSource = {
   ai_completed_parts: number;
   ai_failed_parts: number;
   pending_count: number;
+  selected_page_count: number;
   crawl4ai_available: boolean;
   detected_methods: Array<"json_ld" | "ai" | "ics">;
 };

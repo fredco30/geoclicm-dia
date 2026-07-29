@@ -341,6 +341,7 @@ class EventSourceSerializer(serializers.ModelSerializer):
     last_run = serializers.SerializerMethodField()
     crawl4ai_available = serializers.SerializerMethodField()
     detected_methods = serializers.SerializerMethodField()
+    selected_page_count = serializers.SerializerMethodField()
 
     class Meta:
         model = EventSource
@@ -373,6 +374,7 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "last_run",
             "crawl4ai_available",
             "detected_methods",
+            "selected_page_count",
             "created_at",
             "updated_at",
         )
@@ -390,6 +392,7 @@ class EventSourceSerializer(serializers.ModelSerializer):
             "last_run",
             "crawl4ai_available",
             "detected_methods",
+            "selected_page_count",
             "created_at",
             "updated_at",
         )
@@ -411,6 +414,29 @@ class EventSourceSerializer(serializers.ModelSerializer):
                 EventImportCandidate.Status.INVALID,
             ),
         ).count()
+
+    def get_selected_page_count(self, obj: EventSource) -> int:
+        """Pages du corpus partage retenues par url_patterns (levier Lot 2)."""
+        if not obj.crawl_source_id:
+            return 0
+        patterns = [
+            line.strip().lower()
+            for line in obj.url_patterns.splitlines()
+            if line.strip()
+        ]
+        pages = obj.crawl_source.pages.filter(is_active=True)
+        if not patterns:
+            return pages.count()
+        return sum(
+            1
+            for page in pages.only("final_url", "canonical_url")
+            if any(
+                pattern in candidate
+                for pattern in patterns
+                for candidate in ((page.final_url or "").lower(), (page.canonical_url or "").lower())
+                if candidate
+            )
+        )
 
     def get_last_run(self, obj: EventSource):
         run = obj.runs.first()
