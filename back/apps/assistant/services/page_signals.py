@@ -21,7 +21,8 @@ MIN_TEXT_LENGTH = 200
 # structuree (evenement, lieu, commerce) quel que soit le CMS.
 STRUCTURED_FACTS = re.compile(
     r"(date et heure|horaires?|ouverture|tarifs?|lieu|adresse|contact|"
-    r"organisateur|acc[e\u00e8]s|t[e\u00e9]l[e\u00e9]phone|site web)\s*[:|]",
+    r"organisateur|acc[e\u00e8]s|t[e\u00e9]l[e\u00e9]phone|site web)"
+    r"\s*[:|\n]",
     re.IGNORECASE,
 )
 DATE_READABLE = re.compile(
