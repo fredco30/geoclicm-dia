@@ -285,7 +285,7 @@ non alimenté, puis généraliser la passe multi-catégories.
 
 ## 15. Mise en œuvre — passe multi-catégories (30 juillet 2026)
 
-Implémentation de la section 14, en cours de validation avant déploiement.
+Implémentation de la section 14, **déployée en production** (merge #92, migration discovery.0002).
 
 **Constat d'entrée (vérifié en lecture seule sur le VPS)** : 3250 pages actives
 sur 4 corpus (Le Grau-du-Roi 1051, Saint-Laurent 1015, Aigues-Mortes 696,
@@ -317,3 +317,35 @@ réutilise le créateur de la source Agenda adossée, sinon le premier superuser
 (Qwen3.5-9B, ~1 requête/page), qualité des candidats lieux et marchés produits,
 puis décision de planification automatique (tâche périodique) ou déclenchement
 manuel par source.
+### Résultats de déploiement et pilote (30 juillet 2026, nuit)
+
+- Déployé sur media.geoclic.fr : migration discovery.0002 appliquée, front
+  reconstruit, 4 services redémarrés, backup PostgreSQL préalable (275 Mo).
+- Route dmin/place-imports/ résolue ; boîte « Candidats » Découvrir testée
+  réellement sur Chromium (onglets « À valider »/« Incomplets », état vide
+  propre) ; non-régression Agenda vérifiée (onglets « À valider »/« Incomplets »
+  /« Expirés » intacts).
+- Pilote IA réel (3 pages du Grau-du-Roi, Qwen3.5-9B) : extraction multi-catégories
+  fonctionnelle — lieu « Phare de l'Espiguette » (hint patrimoine, commune
+  résolue), 1 événement, provenance validée. Le routage en base est vérifié :
+  catégorie « Patrimoine » et commune résolues, candidats créés en pending/
+  invalid selon complétude, sans publication.
+- **Coût mesuré** : ~24 s/page nominal, jusqu'à ~200 s sur timeout OVH
+  (EVENT_AI_HTTP_TIMEOUT=100, 2 tentatives). Pour 3250 pages → plusieurs
+  heures : la passe complète doit tourner en tâche Celery de fond, jamais en
+  requête web.
+
+### Point d'exploitation — routage Agenda par ville
+
+Le routage événements/marchés vers la boîte Agenda exige une EventSource
+adossée au corpus. Aujourd'hui **seule Le Grau-du-Roi** en a une
+(EventSource.id=1, crawl_source=2). Les lieux (Découvrir) sont routés pour
+les 4 corpus sans condition. Pour alimenter l'Agenda des 3 autres villes,
+créer une EventSource par corpus (configuration, pas de code).
+
+### Suite à décider
+
+- Lancement d'une passe complète en tâche de fond et mesure coût/durée/qualité.
+- Planification automatique (tâche périodique) **ou** déclenchement manuel par
+  source, après retour sur la qualité des candidats produits.
+- Éventuel repli provider Mistral si les timeouts OVH sont trop fréquents.

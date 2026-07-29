@@ -785,6 +785,15 @@ Place/Event → tout passe par l'IA (Voie A validée). Potentiel : restaurant
 **Validation locale** : manage.py check 0 issue ; 8 tests discovery + 32 tests
 events passent ; ruff propre ; lint + build Next.js OK. Migration  002 générée.
 
-**Reste au réveil** : revue du diff par Fred, merge, déploiement (backup +
-migration + rebuild front), tests réels Chromium, lancement d'une passe pilote
-et mesure coût/durée/qualité avant toute planification automatique.
+**Déployé en production** (merge #92, migration discovery.0002, backup
+275 Mo préalable, front reconstruit, 4 services actifs). Tests Chromium réels :
+boîte « Candidats » Découvrir fonctionnelle, Agenda intact (non-régression).
+Pilote IA réel : lieu « Phare de l'Espiguette » + 1 événement extraits et routés
+correctement (catégorie + commune résolues, statuts pending/invalid, aucune
+publication). Coût mesuré ~24 s/page (jusqu'à ~200 s sur timeout OVH) → passe
+complète à lancer en tâche Celery de fond.
+
+**Reste à décider** : lancement passe complète + mesure qualité ; planification
+auto vs déclenchement manuel ; routage Agenda des 3 autres villes (créer une
+EventSource par corpus — config, pas de code) ; éventuel repli Mistral si
+timeouts OVH trop fréquents.
