@@ -217,6 +217,21 @@ def _save_page(source: CrawlSource, page: dict, now) -> tuple[CrawledPage, bool]
     content_hash = hashlib.sha256(page["html"].encode("utf-8", errors="replace")).hexdigest()
     current = CrawledPage.objects.filter(source=source, url_hash=url_hash).first()
     changed = current is None or current.content_hash != content_hash
+    from apps.assistant.services.page_signals import compute_signals
+
+    shared_count = (
+        CrawledPage.objects.filter(source=source, canonical_url=page["canonical_url"])
+        .exclude(pk=current.pk if current else None)
+        .count()
+    )
+    signals = compute_signals(
+        cleaned_text=page["text"],
+        json_ld=page["json_ld"],
+        links=page["links"],
+        depth=page["depth"],
+        canonical_url=page["canonical_url"],
+        canonical_counts={page["canonical_url"]: shared_count + 1},
+    )
     values = {
         "canonical_url": page["canonical_url"],
         "final_url": page["url"],
@@ -230,6 +245,7 @@ def _save_page(source: CrawlSource, page: dict, now) -> tuple[CrawledPage, bool]
         "fetch_method": page["fetch_method"],
         "http_status": page["http_status"],
         "depth": page["depth"],
+        "signals": signals,
         "is_active": True,
         "fetched_at": now,
         "changed_at": now if changed else current.changed_at,
