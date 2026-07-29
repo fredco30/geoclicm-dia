@@ -562,3 +562,44 @@ Règles retenues :
 
 Voir `26-architecture-collecte-multisite.md` et sa section 9 pour les
 décisions de session.
+
+## 18. Crawl multi-villes et correctif signals — 29-30 juillet 2026
+
+**3 nouvelles villes crawlées** (décision Fred) : La Grande-Motte, Aigues-Mortes,
+Saint-Laurent-d'Aigouze. Corpus total assistant : **3239 pages**.
+
+- Le Grau-du-Roi : 1051 pages ; La Grande-Motte : 477 ; Aigues-Mortes : 696 ;
+  Saint-Laurent : 1015.
+- **Bug introduit par le Lot 1** : le champ `signals` était `NOT NULL` sans
+  défaut en base, bloquant le crawl de toute **nouvelle** page
+  (`null value in column signals violates not-null constraint`). Corrigé par
+  la migration `assistant.0005_signals_db_default` (défaut `'{}'::jsonb`),
+  PR `#91`, mergée et déployée.
+- Worker Celery redémarré pour charger le code corrigé.
+
+**Point d'amélioration identifié (robustesse)** : après la réparation d'un
+crawl échoué, l'**indexation en chunks ne se relance pas automatiquement**.
+La Grande-Motte avait 477 pages mais 0 chunk tant que l'indexation n'a pas
+été relancée manuellement en tâche Celery (`crawl_external_source_now`).
+À traiter dans un futur lot de robustesse : déclencher l'indexation
+automatiquement après un crawl réussi qui succède à un échec.
+
+**Chunks assistant par commune (vérifié)** : Aigues-Mortes 4411, La
+Grande-Motte 535, Le Grau-du-Roi 698, Saint-Laurent 793. Assistant testé en
+réel sur Aigues-Mortes et La Grande-Motte : réponses fondées sur les sites
+officiels, sources citées.
+
+## 19. Décision filtres automatiques — 30 juillet 2026
+
+Voir section 12 de `26-architecture-collecte-multisite.md`. Voie A validée :
+filtre de sélection IA **automatique**, **inclut en cas de doute**, jamais
+exposé à l'admin (non-informaticien). Réduit le coût IA sans réduire la
+couverture ; correction d'une mauvaise détection = exploitation technique.
+
+## 20. Architecture finale — une passe IA multi-catégories (30 juillet 2026)
+
+Voir section 14 de `26-architecture-collecte-multisite.md`. Décision validée :
+une seule passe IA par page récupère et classe toutes les catégories définies
+(événements, marchés, lieux, extensible), avec validation humaine par boîte.
+Voie A prudente (tout à l'IA, aucune perte). Premier chantier : les lieux
+(Découvrir), seul module non alimenté.

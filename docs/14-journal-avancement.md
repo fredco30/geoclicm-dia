@@ -718,3 +718,45 @@ Décision validée avec Fred :
    sites, fondé sur l'observation de leurs structures réelles.
 
 Voir `docs/26-architecture-collecte-multisite.md` (sections 9 et 10).
+
+---
+
+## Crawl multi-villes + correctif signals — 29-30 juillet 2026
+
+3 nouvelles villes crawlées (La Grande-Motte 477, Aigues-Mortes 696,
+Saint-Laurent 1015 pages) ; corpus total 3239 pages. Bug du champ `signals`
+(NOT NULL sans défaut en base, introduit au Lot 1) corrigé par la migration
+`assistant.0005_signals_db_default` (PR `#91`) ; il bloquait le crawl de toute
+nouvelle page.
+
+Point de robustesse noté : l'indexation en chunks ne se relance pas
+automatiquement après un crawl réparé (La Grande-Motte est restée à 0 chunk
+jusqu'à une relance manuelle). À automatiser dans un futur lot.
+
+Assistant testé en réel sur Aigues-Mortes et La Grande-Motte : réponses
+fondées sur les sites officiels avec sources citées. Les 4 corpus réels
+permettent de reprendre l'étude du système de filtres sur données
+hétérogènes.
+
+---
+
+## Décision filtres automatiques — 30 juillet 2026
+
+Constat produit : les admins en production ne sont pas informaticiens et ne
+peuvent pas configurer de filtres techniques. Décision validée (Voie A) :
+filtre de sélection IA **automatique**, **inclut en cas de doute** (on préfère
+une page de trop à l'IA qu'un événement raté), réduit le coût IA sans jamais
+réduire la couverture. Correction d'une mauvaise détection = exploitation
+technique, jamais l'admin. L'admin garde son rôle suffisant : valider les
+événements dans « À valider ».
+
+---
+
+## Architecture finale — une passe IA multi-catégories (30 juillet 2026)
+
+Décision validée : une seule passe IA par page récupère et classe toutes les
+catégories définies (événements, marchés, lieux, extensible). Voie A prudente
+(tout à l'IA, aucune perte) ; filtre automatique limité à la déduplication des
+traductions et à l'exclusion de la navigation pure. Validation humaine par
+boîte, aucune publication automatique. Premier chantier : les lieux
+(Découvrir). Voir `26-architecture-collecte-multisite.md` section 14.

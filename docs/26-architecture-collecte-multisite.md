@@ -201,3 +201,84 @@ Le Lot 2 retient :
 Le Lot 2 du tableau (section 6) est réinterprété en conséquence : « sélection
 IA par patterns d'URL + signaux quand disponibles », non « pré-filtre par
 signaux ».
+
+## 11. Point de robustesse — indexation après réparation de crawl (30 juillet 2026)
+
+Après la réparation d'un crawl échoué (ici le bug `signals`, migration
+`assistant.0005`), l'indexation en chunks **ne se relance pas
+automatiquement** : La Grande-Motte avait 477 pages mais 0 chunk jusqu'à une
+relance manuelle en tâche Celery. Futur lot de robustesse : déclencher
+l'indexation automatiquement après tout crawl réussi qui succède à un échec.
+
+Ce crawl multi-villes (4 corpus réels : Le Grau-du-Roi, La Grande-Motte,
+Aigues-Mortes, Saint-Laurent) fournit les données pour **reprendre l'étude du
+système de filtres** (section 10) sur structures hétérogènes réelles, au lieu
+des suppositions initiales.
+
+## 12. Décision filtres — automatique, jamais exposé à l'admin (30 juillet 2026)
+
+**Constat produit** : en production, les admins ne sont pas informaticiens et ne
+peuvent ni choisir des patterns d'URL ni valider une recommandation technique.
+Toute configuration de filtre exposée à l'admin est donc exclue.
+
+**Décision (Voie A, validée)** : le filtre de sélection des pages pour l'IA est
+**automatique**, avec un garde-fou de sécurité — **en cas de doute, inclure
+plutôt qu'exclure**. On préfère envoyer une page de trop à l'IA que d'en rater
+une. Le filtre réduit le **coût IA**, jamais la couverture : le crawl complet,
+l'extraction gratuite (JSON-LD/ICS) et le cache par segment continuent de
+tourner. Si une ville est mal détectée, la correction relève de l'exploitation
+technique (Fred/Codex), jamais de l'admin.
+
+Le rôle de l'admin reste inchangé et suffisant : **valider les événements**
+dans la boîte « À valider » (titre, date, lieu, image).
+
+Fondé sur l'analyse des 4 corpus réels : aucun site n'a de JSON-LD Event ni
+d'ICS ; les segments d'URL événementiels diffèrent par site (`/evenement/`,
+`/agenda/`, `-apidae`, ou structure multilingue `/en/ /de/ /es/ /it/`).
+
+## 13. Règle de filtre validée sur chiffres réels (30 juillet 2026)
+
+Validée avec Fred sur l'analyse des 4 corpus. Le filtre automatique calcule,
+par source, la densité événementielle de chaque segment d'URL (pages avec date
+OU bloc factuel), puis :
+
+1. **retient** les segments à densité élevée ;
+2. **écarte** seulement les segments clairement non événementiels (peu de
+   dates, beaucoup de pages) ;
+3. **inclut en cas de doute** — y compris les segments d'actualités, qui
+   peuvent annoncer un événement (coût IA faible, sécurité maximale) ;
+4. **déduplique les traductions** (segments `/en/ /de/ /es/ /it/` détectés
+   comme même structure) : seule la langue principale est traitée ;
+5. **repli sûr** : si aucun segment ne ressort clairement (cas La
+   Grande-Motte), tout est envoyé à l'IA, comme aujourd'hui — pas de
+   régression.
+
+Gains estimés sur les corpus réels : Le Grau-du-Roi ~49 %, Saint-Laurent
+~75 %, Aigues-Mortes ~71 % (grâce à la déduplication des traductions), La
+Grande-Motte 0 % (repli sûr accepté).
+
+## 14. Architecture finale — une passe IA multi-catégories (30 juillet 2026)
+
+**Décision validée avec Fred** : une seule passe d'analyse IA par page, qui
+récupère et classe **toutes les catégories définies** (événements, marchés,
+lieux, et toute catégorie future), au lieu d'un passage par catégorie.
+
+Principes :
+
+- **Voie A prudente** : on envoie tout le corpus à l'IA (on ne perd aucune
+  information) ; le filtre automatique se limite à la déduplication des
+  traductions et à l'exclusion des pages de navigation pure ;
+- **une passe, plusieurs sorties** : la même page analysée une fois produit un
+  événement, un marché ou un lieu selon son contenu — coût IA inchangé,
+  couverture maximale ;
+- **catégories extensibles** : la liste des catégories à extraire est une
+  configuration du pipeline, pas du code métier ; ajouter une catégorie (ex.
+  « hébergements », « commerces ») ne doit pas demander de nouveau passage ;
+- **validation humaine par boîte** : chaque catégorie a sa boîte « À valider »
+  (Agenda, Marchés, Découvrir…) ; aucune publication automatique ;
+- **provenance obligatoire** : jamais d'invention, rejet si la page source est
+  inconnue ;
+- l'assistant IA conserve l'intégralité du corpus, inchangé.
+
+Ordre de mise en œuvre : commencer par les **lieux** (Découvrir), seul module
+non alimenté, puis généraliser la passe multi-catégories.
