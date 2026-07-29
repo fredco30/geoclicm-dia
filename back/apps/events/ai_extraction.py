@@ -49,9 +49,10 @@ def _provider_config() -> tuple[str, str]:
     raise ExtractionUnavailable(f"Fournisseur IA Agenda inconnu : {provider}")
 
 
-def _call_ai(source, prompt: str) -> dict:
+def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
     """Appelle le fournisseur Agenda configuré sans modifier les embeddings."""
     provider, model = _provider_config()
+    effective_system_prompt = system_prompt if system_prompt is not None else SYSTEM_PROMPT
     if provider == "ovh":
         from apps.ai_assist.services.mistral import BudgetExceeded
         from apps.ai_assist.services.openai_compatible import (
@@ -68,7 +69,7 @@ def _call_ai(source, prompt: str) -> dict:
                 base_url=settings.OVH_AI_ENDPOINTS_BASE_URL,
                 api_key=settings.OVH_AI_ENDPOINTS_ACCESS_TOKEN,
                 model=model,
-                system_prompt=SYSTEM_PROMPT,
+                system_prompt=effective_system_prompt,
                 user_prompt=prompt,
                 temperature=0.0,
                 max_tokens=6000,
@@ -91,7 +92,7 @@ def _call_ai(source, prompt: str) -> dict:
         result = generate(
             user=source.created_by,
             endpoint="events.extract.mistral",
-            system_prompt=SYSTEM_PROMPT,
+            system_prompt=effective_system_prompt,
             user_prompt=prompt,
             model=model,
             temperature=0.0,
