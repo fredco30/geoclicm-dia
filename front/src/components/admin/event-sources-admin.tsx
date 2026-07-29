@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
@@ -338,6 +338,13 @@ export function EventSourcesAdmin({
                   setDraft({ ...draft, url_patterns: event.target.value })
                 }
               />
+              {selected ? (
+                <p className="mt-1 text-xs text-slate-500">
+                  Ces motifs retiennent{" "}
+                  <strong>{selected.selected_page_count}</strong> page(s) du
+                  corpus — seules elles seront analysées par l&apos;IA.
+                </p>
+              ) : null}
             </div>
           </details>
           <div>

@@ -184,3 +184,20 @@ sans attendre les autres. Les lots 3 et 4 sont indépendants entre eux.
 - Objectif double : réduire le coût/temps de l'IA **et** structurer
   l'alimentation multi-modules.
 - Ubuntu hors support : exclu du périmètre de ce chantier (opération distincte).
+
+## 10. Décision Lot 2 — patterns d'URL d'abord (29 juillet 2026)
+
+Le pré-filtre IA par signaux seuls est **abandonné comme mécanisme principal** :
+sur le corpus de référence, aucun signal structurel ne distingue une fiche
+événement d'une fiche commerce (gabarits identiques, dates souvent hors HTML).
+Le Lot 2 retient :
+
+- **levier principal** : `EventSource.url_patterns` (par source, générique) ;
+- **complément** : signaux (JSON-LD, ICS) pour l'extraction gratuite, et
+  déduplication par canonique contre le re-traitement des pages d'agrégation ;
+- **report** : le système de filtres intelligent sera conçu après le crawl des
+  ~15 sites, fondé sur l'observation de leurs structures réelles.
+
+Le Lot 2 du tableau (section 6) est réinterprété en conséquence : « sélection
+IA par patterns d'URL + signaux quand disponibles », non « pré-filtre par
+signaux ».
