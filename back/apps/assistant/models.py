@@ -358,6 +358,11 @@ class CrawledPage(models.Model):
     fetch_method = models.CharField(max_length=20, choices=FetchMethod.choices)
     http_status = models.PositiveSmallIntegerField(null=True, blank=True)
     depth = models.PositiveSmallIntegerField(default=0)
+    signals = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Signaux structurels calcules (voir services/page_signals.py).",
+    )
     is_active = models.BooleanField(default=True, db_index=True)
     fetched_at = models.DateTimeField()
     changed_at = models.DateTimeField()
