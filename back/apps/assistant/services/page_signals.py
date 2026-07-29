@@ -16,6 +16,20 @@ ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}([T ][0-2]\d:[0-5]\d)?")
 ICS_LINK = re.compile(r"(\.ics($|\?)|format=ics|export=ics|ical=|/ical/|/ics/)", re.I)
 MIN_TEXT_LENGTH = 200
 
+# Bloc de champs factuels (structure d'une fiche, agnostique du metier).
+# Detecte une zone "label : valeur" recurrente, presente sur toute fiche
+# structuree (evenement, lieu, commerce) quel que soit le CMS.
+STRUCTURED_FACTS = re.compile(
+    r"(date et heure|horaires?|ouverture|tarifs?|lieu|adresse|contact|"
+    r"organisateur|acc[e\u00e8]s|t[e\u00e9]l[e\u00e9]phone|site web)\s*[:|]",
+    re.IGNORECASE,
+)
+DATE_READABLE = re.compile(
+    r"(\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2,4}|"
+    r"\d{1,2}\s+[A-Za-z\u00c0-\u00ff]+\s+\d{4})",
+    re.IGNORECASE,
+)
+
 
 def jsonld_types(json_ld: object) -> list[str]:
     """Collecte les @type schema.org d'un payload JSON-LD (graphe inclus)."""
@@ -62,6 +76,8 @@ def compute_signals(
         "jsonld_types": jsonld_types(json_ld),
         "has_ics_link": any(ICS_LINK.search(link or "") for link in (links or [])),
         "has_iso_date": bool(ISO_DATE.search(text)),
+        "has_readable_date": bool(DATE_READABLE.search(text)),
+        "has_structured_facts": bool(STRUCTURED_FACTS.search(text)),
         "text_length": len(text),
         "low_density": len(text) < MIN_TEXT_LENGTH,
         "canonical_shared": counts.get(canonical_url, 0) > 1,
