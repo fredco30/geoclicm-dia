@@ -318,13 +318,21 @@ def _crawl_pages(crawl_source: CrawlSource) -> list:
     )
 
 
-def source_page_urls(crawl_source: CrawlSource) -> list[str]:
-    """URLs analysables du corpus (texte suffisant), dans un ordre stable."""
-    return [
-        (page.final_url or page.canonical_url)
+def source_page_urls(crawl_source: CrawlSource, *, short_first: bool = False) -> list[str]:
+    """URLs analysables du corpus (texte suffisant).
+
+    short_first : les pages courtes (reponse IA rapide) d'abord, les grosses
+    pages segmentees (souvent en timeout) a la fin. Couvre 85 % du corpus
+    rapidement sans rien exclure (voie A preservee).
+    """
+    pages = [
+        page
         for page in _crawl_pages(crawl_source)
         if len(page.cleaned_text or "") >= 200
     ]
+    if short_first:
+        pages.sort(key=lambda page: len(page.cleaned_text or ""))
+    return [(page.final_url or page.canonical_url) for page in pages]
 
 
 def process_page_batch(

@@ -41,11 +41,11 @@ def multi_extract_batch(self, crawl_source_id: int, page_urls: list[str]) -> dic
 
 
 @shared_task(name="discovery.multi_extract_source_chunked", ignore_result=True)
-def multi_extract_source_chunked(crawl_source_id: int) -> dict:
+def multi_extract_source_chunked(crawl_source_id: int, short_first: bool = False) -> dict:
     """Découpe le corpus d'une source en lots et les met en file (passe complète
     en tâche de fond, entrelacée avec les autres traitements Celery)."""
     source = CrawlSource.objects.get(pk=crawl_source_id)
-    urls = source_page_urls(source)
+    urls = source_page_urls(source, short_first=short_first)
     batches = _page_batches(urls)
     for batch in batches:
         multi_extract_batch.delay(source.pk, batch)
