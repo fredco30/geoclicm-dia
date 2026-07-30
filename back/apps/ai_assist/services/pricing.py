@@ -26,12 +26,16 @@ MODEL_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     "Qwen3.5-9B": (Decimal("0.10"), Decimal("0.15")),
     "gpt-oss-20b": (Decimal("0.04"), Decimal("0.15")),
     "gpt-oss-120b": (Decimal("0.08"), Decimal("0.40")),
-    # DeepSeek V3 (deepseek-chat) — https://api-docs.deepseek.com/quick_start/pricing
-    # Standard : $0.27/M input, $1.10/M output (approx. EUR, hors cache).
-    "deepseek-chat": (Decimal("0.25"), Decimal("1.00")),
-    # Alias actuel deepseek-chat -> deepseek-v4-flash (tarif standard identique).
-    "deepseek-v4-flash": (Decimal("0.25"), Decimal("1.00")),
-    "deepseek-v4-pro": (Decimal("0.55"), Decimal("2.20")),
+    # DeepSeek — https://api-docs.deepseek.com/quick_start/pricing (verifie 2026-07).
+    # deepseek-chat : $0.28/M input (cache miss), $0.42/M output. Approx. EUR.
+    # Le cache-hit ($0.028/M) n'est pas distingué ici : on journalise au plein
+    # tarif input, ce qui borne le coût par excès (côté prudent).
+    "deepseek-chat": (Decimal("0.26"), Decimal("0.39")),
+    # Alias actuel deepseek-chat -> deepseek-v4-flash (meme tarif).
+    "deepseek-v4-flash": (Decimal("0.26"), Decimal("0.39")),
+    # deepseek-reasoner : $0.55/M input, $2.19/M output.
+    "deepseek-reasoner": (Decimal("0.50"), Decimal("2.00")),
+    "deepseek-v4-pro": (Decimal("0.50"), Decimal("2.00")),
     # Embeddings — input only, pas d'output
     "mistral-embed": (Decimal("0.10"), Decimal("0.00")),
 }
