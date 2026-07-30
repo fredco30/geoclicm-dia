@@ -382,3 +382,33 @@ Soit environ **15-20x plus rapide** qu'OVH sur ce corpus, sans perte de JSON.
 - Planification automatique (tâche périodique) **ou** déclenchement manuel par
   source, après retour sur la qualité des candidats produits.
 - Repli possible : EVENT_AI_PROVIDER=ovh ou mistral (configuration).
+
+## 17. Cache IA par page (30 juillet 2026)
+
+Problème : chaque passe multi-catégories renvoyait TOUTES les pages à l'IA, même
+inchangées -> coût complet (~4-5 EUR pour 2 400 pages) à chaque collecte, y
+compris la collecte hebdomadaire de routine.
+
+Décision (validée avec Fred) : ne renvoyer à l'IA que les pages dont le contenu
+(ou le prompt/provider) a changé depuis la dernière analyse.
+
+Implémentation :
+- Champ `CrawlSource.multi_extraction_cache` (JSON, migration assistant 0006) :
+  `{cle_segment: {events, markets, places}}`.
+- `extract_multi(..., crawl_source=...)` : pour chaque segment, la clé est
+  `sha256(provider + model + prompt_version + segment)`. Si elle est déjà en
+  cache, le résultat est réutilisé SANS appel IA ; sinon l'IA est appelée et le
+  résultat mis en cache (persisté en une écriture à la fin, en ne gardant que
+  les clés du corpus actuel).
+- Toute modification de page, du prompt (PROMPT_VERSION) ou de provider
+  invalide naturellement la clé -> re-analyse ciblée, jamais de données périmées.
+- La déduplication des candidats est inchangée (update_or_create ; les candidats
+  validés/rejetés/importés sont préservés). Pas de doublon en re-passe.
+
+Effet attendu : la collecte hebdomadaire ne coûte que les vraies nouveautés
+(pages modifiées), pas tout le site. Première passe après déploiement remplit
+le cache (coût plein) ; les suivantes sont quasi gratuites hors changements.
+
+Non testé en réel le jour J : cap budgétaire journalier (5 EUR) atteint par la
+grosse passe initiale. Test de non-régression (cache -> 0 appel IA) à rejouer
+le lendemain ou après relevé du quota.
