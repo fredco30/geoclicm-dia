@@ -42,6 +42,8 @@ def _provider_config() -> tuple[str, str]:
     provider = str(getattr(settings, "EVENT_AI_PROVIDER", "mistral")).strip().lower()
     if provider == "ovh":
         return provider, str(getattr(settings, "EVENT_AI_MODEL", "Qwen3.5-9B"))
+    if provider == "deepseek":
+        return provider, str(getattr(settings, "EVENT_AI_MODEL", "deepseek-chat"))
     if provider == "mistral":
         return provider, str(
             getattr(settings, "AI_ASSIST_DEFAULT_MODEL", "mistral-small-latest")
@@ -75,6 +77,33 @@ def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
                 max_tokens=6000,
                 response_format={"type": "json_object"},
                 reasoning_effort="none",
+                timeout=settings.EVENT_AI_HTTP_TIMEOUT,
+                max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
+            )
+        except (BudgetExceeded, LLMProviderNotConfigured, LLMProviderError) as exc:
+            raise ExtractionUnavailable(str(exc)) from exc
+
+    if provider == "deepseek":
+        from apps.ai_assist.services.mistral import BudgetExceeded
+        from apps.ai_assist.services.openai_compatible import (
+            LLMProviderError,
+            LLMProviderNotConfigured,
+            generate_openai_compatible,
+        )
+
+        try:
+            return generate_openai_compatible(
+                user=source.created_by,
+                endpoint="events.extract.deepseek",
+                provider="DeepSeek",
+                base_url=settings.DEEPSEEK_BASE_URL,
+                api_key=settings.DEEPSEEK_API_KEY,
+                model=model,
+                system_prompt=effective_system_prompt,
+                user_prompt=prompt,
+                temperature=0.0,
+                max_tokens=6000,
+                response_format={"type": "json_object"},
                 timeout=settings.EVENT_AI_HTTP_TIMEOUT,
                 max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
             )

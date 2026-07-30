@@ -26,6 +26,9 @@ MODEL_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     "Qwen3.5-9B": (Decimal("0.10"), Decimal("0.15")),
     "gpt-oss-20b": (Decimal("0.04"), Decimal("0.15")),
     "gpt-oss-120b": (Decimal("0.08"), Decimal("0.40")),
+    # DeepSeek V3 (deepseek-chat) — https://api-docs.deepseek.com/quick_start/pricing
+    # Standard : $0.27/M input, $1.10/M output (approx. EUR, hors cache).
+    "deepseek-chat": (Decimal("0.25"), Decimal("1.00")),
     # Embeddings — input only, pas d'output
     "mistral-embed": (Decimal("0.10"), Decimal("0.00")),
 }
