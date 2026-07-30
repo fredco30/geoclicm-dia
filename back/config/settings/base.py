@@ -246,6 +246,7 @@ OVH_AI_ENDPOINTS_ACCESS_TOKEN = env(
 )
 DEEPSEEK_BASE_URL = env("DEEPSEEK_BASE_URL", default="https://api.deepseek.com")
 DEEPSEEK_API_KEY = env("DEEPSEEK_API_KEY", default="")
+DEEPSEEK_MODEL = env("DEEPSEEK_MODEL", default="deepseek-v4-flash")
 
 # Navigateur Chromium isolé pour les sources Agenda rendues en JavaScript.
 # Vide = moteur standard uniquement, avec comportement inchangé.

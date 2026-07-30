@@ -43,7 +43,7 @@ def _provider_config() -> tuple[str, str]:
     if provider == "ovh":
         return provider, str(getattr(settings, "EVENT_AI_MODEL", "Qwen3.5-9B"))
     if provider == "deepseek":
-        return provider, str(getattr(settings, "EVENT_AI_MODEL", "deepseek-chat"))
+        return provider, str(getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"))
     if provider == "mistral":
         return provider, str(
             getattr(settings, "AI_ASSIST_DEFAULT_MODEL", "mistral-small-latest")

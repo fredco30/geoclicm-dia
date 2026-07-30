@@ -29,6 +29,9 @@ MODEL_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     # DeepSeek V3 (deepseek-chat) — https://api-docs.deepseek.com/quick_start/pricing
     # Standard : $0.27/M input, $1.10/M output (approx. EUR, hors cache).
     "deepseek-chat": (Decimal("0.25"), Decimal("1.00")),
+    # Alias actuel deepseek-chat -> deepseek-v4-flash (tarif standard identique).
+    "deepseek-v4-flash": (Decimal("0.25"), Decimal("1.00")),
+    "deepseek-v4-pro": (Decimal("0.55"), Decimal("2.20")),
     # Embeddings — input only, pas d'output
     "mistral-embed": (Decimal("0.10"), Decimal("0.00")),
 }
