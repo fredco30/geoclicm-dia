@@ -59,11 +59,13 @@ contenus parmi trois catégories. Retourne uniquement un objet JSON avec trois c
   daté). Mêmes champs que "events". Un marché est un événement de nature commerciale
   récurrente ou ponctuelle en plein air ou halle.
 - "places" : un lieu à découvrir, sans date (patrimoine, monument, site naturel,
-  plage, balade, point de vue, savoir-faire). Champs : source_page_url, title,
+  plage, balade, point de vue, savoir-faire, activité sportive ou de loisir,
+  adresse gastronomique, hébergement). Champs : source_page_url, title,
   short_description, description, address, locality, latitude, longitude, duration,
   difficulty, accessibility, best_season, practical_info, official_url,
   category_hint (un seul mot parmi : patrimoine, nature, plages, balades,
-  points-de-vue, savoir-faire), evidence.
+  points-de-vue, savoir-faire, activites-sports, gastronomie, hebergements),
+  evidence.
 
 Règles impératives :
 1. Ne crée un contenu que s'il est explicitement décrit dans le document.
@@ -73,6 +75,12 @@ Règles impératives :
 4. source_page_url doit être recopiée exactement depuis les documents fournis.
 5. evidence : 1 à 3 courts extraits copiés exactement du document.
 6. N'ajoute aucun commentaire hors JSON.
+7. category_hint : choisis la catégorie la plus précise. "activites-sports" pour
+   une activité sportive ou de loisir (nautique, voile, équitation, vélo,
+   accrobranche, karting, fitness, parc de loisirs) ; "gastronomie" pour un
+   restaurant, bar, glacier, producteur ou caviste ; "hebergements" pour un
+   camping, hôtel, résidence ou location de vacances ; "savoir-faire" uniquement
+   pour un artisanat, un atelier ou un savoir-faire local à découvrir.
 """.strip()
 
 CATEGORY_KEYS = ("events", "markets", "places")
@@ -275,6 +283,14 @@ CATEGORY_HINT_SLUGS = {
     "points de vue": "points-de-vue",
     "savoir-faire": "savoir-faire",
     "savoir faire": "savoir-faire",
+    "activites-sports": "activites-sports",
+    "activites & sports": "activites-sports",
+    "activites": "activites-sports",
+    "sports": "activites-sports",
+    "sport": "activites-sports",
+    "gastronomie": "gastronomie",
+    "hebergements": "hebergements",
+    "hebergement": "hebergements",
 }
 
 

@@ -10,6 +10,9 @@ CATEGORIES = [
     ("Balades", "Route", "#1a4d6e"),
     ("Points de vue", "Binoculars", "#7c3aed"),
     ("Savoir-faire", "Hammer", "#a8533a"),
+    ("Activités & Sports", "Bike", "#0f766e"),
+    ("Gastronomie", "UtensilsCrossed", "#b45309"),
+    ("Hébergements", "Hotel", "#6d28d9"),
 ]
 
 
