@@ -229,12 +229,38 @@ CATEGORY_HINT_SLUGS = {
 }
 
 
-def _locality_commune(crawl_source, locality: str) -> Commune | None:
-    if crawl_source.commune_id:
-        return crawl_source.commune
-    if not locality:
+def _norm_locality(value: str) -> str:
+    """Normalise une localite pour comparaison (accents, casse, code postal)."""
+    import re
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = text.encode("ascii", "ignore").decode().casefold()
+    text = re.sub(r"^\d{4,5}\s+", "", text)  # retire un code postal en tete
+    return re.sub(r"[^a-z]+", " ", text).strip()
+
+
+def _match_commune(locality: str) -> Commune | None:
+    """Resout une commune depuis une localite normalisee (variantes de nom)."""
+    wanted = _norm_locality(locality)
+    if not wanted:
         return None
-    return Commune.objects.filter(name__iexact=locality, is_active=True).first()
+    for commune in Commune.objects.filter(is_active=True):
+        if _norm_locality(commune.name) == wanted:
+            return commune
+    return None
+
+
+def _locality_commune(crawl_source, locality: str) -> Commune | None:
+    """Priorite a la localite declaree par l IA, repli sur la commune du corpus.
+
+    Une localite reconnue mais differente du corpus est conservee (l humain
+    tranchera) plutot que d attribuer a tort la commune du corpus.
+    """
+    matched = _match_commune(locality)
+    if matched is not None:
+        return matched
+    return crawl_source.commune if crawl_source.commune_id else None
 
 
 def _place_category(raw: dict, title: str) -> PlaceCategory | None:
@@ -296,8 +322,11 @@ def normalize_place(
 
     uid_basis = f"{page_url}|{slugify(title)}"
     source_uid = hashlib.sha256(uid_basis.encode()).hexdigest()[:48]
+    # Dedup par titre normalise + localite normalisee : robuste aux variantes
+    # de nom et aux traductions d un meme lieu, sans dependre de la resolution
+    # de commune (qui peut echouer sur une variante).
     fingerprint = hashlib.sha256(
-        f"{slugify(title)}|{commune.pk if commune else ''}".encode()
+        f"{_norm_locality(title)}|{_norm_locality(locality)}".encode()
     ).hexdigest()
     image = select_event_image(crawl_page, title=title, generic_urls=generic_urls)
     return {

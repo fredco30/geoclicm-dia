@@ -448,17 +448,72 @@ def _route_results(
                     )
 
     # Lieux -> boîte Découvrir.
+    # Une page d agrégation (carte, annuaire, agenda) peut lister des dizaines
+    # de lieux ; on ne retient que le lieu principal par page (titre le plus
+    # proche du titre de page), puis on deduplique par titre normalise sur tout
+    # le corpus (les traductions /en /de /es d un meme lieu ne font qu un
+    # candidat). Une fiche dediee produit un seul lieu, comportement inchange.
+    places_by_page: dict[str, list[dict]] = {}
     for raw in results["places"]:
-        crawl_page = crawl_page_by_url.get(raw["source_page_url"])
+        places_by_page.setdefault(raw["source_page_url"], []).append(raw)
+
+    seen_fingerprints: set[str] = set()
+    for page_url, raw_places in places_by_page.items():
+        crawl_page = crawl_page_by_url.get(page_url)
         if crawl_page is None:
             continue
-        data = normalize_place(
-            crawl_source, raw, crawl_page=crawl_page, generic_urls=generic_urls
-        )
-        try:
-            _upsert_place_candidate(crawl_source, data)
-            summary["places"] += 1
-        except Exception:  # noqa: BLE001
-            logger.exception("Candidat Découvrir impossible pour %s", crawl_source.label)
+        selected = _select_primary_places(crawl_page, raw_places)
+        for raw in selected:
+            data = normalize_place(
+                crawl_source, raw, crawl_page=crawl_page, generic_urls=generic_urls
+            )
+            if data["fingerprint"] in seen_fingerprints:
+                continue
+            seen_fingerprints.add(data["fingerprint"])
+            try:
+                _upsert_place_candidate(crawl_source, data)
+                summary["places"] += 1
+            except Exception:  # noqa: BLE001
+                logger.exception("Candidat Découvrir impossible pour %s", crawl_source.label)
 
     return summary
+
+
+def _norm_title(value: object) -> str:
+    import re
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", str(value or ""))
+    text = text.encode("ascii", "ignore").decode().casefold()
+    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+
+def _select_primary_places(crawl_page, raw_places: list[dict]) -> list[dict]:
+    """Retient le lieu principal d une page.
+
+    Page a un seul lieu (fiche dediee) : inchange. Page d agregation qui liste
+    plusieurs lieux : on prefere le lieu dont le titre recoupe le titre de la
+    page ; sinon, pour limiter le bruit des annuaires, on ne garde rien (le
+    lieu merite sa propre fiche, qui sera traitee separement).
+    """
+    if len(raw_places) <= 1:
+        return raw_places
+    page_title = _norm_title(crawl_page.title)
+    if not page_title:
+        return []
+    scored = []
+    for raw in raw_places:
+        title = _norm_title(raw.get("title"))
+        if not title:
+            continue
+        overlap = len(set(title.split()) & set(page_title.split()))
+        if title in page_title or page_title in title:
+            overlap += 5
+        scored.append((overlap, raw))
+    if not scored:
+        return []
+    scored.sort(key=lambda row: row[0], reverse=True)
+    best, best_raw = scored[0]
+    # Seuil : le titre du lieu doit recouper sensiblement le titre de la page
+    # pour etre considere comme le sujet principal, et non un item d annuaire.
+    return [best_raw] if best >= 3 else []

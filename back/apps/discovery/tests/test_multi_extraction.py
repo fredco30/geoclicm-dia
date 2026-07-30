@@ -5,6 +5,34 @@ from apps.discovery.multi_extraction import (
     _accepted_items,
     _merge_items,
 )
+from apps.discovery.multi_sync import _select_primary_places
+
+
+class _FakePage:
+    def __init__(self, title):
+        self.title = title
+
+
+class SelectPrimaryPlacesTests(SimpleTestCase):
+    def test_single_place_kept(self):
+        places = [{"title": "Phare de l'Espiguette"}]
+        self.assertEqual(_select_primary_places(_FakePage("Phare"), places), places)
+
+    def test_aggregation_keeps_page_subject(self):
+        page = _FakePage("La carte interactive")
+        places = [
+            {"title": "Restaurant Le Sud"},
+            {"title": "La carte interactive"},
+            {"title": "Hôtel des Remparts"},
+        ]
+        selected = _select_primary_places(page, places)
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0]["title"], "La carte interactive")
+
+    def test_aggregation_without_match_returns_nothing(self):
+        page = _FakePage("Nos partenaires")
+        places = [{"title": "Restaurant A"}, {"title": "Hôtel B"}]
+        self.assertEqual(_select_primary_places(page, places), [])
 
 
 def _result(answer: str) -> dict:
