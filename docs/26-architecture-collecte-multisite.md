@@ -412,3 +412,31 @@ le cache (coût plein) ; les suivantes sont quasi gratuites hors changements.
 Non testé en réel le jour J : cap budgétaire journalier (5 EUR) atteint par la
 grosse passe initiale. Test de non-régression (cache -> 0 appel IA) à rejouer
 le lendemain ou après relevé du quota.
+
+## 18. Categories Decouvrir enrichies (31 juillet 2026)
+
+Constat (remonté par Fred, confirmé par les données prod) : la catégorie
+« Savoir-faire » était un fourre-tout (40% des lieux) car l IA était limitée à
+6 catégories. Activités sportives, restaurants et campings y étaient mal classés.
+
+Décision : ajouter 3 catégories — **Activités & Sports**, **Gastronomie**,
+**Hébergements** (slugs activites-sports, gastronomie, hebergements).
+Les commerces/services (borne de recharge, cyber, boutiques) ne restent PAS dans
+Découvrir : à terme ils iront dans le module Commerçants via un chantier dédié
+(extraction + BusinessImportCandidate + boîte de validation), pas encore fait.
+
+Implémentation :
+- seed_place_categories : 9 catégories.
+- CATEGORY_HINT_SLUGS + SYSTEM_PROMPT mis à jour (règle 7 : choisir la catégorie
+  la plus précise ; définitions des 3 nouvelles).
+- Reclassement des 378 candidats existants SANS IA : règles par mots-clés sur
+  titre+description (hébergements sur titre seul + exclusion « hôtel de ville »,
+  gastronomie puis activités). 134 lieux reclassés, 0 appel IA, 0 coût.
+
+Nouvelle répartition (pending) : Activités & Sports 82, Patrimoine 77,
+Savoir-faire 76, Gastronomie 50, Nature 35, Balades 30, Plages 22,
+Points de vue 4, Hébergements 2.
+
+Attention : le nouveau prompt (règle 7) diffère de celui ayant produit le cache
+IA actuel -> la prochaine collecte ré-analysera tout (coût plein ~4-5 EUR) mais
+classera correctement dès le départ. Reporté à la prochaine vraie collecte.
