@@ -297,6 +297,16 @@ class CrawlSource(models.Model):
     last_failed_count = models.PositiveIntegerField(default=0, editable=False)
     last_changed_count = models.PositiveIntegerField(default=0, editable=False)
     last_truncated = models.BooleanField(default=False, editable=False)
+    multi_extraction_cache = models.JSONField(
+        default=dict,
+        blank=True,
+        editable=False,
+        help_text=(
+            "Cache de la passe IA multi-categories : {cle_segment: {events, "
+            "markets, places}}. Une page n est renvoyee a l IA que si son "
+            "contenu (ou le prompt/provider) a change depuis la derniere analyse."
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

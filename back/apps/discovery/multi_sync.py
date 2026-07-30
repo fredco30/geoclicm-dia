@@ -363,7 +363,7 @@ def process_page_batch(
     crawl_page_by_url = {
         (page.final_url or page.canonical_url): page for page in crawled_pages
     }
-    results, errors = extract_multi(user, pages)
+    results, errors = extract_multi(user, pages, crawl_source=crawl_source)
     return _route_results(
         crawl_source, results, errors, crawl_page_by_url, generic_urls, user
     )
@@ -396,7 +396,9 @@ def run_multi_extraction(
         (page.final_url or page.canonical_url): page for page in crawled_pages
     }
 
-    results, errors = extract_multi(user, pages, progress=progress)
+    results, errors = extract_multi(
+        user, pages, progress=progress, crawl_source=crawl_source
+    )
     return _route_results(
         crawl_source, results, errors, crawl_page_by_url, generic_urls, user
     )

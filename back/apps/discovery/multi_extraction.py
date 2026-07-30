@@ -24,6 +24,7 @@ from apps.events.ai_extraction import (
     _call_ai,
     _content_segments,
     _parse_json_object,
+    _provider_config,
     _provenance_key,
 )
 from apps.events.event_images import select_event_image
@@ -159,15 +160,29 @@ def extract_multi(
     pages: list[dict],
     *,
     progress=None,
+    crawl_source=None,
 ) -> tuple[dict[str, list[dict]], list[str]]:
     """Analyse chaque page une fois et classe son contenu par catégorie.
 
     pages : liste de {url, title, image_url, links, content} (corpus partagé).
     Retourne ({events, markets, places}, erreurs isolées).
+
+    Si ``crawl_source`` est fourni, les résultats de chaque segment sont mis en
+    cache sur la source : un segment dont le contenu (ou le prompt/provider) n'a
+    pas changé depuis la dernière analyse n'est pas renvoyé à l'IA. Cela rend une
+    passe de routine quasi gratuite hors nouveautés réelles.
     """
     results: dict[str, list[dict]] = {key: [] for key in CATEGORY_KEYS}
     errors: list[str] = []
     source = _AIProgressSource(user)
+    provider, model = _provider_config()
+    cache: dict = (
+        dict(getattr(crawl_source, "multi_extraction_cache", {}) or {})
+        if crawl_source is not None
+        else {}
+    )
+    current_keys: set[str] = set()
+    cache_dirty = False
 
     prepared: list[dict] = []
     for page in pages:
@@ -185,9 +200,33 @@ def extract_multi(
                 }
             )
 
+    def _segment_key(segment: dict) -> str:
+        payload = json.dumps(
+            {
+                "provider": provider,
+                "model": model,
+                "prompt_version": PROMPT_VERSION,
+                "segment": segment,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        return hashlib.sha256(payload.encode()).hexdigest()
+
     total = len(prepared)
     for position, segment in enumerate(prepared, start=1):
         batch = [segment]
+        key = _segment_key(segment)
+        current_keys.add(key)
+        cached = cache.get(key)
+        if isinstance(cached, dict) and all(
+            isinstance(cached.get(name), list) for name in CATEGORY_KEYS
+        ):
+            for name in CATEGORY_KEYS:
+                results[name].extend(cached[name])
+            if progress:
+                progress(position, total)
+            continue
         prompt = "Document officiel collecté par GeoClic :\n" + json.dumps(
             batch, ensure_ascii=False
         )
@@ -204,8 +243,18 @@ def extract_multi(
         else:
             for key in CATEGORY_KEYS:
                 results[key].extend(accepted[key])
+            cache[key] = {name: accepted[name] for name in CATEGORY_KEYS}
+            cache_dirty = True
         if progress:
             progress(position, total)
+
+    if crawl_source is not None and cache_dirty:
+        # On ne conserve que les clés du corpus actuel (les pages disparues ou
+        # devenues trop courtes sont oubliées) et on persiste en une écriture.
+        crawl_source.multi_extraction_cache = {
+            name: cache[name] for name in current_keys if name in cache
+        }
+        crawl_source.save(update_fields=["multi_extraction_cache", "updated_at"])
 
     for key in CATEGORY_KEYS:
         results[key] = _merge_items(results[key])
