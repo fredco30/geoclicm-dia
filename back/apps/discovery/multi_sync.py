@@ -312,6 +312,55 @@ def _upsert_place_candidate(
     return candidate, created, updated
 
 
+def _crawl_pages(crawl_source: CrawlSource) -> list:
+    return list(
+        crawl_source.pages.filter(is_active=True).order_by("canonical_url")
+    )
+
+
+def source_page_urls(crawl_source: CrawlSource) -> list[str]:
+    """URLs analysables du corpus (texte suffisant), dans un ordre stable."""
+    return [
+        (page.final_url or page.canonical_url)
+        for page in _crawl_pages(crawl_source)
+        if len(page.cleaned_text or "") >= 200
+    ]
+
+
+def process_page_batch(
+    crawl_source: CrawlSource,
+    page_urls: list[str],
+) -> dict:
+    """Traite un lot de pages (une tache Celery) : IA + routage. Decouper la
+    passe en lots evite de monopoliser un worker des heures et permet la
+    reprise sur erreur."""
+    user = _resolve_user(crawl_source)
+    generic_urls = generic_image_urls(crawl_source)
+    wanted = set(page_urls)
+    crawled_pages = [
+        page
+        for page in _crawl_pages(crawl_source)
+        if (page.final_url or page.canonical_url) in wanted
+    ]
+    pages = [
+        {
+            "url": page.final_url or page.canonical_url,
+            "title": page.title,
+            "image_url": (page.metadata or {}).get("image_url", ""),
+            "links": page.links,
+            "content": page.cleaned_text,
+        }
+        for page in crawled_pages
+    ]
+    crawl_page_by_url = {
+        (page.final_url or page.canonical_url): page for page in crawled_pages
+    }
+    results, errors = extract_multi(user, pages)
+    return _route_results(
+        crawl_source, results, errors, crawl_page_by_url, generic_urls, user
+    )
+
+
 def run_multi_extraction(
     crawl_source: CrawlSource,
     *,
@@ -340,7 +389,20 @@ def run_multi_extraction(
     }
 
     results, errors = extract_multi(user, pages, progress=progress)
+    return _route_results(
+        crawl_source, results, errors, crawl_page_by_url, generic_urls, user
+    )
 
+
+def _route_results(
+    crawl_source: CrawlSource,
+    results: dict,
+    errors: list[str],
+    crawl_page_by_url: dict,
+    generic_urls: set[str],
+    user: User,
+) -> dict:
+    """Route les sorties IA vers les boites Agenda et Decouvrir."""
     commune = crawl_source.commune
     agenda_source = _agenda_event_source(crawl_source)
     summary = {
