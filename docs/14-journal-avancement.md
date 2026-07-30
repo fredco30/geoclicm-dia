@@ -783,7 +783,7 @@ Place/Event → tout passe par l'IA (Voie A validée). Potentiel : restaurant
 - Tâches Celery discovery.multi_extract_source / multi_extract_all.
 
 **Validation locale** : manage.py check 0 issue ; 8 tests discovery + 32 tests
-events passent ; ruff propre ; lint + build Next.js OK. Migration  002 générée.
+events passent ; ruff propre ; lint + build Next.js OK. Migration 002 générée.
 
 **Déployé en production** (merge #92, migration discovery.0002, backup
 275 Mo préalable, front reconstruit, 4 services actifs). Tests Chromium réels :
@@ -797,3 +797,31 @@ complète à lancer en tâche Celery de fond.
 auto vs déclenchement manuel ; routage Agenda des 3 autres villes (créer une
 EventSource par corpus — config, pas de code) ; éventuel repli Mistral si
 timeouts OVH trop fréquents.
+
+---
+
+## 30 juillet 2026 - Bascule extraction IA sur DeepSeek
+
+L'extracteur multi-catégories (Agenda/Marchés/Découvrir) tournait sur OVH
+Qwen3.5-9B : ~24 s/page, timeouts fréquents, passe complète de plusieurs heures.
+
+Décision validée avec Fred : basculer l'extraction sur **DeepSeek** (API
+compatible OpenAI), déjà présente sur le serveur (AE_Gestion). Embeddings
+Mistral inchangés.
+
+- `EVENT_AI_PROVIDER=deepseek` ; branche `deepseek` dans
+  `events/ai_extraction.py` réutilisant `generate_openai_compatible`
+  (budget + audit + reprises) ; endpoint `events.extract.deepseek`.
+- Settings `DEEPSEEK_BASE_URL`/`DEEPSEEK_API_KEY`/`DEEPSEEK_MODEL`
+  (défaut `deepseek-v4-flash` ; `deepseek-chat` est un alias).
+- Tarifs v4 ajoutés dans `ai_assist/services/pricing.py`.
+- Clé copiée depuis `/opt/aegestion/.env` vers `back/.env` (sudo, jamais
+  commitée). Redémarrage django + celery-worker.
+
+Mesures (code de production) : petites pages ~1,4 s ; grosses pages 0,8-17 s,
+6/6 JSON valide, 17 lieux extraits ; appel réel ~1,5 s, coût journalisé.
+**~15-20x plus rapide qu'OVH**, sans perte de JSON.
+
+Commits : `17fe9bc` (provider), `73988bf` (modèle v4-flash explicite +
+tarifs), docs mises à jour. Passe complète multi-catégories relancée en tâche
+de fond (lots Celery, short_first) sur les 4 corpus ; mesurer coût/durée/qualité.

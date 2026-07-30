@@ -228,7 +228,7 @@ MISTRAL_MODEL = env("MISTRAL_MODEL", default="mistral-small-latest")
 MISTRAL_EMBED_MODEL = env("MISTRAL_EMBED_MODEL", default="mistral-embed")
 
 # Passerelle de génération Agenda. Le défaut Mistral préserve les
-# installations existantes ; la production bascule explicitement sur OVH.
+# installations existantes ; la production bascule explicitement (deepseek).
 EVENT_AI_PROVIDER = env("EVENT_AI_PROVIDER", default="mistral").lower()
 EVENT_AI_MODEL = env("EVENT_AI_MODEL", default="Qwen3.5-9B")
 # Les pages riches observées en production peuvent répondre en ~90 s.

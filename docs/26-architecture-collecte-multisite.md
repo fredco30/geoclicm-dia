@@ -295,7 +295,7 @@ restaurant 913 pages, hébergement 873, patrimoine 563, plage 562, marché 486.
 
 **Composants livrés** :
 
-- discovery.PlaceImportCandidate (migration  002) : miroir du candidat
+- discovery.PlaceImportCandidate (migration 002) : miroir du candidat
   Agenda pour les lieux, avec provenance, preuve vérifiée et statuts.
 - discovery/multi_extraction.py : une passe IA par page classant son contenu
   en events / markets / places (prompt dédié, version multi-v1),
@@ -343,9 +343,42 @@ adossée au corpus. Aujourd'hui **seule Le Grau-du-Roi** en a une
 les 4 corpus sans condition. Pour alimenter l'Agenda des 3 autres villes,
 créer une EventSource par corpus (configuration, pas de code).
 
+## 16. Bascule provider DeepSeek (30 juillet 2026)
+
+L'extracteur multi-catégories utilisait OVH (Qwen3.5-9B) : ~24 s/page nominal,
+jusqu'à ~200 s sur timeout (EVENT_AI_HTTP_TIMEOUT=100, 2 tentatives). Pour
+3 250 pages, une passe complète prenait plusieurs heures et s'étouffait sur les
+timeouts.
+
+**Décision (validée avec Fred) : basculer l'extraction Agenda/Découvrir sur
+DeepSeek** (API compatible OpenAI), déjà utilisée sur ce serveur par une autre
+application (AE_Gestion). Aucun impact sur les embeddings (Mistral, inchangés).
+
+Implémentation :
+- `EVENT_AI_PROVIDER=deepseek` (config, pas de code métier modifié).
+- `_provider_config` / `_call_ai` (events/ai_extraction.py) : branche
+  `deepseek` réutilisant `generate_openai_compatible` (budget, reprises,
+  journal d'audit), endpoint `events.extract.deepseek`.
+- Settings `DEEPSEEK_BASE_URL` (https://api.deepseek.com), `DEEPSEEK_API_KEY`
+  (copiée depuis l'.env AE_Gestion, jamais commitée), `DEEPSEEK_MODEL`
+  (défaut `deepseek-v4-flash` ; `deepseek-chat` est un alias qui résout vers
+  ce modèle).
+- Tarifs ajoutés dans ai_assist/services/pricing.py (deepseek-v4-flash/pro)
+  pour journaliser un coût réaliste au lieu de 0.
+
+Mesures de validation (VPS, code de production) :
+- Petites pages : ~1,4 s/page, 6/6 JSON valide, 0 timeout.
+- Grosses pages (12-18k, Aigues-Mortes) : 6/6 JSON valide, 17 lieux extraits,
+  latences 0,8-17 s (vs ~24 s + timeouts sur Qwen).
+- Appel réel via `_call_ai` : provider DeepSeek, model deepseek-v4-flash,
+  ~1,5 s, JSON valide, coût journalisé.
+
+Soit environ **15-20x plus rapide** qu'OVH sur ce corpus, sans perte de JSON.
+
 ### Suite à décider
 
-- Lancement d'une passe complète en tâche de fond et mesure coût/durée/qualité.
+- Passe complète multi-catégories relancée en tâche de fond (lots Celery,
+  short_first) : mesurer coût/durée/qualité sur les 4 corpus.
 - Planification automatique (tâche périodique) **ou** déclenchement manuel par
   source, après retour sur la qualité des candidats produits.
-- Éventuel repli provider Mistral si les timeouts OVH sont trop fréquents.
+- Repli possible : EVENT_AI_PROVIDER=ovh ou mistral (configuration).
