@@ -182,7 +182,14 @@ def _sitemap_urls(source: CrawlSource) -> set[str]:
     if robots is not None:
         for line in robots.text.splitlines():
             if line.lower().startswith("sitemap:"):
-                maps.append(line.split(":", 1)[1].strip())
+                # Ne jamais suivre un sitemap d'un autre domaine : certains
+                # WordPress mutualises listent des dizaines de sitemaps
+                # d'autres communes (Yoast), ce qui ferait explorer des
+                # domaines etrangers a la source (lenteur extreme, risque de
+                # crawler hors perimetre).
+                declared = line.split(":", 1)[1].strip()
+                if _same_domain(declared, parsed.netloc.lower()):
+                    maps.append(declared)
     seen, pages = set(), set()
     while maps and len(seen) < 100:
         sitemap_url = canonicalize_url(maps.popleft())
