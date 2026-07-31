@@ -33,8 +33,17 @@ from apps.events.imports import (
     commune_id,
 )
 
+from apps.directory.models import Business, BusinessImportCandidate
+
+from apps.listings.models import Listing, ListingImportCandidate
+
 from .models import Place, PlaceImportCandidate
-from .multi_extraction import extract_multi, normalize_place
+from .multi_extraction import (
+    extract_multi,
+    normalize_business,
+    normalize_listing,
+    normalize_place,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -194,9 +203,12 @@ def _unique_place_slug(title: str, source_uid: str) -> str:
     return f"{base[:170]}-{hashlib.sha256(source_uid.encode()).hexdigest()[:8]}"
 
 
-def sync_place_cover_image(place: Place, image_url: str) -> bool:
-    """Télécharge l'image officielle du lieu (borne taille/format), si absente."""
-    if not image_url or place.cover_image:
+def _download_cover_image(instance, image_url: str, *, title: str, label: str) -> bool:
+    """Télécharge l'image officielle (borne taille/format), si cover absente.
+
+    Partagé par les lieux et les commerces : mêmes bornes (5 Mo, jpg/png/webp).
+    """
+    if not image_url or instance.cover_image:
         return False
     try:
         response = requests.get(
@@ -209,7 +221,7 @@ def sync_place_cover_image(place: Place, image_url: str) -> bool:
         content = response.content
         response.close()
     except requests.RequestException:
-        logger.warning("Image lieu non téléchargeable %s", image_url, exc_info=True)
+        logger.warning("Image %s non téléchargeable %s", label, image_url, exc_info=True)
         return False
     if len(content) > MAX_IMAGE_BYTES:
         return False
@@ -219,10 +231,22 @@ def sync_place_cover_image(place: Place, image_url: str) -> bool:
     )
     if suffix is None:
         return False
-    filename = f"{slugify(place.title)[:80]}-{hashlib.sha256(content).hexdigest()[:12]}{suffix}"
-    place.cover_image.save(filename, ContentFile(content), save=False)
-    place.save(update_fields=["cover_image", "updated_at"])
+    filename = f"{slugify(title)[:80]}-{hashlib.sha256(content).hexdigest()[:12]}{suffix}"
+    instance.cover_image.save(filename, ContentFile(content), save=False)
+    instance.save(update_fields=["cover_image", "updated_at"])
     return True
+
+
+def sync_place_cover_image(place: Place, image_url: str) -> bool:
+    """Télécharge l'image officielle du lieu (borne taille/format), si absente."""
+    return _download_cover_image(place, image_url, title=place.title, label="lieu")
+
+
+def sync_business_cover_image(business: Business, image_url: str) -> bool:
+    """Télécharge l'image officielle du commerce (borne taille/format), si absente."""
+    return _download_cover_image(
+        business, image_url, title=business.name, label="commerce"
+    )
 
 
 @transaction.atomic
@@ -303,6 +327,187 @@ def _upsert_place_candidate(
                 in {
                     PlaceImportCandidate.Status.REJECTED,
                     PlaceImportCandidate.Status.IMPORTED,
+                }
+                else status
+            ),
+        },
+    )
+    updated = not created and previous_payload != data["raw_payload"]
+    return candidate, created, updated
+
+
+def _unique_business_slug(name: str, source_uid: str) -> str:
+    base = slugify(name)[:160] or "commerce"
+    if not Business.objects.filter(slug=base).exists():
+        return base
+    return f"{base[:140]}-{hashlib.sha256(source_uid.encode()).hexdigest()[:8]}"
+
+
+@transaction.atomic
+def import_business_candidate(
+    candidate: BusinessImportCandidate,
+    *,
+    user: User,
+    publish: bool = True,
+) -> Business:
+    """Transforme un candidat validÃ© en Business (brouillon ou publiÃ©)."""
+    if candidate.category_id is None or candidate.commune_id is None:
+        raise ValueError("Commune et catÃ©gorie requises pour importer un commerce")
+    business = candidate.matched_business
+    if business is None:
+        business = Business(
+            slug=_unique_business_slug(candidate.name, candidate.source_uid),
+        )
+    business.name = candidate.name
+    business.short_description = candidate.short_description or candidate.name
+    business.description = (
+        candidate.description or candidate.short_description or candidate.name
+    )
+    business.category = candidate.category
+    business.commune = candidate.commune
+    business.address = candidate.address
+    business.postal_code = candidate.postal_code
+    business.city = candidate.city or candidate.commune.name
+    business.location = (
+        Point(float(candidate.longitude), float(candidate.latitude), srid=4326)
+        if candidate.latitude is not None and candidate.longitude is not None
+        else None
+    )
+    business.phone = candidate.phone
+    business.email = candidate.email
+    business.website = candidate.website
+    business.is_published = publish
+    business.save()
+    if candidate.image_url:
+        try:
+            sync_business_cover_image(business, candidate.image_url)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Image commerce non synchronisée pour %s", business.slug, exc_info=True
+            )
+    candidate.status = BusinessImportCandidate.Status.IMPORTED
+    candidate.matched_business = business
+    candidate.imported_at = timezone.now()
+    candidate.save(
+        update_fields=["status", "matched_business", "imported_at", "last_seen_at"]
+    )
+    return business
+
+
+def _upsert_business_candidate(
+    crawl_source: CrawlSource, data: dict
+) -> tuple[BusinessImportCandidate, bool, bool]:
+    existing = BusinessImportCandidate.objects.filter(
+        crawl_source=crawl_source,
+        source_uid=data["source_uid"],
+    ).first()
+    created = existing is None
+    previous_payload = existing.raw_payload if existing else None
+    status = (
+        BusinessImportCandidate.Status.INVALID
+        if data["validation_errors"]
+        else BusinessImportCandidate.Status.PENDING
+    )
+    candidate, _ = BusinessImportCandidate.objects.update_or_create(
+        crawl_source=crawl_source,
+        source_uid=data["source_uid"],
+        defaults={
+            **data,
+            "status": (
+                existing.status
+                if existing
+                and existing.status
+                in {
+                    BusinessImportCandidate.Status.REJECTED,
+                    BusinessImportCandidate.Status.IMPORTED,
+                }
+                else status
+            ),
+        },
+    )
+    updated = not created and previous_payload != data["raw_payload"]
+    return candidate, created, updated
+
+
+def _unique_listing_slug(title: str, source_uid: str) -> str:
+    base = slugify(title)[:190] or "annonce"
+    if not Listing.objects.filter(slug=base).exists():
+        return base
+    return f"{base[:170]}-{hashlib.sha256(source_uid.encode()).hexdigest()[:8]}"
+
+
+@transaction.atomic
+def import_listing_candidate(
+    candidate: ListingImportCandidate,
+    *,
+    user: User,
+    publish: bool = True,
+) -> Listing:
+    """Transforme un candidat validé en annonce (brouillon ou publiée)."""
+    if candidate.category_id is None:
+        raise ValueError("Catégorie requise pour importer une annonce")
+    listing = candidate.matched_listing
+    if listing is None:
+        listing = Listing(
+            slug=_unique_listing_slug(candidate.title, candidate.source_uid),
+            created_by=user,
+        )
+    listing.title = candidate.title
+    listing.short_description = candidate.short_description or candidate.title
+    listing.description = (
+        candidate.description or candidate.short_description or candidate.title
+    )
+    listing.category = candidate.category
+    listing.commune = candidate.commune
+    listing.locality = candidate.locality
+    listing.address = candidate.address
+    listing.employer_or_agency = candidate.employer_or_agency
+    listing.contract_type = candidate.contract_type
+    listing.price = candidate.price
+    listing.contact_email = candidate.contact_email
+    listing.contact_phone = candidate.contact_phone
+    listing.application_url = candidate.application_url
+    listing.source_url = candidate.source_url
+    listing.expires_at = candidate.expires_at
+    listing.status = Listing.Status.PUBLISHED if publish else Listing.Status.DRAFT
+    if publish and listing.published_at is None:
+        listing.published_at = candidate.published_on_source_at or timezone.now()
+    listing.save()
+    candidate.status = ListingImportCandidate.Status.IMPORTED
+    candidate.matched_listing = listing
+    candidate.imported_at = timezone.now()
+    candidate.save(
+        update_fields=["status", "matched_listing", "imported_at", "last_seen_at"]
+    )
+    return listing
+
+
+def _upsert_listing_candidate(
+    crawl_source: CrawlSource, data: dict
+) -> tuple[ListingImportCandidate, bool, bool]:
+    existing = ListingImportCandidate.objects.filter(
+        crawl_source=crawl_source,
+        source_uid=data["source_uid"],
+    ).first()
+    created = existing is None
+    previous_payload = existing.raw_payload if existing else None
+    status = (
+        ListingImportCandidate.Status.INVALID
+        if data["validation_errors"]
+        else ListingImportCandidate.Status.PENDING
+    )
+    candidate, _ = ListingImportCandidate.objects.update_or_create(
+        crawl_source=crawl_source,
+        source_uid=data["source_uid"],
+        defaults={
+            **data,
+            "status": (
+                existing.status
+                if existing
+                and existing.status
+                in {
+                    ListingImportCandidate.Status.REJECTED,
+                    ListingImportCandidate.Status.IMPORTED,
                 }
                 else status
             ),
@@ -412,7 +617,7 @@ def _route_results(
     generic_urls: set[str],
     user: User,
 ) -> dict:
-    """Route les sorties IA vers les boites Agenda et Decouvrir."""
+    """Route les sorties IA vers les boites Agenda, Decouvrir et Commercants."""
     commune = crawl_source.commune
     agenda_source = _agenda_event_source(crawl_source)
     summary = {
@@ -420,6 +625,8 @@ def _route_results(
         "events": 0,
         "markets": 0,
         "places": 0,
+        "businesses": 0,
+        "listings": 0,
         "errors": len(errors),
         "error_details": errors[:50],
         "agenda_routed": False,
@@ -477,6 +684,55 @@ def _route_results(
                 summary["places"] += 1
             except Exception:  # noqa: BLE001
                 logger.exception("Candidat Découvrir impossible pour %s", crawl_source.label)
+
+    # Commerces -> boîte Commerçants. Mêmes règles de bruit que les lieux :
+    # commerce principal par page (recoupement avec le titre de page), puis
+    # déduplication par empreinte nom + localité sur tout le corpus.
+    businesses_by_page: dict[str, list[dict]] = {}
+    for raw in results["businesses"]:
+        businesses_by_page.setdefault(raw["source_page_url"], []).append(raw)
+
+    for page_url, raw_businesses in businesses_by_page.items():
+        crawl_page = crawl_page_by_url.get(page_url)
+        if crawl_page is None:
+            continue
+        selected = _select_primary_places(crawl_page, raw_businesses)
+        for raw in selected:
+            data = normalize_business(
+                crawl_source, raw, crawl_page=crawl_page, generic_urls=generic_urls
+            )
+            if data["fingerprint"] in seen_fingerprints:
+                continue
+            seen_fingerprints.add(data["fingerprint"])
+            try:
+                _upsert_business_candidate(crawl_source, data)
+                summary["businesses"] += 1
+            except Exception:  # noqa: BLE001
+                logger.exception("Candidat Commerçant impossible pour %s", crawl_source.label)
+
+    # Annonces (emploi...) -> boîte Annonces. Même sélection « sujet principal
+    # par page » que lieux/commerces (les archives d'offres en listent
+    # plusieurs : on ne retient que celle qui recoupe le titre de la page),
+    # puis dédup par empreinte titre + localité sur tout le corpus.
+    listings_by_page: dict[str, list[dict]] = {}
+    for raw in results["listings"]:
+        listings_by_page.setdefault(raw["source_page_url"], []).append(raw)
+
+    for page_url, raw_listings in listings_by_page.items():
+        crawl_page = crawl_page_by_url.get(page_url)
+        if crawl_page is None:
+            continue
+        selected = _select_primary_places(crawl_page, raw_listings)
+        for raw in selected:
+            data = normalize_listing(crawl_source, raw, crawl_page=crawl_page)
+            if data["fingerprint"] in seen_fingerprints:
+                continue
+            seen_fingerprints.add(data["fingerprint"])
+            try:
+                _upsert_listing_candidate(crawl_source, data)
+                summary["listings"] += 1
+            except Exception:  # noqa: BLE001
+                logger.exception("Candidat annonce impossible pour %s", crawl_source.label)
 
     return summary
 

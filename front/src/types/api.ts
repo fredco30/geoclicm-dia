@@ -431,6 +431,107 @@ export type CommuneMini = {
   department: string;
 };
 
+export type ListingCategory = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+export type ListingListItem = {
+  id: number;
+  title: string;
+  slug: string;
+  short_description: string;
+  category: ListingCategory;
+  commune: number | null;
+  commune_name: string | null;
+  locality: string;
+  employer_or_agency: string;
+  contract_type: string;
+  price: string;
+  published_at: string | null;
+  expires_at: string | null;
+  status: string;
+};
+
+export type ListingDetail = ListingListItem & {
+  description: string;
+  address: string;
+  contact_email: string;
+  contact_phone: string;
+  application_url: string;
+  source_url: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListingImportCandidate = {
+  id: number;
+  crawl_source: number;
+  crawl_source_label: string;
+  source_uid: string;
+  extraction_method: "ai" | "json_ld";
+  source_url: string;
+  title: string;
+  short_description: string;
+  description: string;
+  address: string;
+  locality: string;
+  employer_or_agency: string;
+  contract_type: string;
+  price: string;
+  contact_email: string;
+  contact_phone: string;
+  application_url: string;
+  published_on_source_at: string | null;
+  expires_at: string | null;
+  commune: number | null;
+  commune_name: string | null;
+  category: number | null;
+  category_name: string | null;
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  validation_errors: string[];
+  extraction_evidence: string[];
+  matched_listing_slug: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+};
+
+export type BusinessImportCandidate = {
+  id: number;
+  crawl_source: number;
+  crawl_source_label: string;
+  source_uid: string;
+  extraction_method: "ai" | "json_ld";
+  source_url: string;
+  name: string;
+  short_description: string;
+  description: string;
+  image_url: string;
+  address: string;
+  postal_code: string;
+  city: string;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string;
+  email: string;
+  website: string;
+  commune: number | null;
+  commune_name: string | null;
+  category: number | null;
+  category_name: string | null;
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  validation_errors: string[];
+  extraction_evidence: string[];
+  matched_business_slug: string | null;
+  first_seen_at: string;
+  last_seen_at: string;
+};
+
 export type BusinessCategory = {
   id: number;
   name: string;

@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.forms import OSMWidget
 
-from .models import Business, BusinessCategory
+from .models import Business, BusinessCategory, BusinessImportCandidate
 
 
 CAMARGUE_OSM = OSMWidget(
@@ -90,3 +90,11 @@ class BusinessAdmin(GISModelAdmin):
             "fields": ("view_count", "created_at", "updated_at"),
         }),
     )
+
+
+@admin.register(BusinessImportCandidate)
+class BusinessImportCandidateAdmin(admin.ModelAdmin):
+    list_display = ("name", "crawl_source", "category", "commune", "status", "extraction_method")
+    list_filter = ("status", "extraction_method", "category", "commune")
+    search_fields = ("name", "short_description", "description", "address")
+    readonly_fields = ("source_uid", "fingerprint", "raw_payload", "first_seen_at", "last_seen_at")

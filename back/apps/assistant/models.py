@@ -64,6 +64,7 @@ class KnowledgeChunk(models.Model):
         ),
     )
     source_url = models.URLField(
+        max_length=1000,
         blank=True,
         help_text="URL d'origine pour citer la source dans la réponse.",
     )

@@ -19,6 +19,9 @@ import type {
   EventCategory,
   EventDetail,
   EventListItem,
+  ListingCategory,
+  ListingDetail,
+  ListingListItem,
   Paginated,
   PlaceCategory,
   PlaceDetail,
@@ -158,6 +161,26 @@ export const api = {
       apiGet<PlaceCategory[]>("/api/place-categories/", {
         revalidate: 3600,
         tags: ["place-categories"],
+      }),
+  },
+
+  listings: {
+    list: (params: Record<string, string | number | boolean | undefined> = {}) => {
+      const qs = buildQuery(params);
+      return apiGet<Paginated<ListingListItem>>(`/api/listings/${qs}`, {
+        revalidate: 300,
+        tags: ["listings"],
+      });
+    },
+    detail: (slug: string) =>
+      apiGet<ListingDetail>(`/api/listings/${slug}/`, {
+        revalidate: 600,
+        tags: ["listings", `listing:${slug}`],
+      }),
+    categories: () =>
+      apiGet<ListingCategory[]>("/api/listing-categories/", {
+        revalidate: 3600,
+        tags: ["listing-categories"],
       }),
   },
 

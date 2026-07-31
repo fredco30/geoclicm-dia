@@ -118,13 +118,13 @@ class PlaceImportCandidate(models.Model):
         default=ExtractionMethod.AI,
         db_index=True,
     )
-    source_url = models.URLField()
+    source_url = models.URLField(max_length=1000)
     raw_payload = models.JSONField(default=dict, blank=True)
     fingerprint = models.CharField(max_length=64, db_index=True)
     title = models.CharField(max_length=200)
     short_description = models.CharField(max_length=240, blank=True)
     description = models.TextField(blank=True)
-    image_url = models.URLField(blank=True)
+    image_url = models.URLField(max_length=1000, blank=True)
     image_credit = models.CharField(max_length=200, blank=True)
     address = models.CharField(max_length=255, blank=True)
     latitude = models.DecimalField(

@@ -187,3 +187,113 @@ class Business(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)[:180]
         super().save(*args, **kwargs)
+
+
+class BusinessImportCandidate(models.Model):
+    """CommerÃ§ant structurÃ© en attente de validation, miroir de DÃ©couvrir.
+
+    Produit par la passe IA multi-catÃ©gories (docs/26 Â§19) sur le corpus
+    crawlÃ© partagÃ©. Aucune publication automatique : un humain valide chaque
+    candidat dans la boÃ®te Â« Ã€ valider Â» CommerÃ§ants avant qu'il ne devienne
+    un Business publiÃ©.
+    """
+
+    class ExtractionMethod(models.TextChoices):
+        AI = "ai", "Extraction IA Ã  valider"
+        JSON_LD = "json_ld", "JSON-LD officiel"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ã€ vÃ©rifier"
+        IMPORTED = "imported", "ImportÃ©"
+        REJECTED = "rejected", "RejetÃ©"
+        DUPLICATE = "duplicate", "Doublon"
+        INVALID = "invalid", "Incomplet"
+
+    crawl_source = models.ForeignKey(
+        "assistant.CrawlSource",
+        on_delete=models.CASCADE,
+        related_name="business_import_candidates",
+    )
+    source_uid = models.CharField(max_length=240)
+    extraction_method = models.CharField(
+        max_length=20,
+        choices=ExtractionMethod.choices,
+        default=ExtractionMethod.AI,
+        db_index=True,
+    )
+    source_url = models.URLField(max_length=1000)
+    raw_payload = models.JSONField(default=dict, blank=True)
+    fingerprint = models.CharField(max_length=64, db_index=True)
+    name = models.CharField(max_length=150)
+    short_description = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
+    image_url = models.URLField(max_length=1000, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    postal_code = models.CharField(max_length=10, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+    )
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+    )
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    commune = models.ForeignKey(
+        Commune,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="business_import_candidates",
+    )
+    category = models.ForeignKey(
+        BusinessCategory,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="import_candidates",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    validation_errors = models.JSONField(default=list, blank=True)
+    matched_business = models.ForeignKey(
+        Business,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="import_candidates",
+    )
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+    imported_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["status", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["crawl_source", "source_uid"],
+                name="business_candidate_unique_source_uid",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["crawl_source", "status"],
+                name="biz_cand_src_status_idx",
+            ),
+        ]
+        verbose_name = "Candidat CommerÃ§ant"
+        verbose_name_plural = "Candidats CommerÃ§ants"
+
+    def __str__(self) -> str:
+        return f"{self.name} [{self.crawl_source.label}]"

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, Compass, FileText, Plus, Home, Settings, Tags, Store, Megaphone, LayoutGrid, Sparkles, Phone } from "lucide-react";
+import { CalendarDays, Compass, FileText, Plus, Home, Settings, Tags, Store, Megaphone, LayoutGrid, Sparkles, Phone, Newspaper } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 import { getRoleLabel } from "@/lib/roles";
 import { LogoutButton } from "@/components/admin/logout-button";
@@ -59,6 +59,9 @@ export default async function AdminProtectedLayout({
           </NavLink>
           <NavLink href="/admin/directory/categories" icon={<Tags className="h-4 w-4" />}>
             Catégories commerçants
+          </NavLink>
+          <NavLink href="/admin/annonces" icon={<Newspaper className="h-4 w-4" />}>
+            Annonces
           </NavLink>
           <NavLink href="/admin/regie/campagnes" icon={<Megaphone className="h-4 w-4" />}>
             Régie publicitaire

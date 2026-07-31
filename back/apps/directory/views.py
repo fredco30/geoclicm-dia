@@ -9,18 +9,21 @@ ViewSets DRF pour l'API directory.
 from __future__ import annotations
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from apps.core.models import User
 from apps.editorial.permissions import IsEditorOrAdmin
 
 from .filters import BusinessFilter
-from .models import Business, BusinessCategory
+from .models import Business, BusinessCategory, BusinessImportCandidate
 from .permissions import IsAdvertiserOrTeam, IsBusinessOwnerOrTeam
 from .serializers import (
     BusinessAdvertiserWriteSerializer,
     BusinessCategorySerializer,
     BusinessDetailSerializer,
+    BusinessImportCandidateSerializer,
     BusinessListSerializer,
     BusinessWriteSerializer,
 )
@@ -76,6 +79,77 @@ class BusinessViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return BusinessListSerializer
         return BusinessDetailSerializer
+
+
+class BusinessImportCandidateAdminViewSet(viewsets.ModelViewSet):
+    """Boîte « À valider » Commerçants : validation humaine des fiches détectées."""
+
+    queryset = BusinessImportCandidate.objects.all().select_related(
+        "crawl_source", "commune", "category", "matched_business"
+    )
+    serializer_class = BusinessImportCandidateSerializer
+    permission_classes = (permissions.IsAuthenticated, IsEditorOrAdmin)
+    pagination_class = None
+    http_method_names = ("get", "patch", "post", "head", "options")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if source_id := self.request.query_params.get("source"):
+            qs = qs.filter(crawl_source_id=source_id)
+        if candidate_status := self.request.query_params.get("status"):
+            qs = qs.filter(status=candidate_status)
+        else:
+            qs = qs.filter(
+                status__in=(
+                    BusinessImportCandidate.Status.PENDING,
+                    BusinessImportCandidate.Status.INVALID,
+                )
+            )
+        if self.action == "list" and "limit" in self.request.query_params:
+            try:
+                limit = min(max(int(self.request.query_params["limit"]), 1), 100)
+                offset = max(int(self.request.query_params.get("offset", 0)), 0)
+            except (TypeError, ValueError):
+                limit, offset = 50, 0
+            qs = qs[offset : offset + limit]
+        return qs
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        from apps.discovery.multi_sync import import_business_candidate
+
+        candidate = self.get_object()
+        serializer = self.get_serializer(
+            candidate, data=request.data or {}, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        candidate = serializer.save()
+        missing = []
+        if candidate.category_id is None:
+            missing.append("catégorie")
+        if candidate.commune_id is None:
+            missing.append("commune")
+        if missing:
+            return Response(
+                {"detail": "Champs requis : " + ", ".join(missing)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            business = import_business_candidate(
+                candidate, user=request.user, publish=True
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            BusinessDetailSerializer(business, context={"request": request}).data
+        )
+
+    @action(detail=True, methods=["post"])
+    def reject(self, request, pk=None):
+        candidate = self.get_object()
+        candidate.status = BusinessImportCandidate.Status.REJECTED
+        candidate.save(update_fields=["status", "last_seen_at"])
+        return Response(self.get_serializer(candidate).data)
 
 
 class AdvertiserBusinessViewSet(viewsets.ModelViewSet):

@@ -1,5 +1,5 @@
 """
-Seed des BusinessCategory : 8 catégories racines + sous-catégories.
+Seed des BusinessCategory : 9 catégories racines + sous-catégories.
 
 Usage : python manage.py seed_business_categories
 
@@ -104,6 +104,19 @@ ROOTS = [
             ("Assurance", "ShieldCheck", "InsuranceAgency"),
             ("Immobilier", "Home", "RealEstateAgent"),
             ("Santé", "HeartPulse", "MedicalBusiness"),
+        ],
+    },
+    {
+        "name": "Associations",
+        "icon": "Users",
+        "schema_type": "NGO",
+        "children": [
+            ("Culture et arts", "Palette", "NGO"),
+            ("Sport", "Trophy", "SportsOrganization"),
+            ("Solidarité", "HeartHandshake", "NGO"),
+            ("Environnement", "Leaf", "NGO"),
+            ("Jeunesse", "GraduationCap", "NGO"),
+            ("Vie locale", "Landmark", "NGO"),
         ],
     },
 ]

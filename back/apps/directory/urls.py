@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AdvertiserBusinessViewSet,
     BusinessCategoryViewSet,
+    BusinessImportCandidateAdminViewSet,
     BusinessViewSet,
 )
 
@@ -16,6 +17,11 @@ router.register(
     "advertiser/businesses",
     AdvertiserBusinessViewSet,
     basename="advertiser-business",
+)
+router.register(
+    "admin/business-imports",
+    BusinessImportCandidateAdminViewSet,
+    basename="admin-business-import",
 )
 
 urlpatterns = [

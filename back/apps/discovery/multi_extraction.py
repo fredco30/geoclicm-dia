@@ -19,6 +19,7 @@ import logging
 from django.utils.text import slugify
 
 from apps.core.models import Commune, User
+from apps.directory.models import BusinessCategory
 from apps.events.ai_extraction import (
     ExtractionUnavailable,
     _call_ai,
@@ -34,7 +35,7 @@ from .models import PlaceCategory
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "multi-v1"
+PROMPT_VERSION = "multi-v3"
 
 # Seuil minimal de texte pour envoyer une page à l'IA (navigation pure écartée,
 # jamais de filtre sémantique : voie A prudente).
@@ -47,8 +48,9 @@ dans ces pages. N'utilise aucune connaissance externe et ne complète jamais une
 information absente.
 
 Pour chaque document fourni, détecte s'il annonce explicitement un ou plusieurs
-contenus parmi trois catégories. Retourne uniquement un objet JSON avec trois clés :
-"events", "markets", "places" (des listes, vides si rien n'est annoncé).
+contenus parmi cinq catégories. Retourne uniquement un objet JSON avec cinq
+clés : "events", "markets", "places", "businesses", "listings" (des listes,
+vides si rien n'est annoncé).
 
 - "events" : un événement daté (concert, spectacle, fête, exposition, sortie).
   Champs : source_page_url, title, short_description, description, venue_name,
@@ -66,6 +68,25 @@ contenus parmi trois catégories. Retourne uniquement un objet JSON avec trois c
   category_hint (un seul mot parmi : patrimoine, nature, plages, balades,
   points-de-vue, savoir-faire, activites-sports, gastronomie, hebergements),
   evidence.
+- "businesses" : un commerce, artisan ou service établi (boutique, atelier,
+  borne de recharge, cybercafé, banque, agence, médecin, garage...). Les
+  restaurants, bars, glaciers, hébergements et prestataires d'activités de
+  loisir restent dans "places" (gastronomie, hebergements, activites-sports) :
+  ne les mets PAS dans "businesses". Une association (club sportif, comité des
+  fêtes, association culturelle ou solidaire) va dans "businesses" avec
+  category_hint = "Associations". Champs : source_page_url, title,
+  short_description, description, address, postal_code, locality, latitude,
+  longitude, phone, email, website, category_hint (un nom parmi la liste des
+  catégories commerçantes du site, par exemple Boulangeries, Coiffure,
+  Immobilier, Vêtements), evidence.
+- "listings" : une petite annonce datée, d'abord les offres d'emploi (poste à
+  pourvoir, recrutement). Champs : source_page_url, title, short_description,
+  description, address, locality, employer_or_agency, contract_type, price,
+  contact_email, contact_phone, application_url, category_hint (uniquement
+  "emploi" pour l'instant), published_on_source_at (date de publication ISO si
+  affichée, sinon null), expires_at (date limite de candidature ISO si
+  affichée, sinon null), evidence. Une offre d'emploi n'est NI un événement,
+  NI un commerce : ne la mets que dans "listings".
 
 Règles impératives :
 1. Ne crée un contenu que s'il est explicitement décrit dans le document.
@@ -83,7 +104,7 @@ Règles impératives :
    pour un artisanat, un atelier ou un savoir-faire local à découvrir.
 """.strip()
 
-CATEGORY_KEYS = ("events", "markets", "places")
+CATEGORY_KEYS = ("events", "markets", "places", "businesses", "listings")
 
 
 class _AIProgressSource:
@@ -418,6 +439,215 @@ def normalize_place(
         "best_season": _compact_text(raw.get("best_season"), 120),
         "practical_info": _compact_text(raw.get("practical_info")),
         "official_url": page_url,
+        "commune": commune,
+        "category": category,
+        "validation_errors": errors,
+    }
+
+
+# --- Normalisation des commerces vers BusinessImportCandidate ---------------
+
+_BUSINESS_CATEGORY_BY_HINT: dict[str, BusinessCategory] | None = None
+
+
+def _business_category(raw: dict) -> BusinessCategory | None:
+    """Resout la categorie commercante depuis le hint IA (nom ou slug exact).
+
+    Aucun rapprochement flou : un hint non reconnu laisse la categorie vide,
+    l'humain la choisit dans la boite de validation.
+    """
+    global _BUSINESS_CATEGORY_BY_HINT
+    if _BUSINESS_CATEGORY_BY_HINT is None:
+        mapping: dict[str, BusinessCategory] = {}
+        for category in BusinessCategory.objects.filter(is_active=True):
+            mapping.setdefault(_norm_locality(category.name), category)
+            mapping.setdefault(category.slug.casefold(), category)
+        _BUSINESS_CATEGORY_BY_HINT = mapping
+    hint = str(raw.get("category_hint") or "").strip()
+    if not hint:
+        return None
+    return _BUSINESS_CATEGORY_BY_HINT.get(_norm_locality(hint)) or (
+        _BUSINESS_CATEGORY_BY_HINT.get(hint.casefold())
+    )
+
+
+def normalize_business(
+    crawl_source,
+    raw: dict,
+    *,
+    crawl_page,
+    generic_urls: set[str] | None = None,
+) -> dict:
+    """Transforme une sortie IA « business » en donnees de candidat validees."""
+    page_url = crawl_page.final_url or crawl_page.canonical_url
+    page_text = " ".join(str(crawl_page.cleaned_text or "").split()).casefold()
+
+    name = _compact_text(raw.get("title"), 150)
+    short_description = _compact_text(raw.get("short_description"), 200)
+    description = _compact_text(raw.get("description"))
+    locality = _compact_text(raw.get("locality"), 120)
+    commune = _locality_commune(crawl_source, locality)
+    address = _compact_text(raw.get("address"), 255)
+    postal_code = _compact_text(raw.get("postal_code"), 10)
+    latitude = _optional_float(raw.get("latitude"))
+    longitude = _optional_float(raw.get("longitude"))
+    if (latitude is None or longitude is None) and address:
+        latitude, longitude = _geocode(address, commune)
+
+    verified_evidence = []
+    evidence = raw.get("evidence") or []
+    if isinstance(evidence, list):
+        for value in evidence[:3]:
+            snippet = _compact_text(value, 300)
+            if snippet and " ".join(snippet.split()).casefold() in page_text:
+                verified_evidence.append(snippet)
+
+    category = _business_category(raw)
+    errors = []
+    if not name:
+        errors.append("Nom absent")
+    if not commune:
+        errors.append("Commune non reconnue")
+    if not category:
+        errors.append("Catégorie non déterminée")
+    if not description and not short_description:
+        errors.append("Description absente")
+    if not verified_evidence:
+        errors.append("Preuve textuelle IA non vérifiable dans la page")
+
+    uid_basis = f"{page_url}|{slugify(name)}"
+    source_uid = hashlib.sha256(uid_basis.encode()).hexdigest()[:48]
+    fingerprint = hashlib.sha256(
+        f"{_norm_locality(name)}|{_norm_locality(locality)}".encode()
+    ).hexdigest()
+    image = select_event_image(crawl_page, title=name, generic_urls=generic_urls)
+    return {
+        "source_uid": source_uid,
+        "extraction_method": "ai",
+        "source_url": page_url,
+        "raw_payload": {
+            "ai": raw,
+            "verified_evidence": verified_evidence,
+            "page_url": page_url,
+        },
+        "fingerprint": fingerprint,
+        "name": name or "Commerce sans nom",
+        "short_description": short_description or description[:200],
+        "description": description or short_description,
+        "image_url": image.url,
+        "address": address,
+        "postal_code": postal_code,
+        "city": locality or (commune.name if commune else ""),
+        "latitude": latitude,
+        "longitude": longitude,
+        "phone": _compact_text(raw.get("phone"), 20),
+        "email": _compact_text(raw.get("email"), 254),
+        "website": _compact_text(raw.get("website"), 200),
+        "commune": commune,
+        "category": category,
+        "validation_errors": errors,
+    }
+
+
+# --- Normalisation des annonces vers ListingImportCandidate ------------------
+
+_LISTING_HINT_SLUGS = {
+    "emploi": "offres-d-emploi",
+    "job": "offres-d-emploi",
+    "offre d'emploi": "offres-d-emploi",
+    "offres d'emploi": "offres-d-emploi",
+    "recrutement": "offres-d-emploi",
+    "location": "locations-annuelles",
+    "locations": "locations-annuelles",
+    "locations annuelles": "locations-annuelles",
+    "location annuelle": "locations-annuelles",
+}
+
+
+def _listing_category(raw: dict):
+    """Resout la categorie d'annonce (hint IA exact -> slug seede)."""
+    from apps.listings.models import ListingCategory
+
+    hint = str(raw.get("category_hint") or "").strip().casefold()
+    slug = _LISTING_HINT_SLUGS.get(hint)
+    if not slug:
+        return None
+    return ListingCategory.objects.filter(slug=slug, is_active=True).first()
+
+
+def normalize_listing(
+    crawl_source,
+    raw: dict,
+    *,
+    crawl_page,
+) -> dict:
+    """Transforme une sortie IA « listing » en donnees de candidat validees."""
+    from apps.events.imports import _aware
+
+    page_url = crawl_page.final_url or crawl_page.canonical_url
+    page_text = " ".join(str(crawl_page.cleaned_text or "").split()).casefold()
+
+    title = _compact_text(raw.get("title"), 200)
+    short_description = _compact_text(raw.get("short_description"), 240)
+    description = _compact_text(raw.get("description"))
+    locality = _compact_text(raw.get("locality"), 120)
+    commune = _locality_commune(crawl_source, locality)
+    category = _listing_category(raw)
+
+    verified_evidence = []
+    evidence = raw.get("evidence") or []
+    if isinstance(evidence, list):
+        for value in evidence[:3]:
+            snippet = _compact_text(value, 300)
+            if snippet and " ".join(snippet.split()).casefold() in page_text:
+                verified_evidence.append(snippet)
+
+    # L'URL de candidature n'est conservee que si elle figure dans les liens
+    # de la page (pas d'URL inventee par l'IA).
+    links = set(crawl_page.links or [])
+    from apps.events.imports import _absolute_http_url
+
+    application_candidate = _absolute_http_url(page_url, raw.get("application_url"))
+    application_url = application_candidate if application_candidate in links else ""
+
+    errors = []
+    if not title:
+        errors.append("Titre absent")
+    if not category:
+        errors.append("Catégorie non déterminée")
+    if not description and not short_description:
+        errors.append("Description absente")
+    if not verified_evidence:
+        errors.append("Preuve textuelle IA non vérifiable dans la page")
+
+    uid_basis = f"{page_url}|{slugify(title)}"
+    source_uid = hashlib.sha256(uid_basis.encode()).hexdigest()[:48]
+    fingerprint = hashlib.sha256(
+        f"{_norm_locality(title)}|{_norm_locality(locality)}".encode()
+    ).hexdigest()
+    return {
+        "source_uid": source_uid,
+        "extraction_method": "ai",
+        "source_url": page_url,
+        "raw_payload": {
+            "ai": raw,
+            "verified_evidence": verified_evidence,
+            "page_url": page_url,
+        },
+        "fingerprint": fingerprint,
+        "title": title or "Annonce sans titre",
+        "short_description": short_description or description[:240],
+        "description": description or short_description,
+        "address": _compact_text(raw.get("address"), 255),
+        "locality": locality,
+        "employer_or_agency": _compact_text(raw.get("employer_or_agency"), 150),
+        "contract_type": _compact_text(raw.get("contract_type"), 80),
+        "price": _compact_text(raw.get("price"), 100),
+        "contact_email": _compact_text(raw.get("contact_email"), 254),
+        "contact_phone": _compact_text(raw.get("contact_phone"), 20),
+        "application_url": application_url,
+        "published_on_source_at": _aware(raw.get("published_on_source_at")),
+        "expires_at": _aware(raw.get("expires_at")),
         "commune": commune,
         "category": category,
         "validation_errors": errors,

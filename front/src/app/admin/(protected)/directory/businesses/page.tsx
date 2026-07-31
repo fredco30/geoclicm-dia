@@ -41,11 +41,18 @@ export default async function BusinessesPage() {
             ({businesses.length})
           </span>
         </h1>
-        <Link href="/admin/directory/businesses/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4" /> Nouveau commerçant
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/directory/imports">
+            <Button variant="secondary" size="sm">
+              Candidats
+            </Button>
+          </Link>
+          <Link href="/admin/directory/businesses/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" /> Nouveau commerçant
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {businesses.length === 0 ? (

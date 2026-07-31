@@ -440,3 +440,108 @@ Points de vue 4, Hébergements 2.
 Attention : le nouveau prompt (règle 7) diffère de celui ayant produit le cache
 IA actuel -> la prochaine collecte ré-analysera tout (coût plein ~4-5 EUR) mais
 classera correctement dès le départ. Reporté à la prochaine vraie collecte.
+
+## 19. Module Commerçants alimenté par le crawl (31 juillet 2026)
+
+Suite de §18 : les commerces/services ne restent plus dans Découvrir. La passe
+IA multi-catégories produit désormais une quatrième clé "businesses" (commerce,
+artisan ou service établi : boutique, atelier, borne de recharge, cybercafé,
+banque, agence...). Restaurants, hébergements et prestataires de loisir restent
+dans "places" (gastronomie, hebergements, activites-sports) — le prompt le dit
+explicitement pour éviter les doubles emplois.
+
+Implémentation (miroir exact du pipeline Découvrir) :
+- `directory.BusinessImportCandidate` + migration `directory.0004` (mêmes
+  champs que PlaceImportCandidate, adaptés à Business : phone, email, website,
+  postal_code, city ; catégorie = BusinessCategory).
+- `PROMPT_VERSION = "multi-v2"` : le cache IA par page (§17) est invalidé par
+  construction, la prochaine passe ré-analyse tout (coût plein ~4-5 EUR) et
+  produit events + markets + places + businesses en une analyse par page.
+- `normalize_business` : catégorie résolue uniquement si le hint IA correspond
+  exactement (nom ou slug) à une BusinessCategory active — aucun rapprochement
+  flou, sinon la fiche part en « Incomplets » et l'humain choisit. Preuve
+  textuelle vérifiée dans la page (même règle que lieux).
+- Routage dans `_route_results` : commerce principal par page (même règle de
+  recoupement titre de page que les lieux) + dédup par empreinte
+  nom+localité normalisés sur tout le corpus.
+- Boîte « À valider » Commerçants : `GET/PATCH/POST /api/admin/business-imports/`
+  (approve/reject, commune+catégorie requises) et page front
+  `/admin/directory/imports` (onglets « À valider »/« Incomplets », pagination
+  50/page), bouton « Candidats » ajouté sur `/admin/directory/businesses`.
+  L'approbation crée le Business publié (plan free, owner=null, is_claimed=false,
+  image officielle téléchargée dans cover_image via sync_business_cover_image,
+  mêmes bornes que les lieux : 5 Mo max, jpg/png/webp, uniquement si cover vide).
+
+Vérifications (31 juillet 2026, local) : `manage.py check` OK,
+`makemigrations --check` : aucun changement détecté (migration manuscrite
+cohérente), 20 tests `apps.discovery` OK (dont 9 nouveaux : routage clé
+businesses, cache ancien sans la clé, normalisation/hint/preuve/empreinte,
+téléchargeur d'image partagé lieux/commerces),
+`tsc --noEmit` et ESLint OK côté front.
+
+À faire au déploiement : appliquer `directory.0004`, puis relancer une passe
+multi-catégories complète (cache invalidé -> coût plein). Les candidats
+commerces arriveront dans la boîte « À valider » Commerçants ; aucune
+publication automatique, validation humaine obligatoire (règle inchangée §8).
+
+## 20. Annonces (emploi, locations) et Associations (31 juillet 2026)
+
+Décisions d'une réunion de travail (Fred) :
+- **Offres d'emploi** : alimentées par le crawl, liées à la source
+  terredecamargue.fr (WordPress, type de contenu `offre-emploi`, ~7 offres
+  actives constatées le 31/07 ; flux RSS `/offre-emploi/feed/` en 500, API
+  REST WP désactivée -> crawl HTML classique).
+- **Pharmacies & médecins de garde** : rubrique manuelle, hors flux d'annonces.
+  À gérer dans `utility.UsefulContact` (rubrique « Pratique », category_label
+  dédié) — aucun dev. La valeur stockée doit être une URL/numéro de garde
+  officiel (les gardes tournent), pas une liste figée.
+- **Locations annuelles** (La Grande-Motte, Le Grau-du-Roi, Aigues-Mortes) :
+  offres ET demandes, saisie **manuelle** (pas de crawl). Les gros portails
+  d'annonces (Leboncoin, SeLoger...) interdisent le scraping dans leurs CGU et
+  se protègent techniquement : non recommandé. Un partenariat flux avec une
+  agence locale reste possible plus tard.
+- **Associations** : catégorie racine « Associations » dans l'annuaire
+  Commerçants (BusinessCategory), alimentée par le crawl via la clé
+  "businesses" de la passe IA (hint exact "Associations").
+
+Choix d'architecture : les annonces emploi/locative sont des contenus datés qui
+expirent, distincts de l'Agenda (événements), de Découvrir (lieux pérennes) et
+de l'annuaire (fiches établies). Un nouveau module **`listings`** est créé
+(voie A validée) plutôt que de tordre un module existant.
+
+Implémentation :
+- App `apps.listings` : `ListingCategory` (emploi, locations annuelles —
+  seed_listing_categories), `Listing` (annonce avec `expires_at`, statuts
+  draft/published/expired/archived, commune nullable = intercommunal),
+  `ListingImportCandidate` (miroir Découvrir/Commerçants).
+- `PROMPT_VERSION = "multi-v3"` : 5e clé `listings` dans la passe IA (emploi).
+  Le cache IA par page est invalidé par construction.
+- `normalize_listing` : catégorie par hint exact (emploi -> offres-d-emploi) ;
+  `application_url` conservée **uniquement** si présente dans les liens de la
+  page (pas d'URL inventée) ; preuve textuelle vérifiée ; pas d'erreur si
+  commune non résolue (annonce intercommunale possible).
+- Routage `_route_results` : annonce « sujet principal » par page + dédup par
+  empreinte titre+localité.
+- `directory` : seed 9 catégories racines (ajout « Associations », 6
+  sous-catégories, schema_type NGO) ; le prompt IA route les associations vers
+  businesses avec hint "Associations".
+- API publique `/api/listings/` (publiées ET non expirées seulement),
+  `/api/listing-categories/` ; admin `/api/admin/listings/` (CRUD),
+  `/api/admin/listing-imports/` (approve/reject, catégorie requise).
+- Front public : `/emploi` et `/locations-annuelles` (liste + détail,
+  composants partagés `makeListingListPage` / `makeListingDetailPage`,
+  `ListingCard`), filtre par commune, pagination.
+- Front admin : nav « Annonces », liste `/admin/annonces` (avec boutons
+  Candidats + Nouvelle annonce), boîte de validation `/admin/annonces/imports`
+  (onglets À valider/Incomplets), formulaire CRUD `/admin/annonces/new` et
+  `/admin/annonces/[slug]/edit`.
+
+Vérifications (31 juillet 2026, local) : `manage.py check` OK, aucune migration
+en suspens, routes résolues (4 viewsets), 24 tests `apps.discovery`+`listings`
+OK (dont clé listings, normalisation, drop d'URL de candidature hors-page),
+`tsc --noEmit` et ESLint OK côté front.
+
+À faire au déploiement : appliquer `listings.0001` + `directory.0004`, lancer
+`seed_listing_categories` et `seed_business_categories`, ajouter
+terredecamargue.fr comme CrawlSource (kind office de tourisme, commune vide =
+intercommunal), puis relancer la passe multi-catégories (coût plein ~4-5 EUR).

@@ -13,7 +13,7 @@ from rest_framework import serializers
 from apps.core.models import Commune
 from apps.editorial.serializers import ImageVariantsField
 
-from .models import Business, BusinessCategory
+from .models import Business, BusinessCategory, BusinessImportCandidate
 
 
 class CommuneMiniSerializer(serializers.ModelSerializer):
@@ -209,3 +209,71 @@ class BusinessAdvertiserWriteSerializer(BusinessWriteSerializer):
             "opening_hours", "seasonal_closures",
             "meta_description",
         )
+
+
+# ============================================================================
+# BusinessImportCandidate — boîte « À valider » Commerçants
+# ============================================================================
+
+class BusinessImportCandidateSerializer(serializers.ModelSerializer):
+    crawl_source_label = serializers.CharField(source="crawl_source.label", read_only=True)
+    commune_name = serializers.CharField(source="commune.name", read_only=True, default=None)
+    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    matched_business_slug = serializers.CharField(
+        source="matched_business.slug",
+        read_only=True,
+        default=None,
+    )
+    extraction_evidence = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BusinessImportCandidate
+        fields = (
+            "id",
+            "crawl_source",
+            "crawl_source_label",
+            "source_uid",
+            "extraction_method",
+            "source_url",
+            "name",
+            "short_description",
+            "description",
+            "image_url",
+            "address",
+            "postal_code",
+            "city",
+            "latitude",
+            "longitude",
+            "phone",
+            "email",
+            "website",
+            "commune",
+            "commune_name",
+            "category",
+            "category_name",
+            "status",
+            "validation_errors",
+            "extraction_evidence",
+            "matched_business_slug",
+            "first_seen_at",
+            "last_seen_at",
+        )
+        read_only_fields = (
+            "id",
+            "crawl_source",
+            "source_uid",
+            "extraction_method",
+            "source_url",
+            "image_url",
+            "status",
+            "validation_errors",
+            "extraction_evidence",
+            "matched_business_slug",
+            "first_seen_at",
+            "last_seen_at",
+        )
+
+    def get_extraction_evidence(self, obj):
+        payload = obj.raw_payload or {}
+        evidence = payload.get("verified_evidence") or []
+        return [str(item) for item in evidence if item]
