@@ -257,6 +257,7 @@ export type EventImportCandidate = {
   image_credit: string;
   starts_at: string | null;
   ends_at: string | null;
+  occurrences: { starts_at: string | null; ends_at: string | null; is_all_day: boolean }[];
   venue_name: string;
   address: string;
   latitude: number | null;

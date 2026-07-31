@@ -93,6 +93,15 @@ def _allowed(source: CrawlSource, url: str) -> bool:
     )
 
 
+def _meta_content(soup, *candidates) -> str:
+    """Premier contenu meta non vide parmi plusieurs sélecteurs possibles."""
+    for attrs in candidates:
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            return str(tag["content"]).strip()
+    return ""
+
+
 def _parse_html(html: str, page_url: str, method: str, status: int | None, depth: int) -> dict:
     page_url = canonicalize_url(page_url)
     soup = BeautifulSoup(html, "lxml")
@@ -105,11 +114,28 @@ def _parse_html(html: str, page_url: str, method: str, status: int | None, depth
     title = soup.title.get_text(" ", strip=True)[:500] if soup.title else ""
     image = soup.find("meta", attrs={"property": "og:image"})
     description = soup.find("meta", attrs={"name": "description"})
+
     metadata = {
         "image_url": (
             urljoin(page_url, image.get("content")) if image and image.get("content") else ""
         ),
         "description": description.get("content", "")[:2000] if description else "",
+        "published_at": _meta_content(
+            soup,
+            {"property": "article:published_time"},
+            {"name": "article:published_time"},
+            {"name": "date"},
+            {"name": "dc.date"},
+            {"name": "dc.date.created"},
+            {"itemprop": "datePublished"},
+        ),
+        "modified_at": _meta_content(
+            soup,
+            {"property": "article:modified_time"},
+            {"name": "article:modified_time"},
+            {"name": "last-modified"},
+            {"itemprop": "dateModified"},
+        ),
     }
     links = []
     for anchor in soup.find_all("a", href=True):

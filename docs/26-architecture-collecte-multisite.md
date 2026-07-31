@@ -545,3 +545,43 @@ OK (dont clé listings, normalisation, drop d'URL de candidature hors-page),
 `seed_listing_categories` et `seed_business_categories`, ajouter
 terredecamargue.fr comme CrawlSource (kind office de tourisme, commune vide =
 intercommunal), puis relancer la passe multi-catégories (coût plein ~4-5 EUR).
+
+
+## 21. Fra?cheur des dates d'?v?nements (correctif multi-v4 / events-v4)
+
+Constat (31 juillet 2026, prod) : des ?v?nements encore actifs remontaient avec
+des dates anciennes (? Terre de Sport ? affich? au 13 juin 2022, ? Cryptors in
+the City ? et plusieurs march?s au 1 janv. 2024). Cause : les fiches WordPress /
+OT r?currentes ne sont pas mises ? jour chaque ann?e. Le texte donne un jour et
+un mois sans ann?e (? du 13 juin au 18 septembre ?), et la seule ann?e pr?sente
+sur la page est sa date de publication (2022) que l'IA reprenait ; ? d?faut de
+date elle fabriquait un ? 1 janvier ? d'une ann?e d?duite.
+
+Correctifs :
+
+- **Dates de page crawl?es** : `_parse_html` (shared_crawl) stocke d?sormais
+  `published_at` / `modified_at` dans `CrawledPage.metadata` (meta HTML
+  `article:published_time`, `dc.date`, `itemprop=datePublished`, etc.).
+  `discovery/page_dates.resolve_page_dates` compl?te depuis le JSON-LD
+  (`datePublished` / `dateModified`, y compris dans `@graph`) et normalise en
+  ISO `YYYY-MM-DD`. Ces dates sont un **rep?re de fra?cheur de page**, jamais
+  une date d'?v?nement.
+- **Prompt IA** : la date du jour (`today`) est inject?e dans chaque requ?te,
+  et `page_dates` est joint ? chaque segment. Nouvelles r?gles : date sans
+  ann?e -> prochaine occurrence future par rapport ? `today` ; ne jamais
+  utiliser l'ann?e de publication de la page comme ann?e de l'?v?nement ; si
+  aucune date r?elle et future n'est d?terminable -> `occurrences: []` (pas de
+  1er janvier fabriqu?) ; une activit? permanente (? toute l'ann?e ?, jeu de
+  piste, parcours) va dans `places`, pas dans `events`/`markets` ; pas
+  d'?v?nement/march? sans date, jour r?current ou saison explicitement dat?s.
+- **Versions de prompt** bump?es (`multi-v4`, `events-v4`) pour neutraliser les
+  caches de segments calcul?s avec l'ancien prompt.
+- **Back-office Agenda** : un candidat sans occurrence dat?e affiche
+  ? R?currence ou p?riode non dat?e ? ? pr?ciser ? suivi de la preuve textuelle,
+  au lieu d'un faux `1 janv. 2024`. Le bouton ? Approuver ? reste bloqu? tant
+  qu'aucune date n'est renseign?e (validation humaine).
+
+V?rifications (1 ao?t 2026, local) : `py_compile` OK sur les modules touch?s,
+29 tests `apps.discovery` OK (dont `test_page_dates` : priorit? meta, repli
+JSON-LD, `@graph`, valeurs invalides ?cart?es ; et propagation `today` +
+`page_dates` au prompt), `tsc --noEmit` et ESLint OK c?t? front.

@@ -44,6 +44,7 @@ from .multi_extraction import (
     normalize_listing,
     normalize_place,
 )
+from .page_dates import resolve_page_dates
 
 logger = logging.getLogger(__name__)
 
@@ -562,6 +563,7 @@ def process_page_batch(
             "image_url": (page.metadata or {}).get("image_url", ""),
             "links": page.links,
             "content": page.cleaned_text,
+            "page_dates": resolve_page_dates(page.metadata, page.json_ld),
         }
         for page in crawled_pages
     ]
@@ -594,6 +596,7 @@ def run_multi_extraction(
             "image_url": (page.metadata or {}).get("image_url", ""),
             "links": page.links,
             "content": page.cleaned_text,
+            "page_dates": resolve_page_dates(page.metadata, page.json_ld),
         }
         for page in crawled_pages
     ]

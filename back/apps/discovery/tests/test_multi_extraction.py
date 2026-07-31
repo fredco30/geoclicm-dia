@@ -1,3 +1,4 @@
+from datetime import date
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -9,6 +10,7 @@ from apps.discovery.multi_extraction import (
     CATEGORY_HINT_SLUGS,
     _accepted_items,
     _merge_items,
+    extract_multi,
     normalize_business,
     normalize_listing,
 )
@@ -358,3 +360,48 @@ class DownloadCoverImageTests(SimpleTestCase):
                 instance, "https://ot.fr/img.jpg", title="X", label="commerce"
             )
         self.assertFalse(ok)
+
+
+class ExtractMultiPromptTests(SimpleTestCase):
+    def _call_capture(self, captured):
+        def fake_call_ai(source, prompt, *, system_prompt=None):
+            captured["prompt"] = prompt
+            return {
+                "answer": "{\"events\":[],\"markets\":[],\"places\":[],\"businesses\":[],\"listings\":[]}",
+                "provider": "ovh",
+                "model": "Qwen3.5-9B",
+            }
+
+        return fake_call_ai
+
+    def test_prompt_includes_today_and_page_dates(self):
+        captured = {}
+        pages = [
+            {
+                "url": "https://ot.fr/terredesport",
+                "title": "Terre de Sport",
+                "content": "Terre de Sport reunit une dizaine de disciplines en plein air. " * 8,
+                "page_dates": {"published_at": "2022-06-15", "modified_at": "2022-06-15"},
+            }
+        ]
+        user = SimpleNamespace(pk=1, id=1)
+        with (
+            patch.object(me, "_provider_config", return_value=("ovh", "Qwen3.5-9B")),
+            patch.object(me, "_call_ai", side_effect=self._call_capture(captured)),
+        ):
+            extract_multi(user, pages)
+        self.assertIn("today", captured["prompt"])
+        self.assertIn(date.today().isoformat(), captured["prompt"])
+        self.assertIn("2022-06-15", captured["prompt"])
+
+    def test_page_dates_not_required(self):
+        captured = {}
+        pages = [{"url": "https://ot.fr/x", "title": "X", "content": "contenu " * 40}]
+        user = SimpleNamespace(pk=1, id=1)
+        with (
+            patch.object(me, "_provider_config", return_value=("ovh", "Qwen3.5-9B")),
+            patch.object(me, "_call_ai", side_effect=self._call_capture(captured)),
+        ):
+            results, errors = extract_multi(user, pages)
+        self.assertEqual(errors, [])
+        self.assertIn("today", captured["prompt"])
