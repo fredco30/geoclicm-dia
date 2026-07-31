@@ -11,12 +11,14 @@ from apps.listings.models import ListingCategory
 CATEGORIES = [
     {
         "name": "Offres d'emploi",
+        "slug": "offres-d-emploi",
         "icon": "Briefcase",
         "description": "Offres d'emploi du territoire (collectÃ©es via les sites "
                        "officiels crawlÃ©s, validÃ©es avant publication).",
     },
     {
         "name": "Locations annuelles",
+        "slug": "locations-annuelles",
         "icon": "House",
         "description": "Offres et demandes de locations Ã  l'annÃ©e (La "
                        "Grande-Motte, Le Grau-du-Roi, Aigues-Mortes). Saisie "
@@ -31,7 +33,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options) -> None:
         created, updated = 0, 0
         for idx, data in enumerate(CATEGORIES):
-            slug = slugify(data["name"])
+            # Slug fige (utilise par le front et les hints IA), pas derive du nom.
+            slug = data["slug"]
             _, was_created = ListingCategory.objects.update_or_create(
                 slug=slug,
                 defaults={

@@ -556,6 +556,8 @@ _LISTING_HINT_SLUGS = {
     "job": "offres-d-emploi",
     "offre d'emploi": "offres-d-emploi",
     "offres d'emploi": "offres-d-emploi",
+    "offres-d-emploi": "offres-d-emploi",
+    "offres-demploi": "offres-d-emploi",
     "recrutement": "offres-d-emploi",
     "location": "locations-annuelles",
     "locations": "locations-annuelles",
