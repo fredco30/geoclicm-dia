@@ -743,3 +743,71 @@ V?rifi? : cl?s = hash 64 car., fusion A+B entre lots, hit cache (0 appel IA au r
 **Cons?quence** : la prochaine passe multi ne repaiera que les segments dont le contenu
 (ou prompt/provider) a chang?. Le cap de 5 ?/jour reste ? ajuster si une passe compl?te
 doit tenir en un jour (d?cision produit, non tranch?e).
+
+## 25. Lot du 1er aout (nuit) — refonte frontend mobile-first + monetisation "A la une"
+
+Lot deploye sur `main`. Feu vert de Fred a chaque etape (agenda pilote, puis
+generalisation). Objectif : pages de listing lisibles sur mobile sans scroll
+excessif, et emplacements "A la une" controlables depuis l'admin (monetisation).
+
+### 25.1 Agenda — refonte dense (pilote)
+
+- `00bb651` refonte mobile-first : header compact (titre + compteur), filtres replies
+  derriere un bouton, lignes denses `event-row.tsx` (pastille date + titre + lieu),
+  groupees par mois. Image retiree de la liste (reste sur la fiche detail).
+- **Bug 500 en prod** : `RangeError: Invalid time value`. `monthKey` produisait une
+  date localisee `MM/AAAA` mais `monthLabel` splittait sur `-` → `NaN` → date invalide
+  au premier evenement date. Corrige (`31aa837`, cle ISO `AAAA-MM`) ; date-guards
+  ajoutes dans `event-row` / `agenda-map-explorer` (`cfc52f7`).
+- `52c3f54` bandeau "A la une" monetise + la fenetre carte ne s'ouvre plus toute seule.
+- `bd38bc0` carte `AgendaMapExplorer` repliable **desktop-only** + suppression de la
+  liste interne doublonne (mobile = liste dense uniquement).
+
+### 25.2 Monetisation "A la une" (placements AdCampaign)
+
+Le mecanisme reutilise `AdCampaign` (periode, ciblage, stats, serve/redirect). Une FK
+optionnelle permet de mettre en avant une fiche existante plutot qu'une crea externe :
+
+- `agenda_featured` + `featured_event` (FK Event) : `d9e3b79` + migration `0003`
+  (`13d8940`). Bandeau agenda au-dessus de la liste, affiche la fiche evenement
+  (image/titre/date/lieu), mention "Presente par {annonceur} · Publicite". Le clic
+  passe par `/r/<id>/` (track) puis redirige vers `/agenda/<slug>`.
+- `directory_featured` + `featured_business` (FK Business) : `5fd7050` + migration
+  `0004` (`018b96b`). Bandeau annuaire, meme logique, redirige vers `/commerces/<slug>`.
+
+**Gestion 100% admin** (Campagnes publicitaires) : creer une campagne sur le placement,
+choisir l'evenement/commercant, activer. Desactiver la campagne = le bandeau disparait
+(le composant rend `null` si aucune campagne active, HTTP 204). Deux campagnes de demo
+creees en prod (id=1 agenda, id=2 annuaire, toutes deux "A VELO") — a gerer par Fred.
+
+### 25.3 Generalisation aux autres listings
+
+`f86abd4` — composants mutualises + lignes denses :
+
+- **Mutualises** : `ui/collapsible-filters.tsx` (filtres replies), `ui/collapsible-map.tsx`
+  (carte repliable visible par defaut). Filtres client par page (`business-filters`,
+  `discovery-filters`, `listing-filters`).
+- **Lignes denses** : `business-row.tsx` (logo carre + nom + categorie + commune),
+  `place-row.tsx`, `listing-row.tsx` — 5-6 items par ecran mobile au lieu d'1.
+- **Pages refondues** : `/commerces` (carte gardee mais repliable + "commercant a la une"),
+  `/decouvrir`, `/emploi`, `/locations-annuelles` (et toutes pages via `listing-list-page`).
+
+### 25.4 Nettoyage
+
+`7dad271` — suppression des composants devenus orphelins : `place-card`, `listing-card`,
+`business-featured-section`. `business-card` et `event-card` **conserves** (encore
+utilises par `/marches`).
+
+### 25.5 Verifications
+
+tsc + eslint 0 erreur a chaque commit ; migrations `0003`/`0004` appliquees en prod
+(backup PG avant) ; pages `/agenda`, `/commerces`, `/decouvrir`, `/emploi` → 200 ;
+rendus mobile (390px) et desktop (1280px) valides par captures Playwright.
+
+### 25.6 Reste a faire
+
+- **`/marches`** : derniere page encore en ancien style (gros header + grille de grosses
+  cartes `EventCard`/`BusinessCard`). En attente du feu vert de Fred. Une fois refaite,
+  supprimer `business-card` et `event-card` (fin du nettoyage).
+- `/decouvrir`, `/emploi`, `/locations-annuelles` affichent "0" tant qu'il n'y a pas de
+  contenu publie (gabarit en place, pas un bug).

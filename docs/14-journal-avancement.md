@@ -945,3 +945,38 @@ purge par lot (un lot Celery de 15 pages n'efface plus les autres lots).
 V?rifi? : cl?s = hash, fusion A+B entre lots, hit cache (0 appel IA au re-appel).
 29/29 tests discovery OK. La prochaine passe ne paiera que les segments modifi?s.
 Cap 5 ?/jour ? ajuster si une passe compl?te doit tenir en un jour (non tranch?).
+
+## 1er aout 2026 (nuit) — Refonte frontend mobile-first + monetisation "A la une"
+
+Refonte des pages de listing pour supprimer le scroll excessif sur mobile, et
+emplacements "A la une" geres depuis l'admin. Detail complet : doc 25, section 25.
+
+### Agenda (pilote)
+- `00bb651` lignes denses + filtres replies + header compact (groupe par mois).
+- `31aa837` **fix 500 prod** : `monthKey` rendait `MM/AAAA`, `monthLabel` splittait
+  sur `-` → `RangeError`. Corrige (cle ISO `AAAA-MM`).
+- `52c3f54` bandeau "A la une" + fenetre carte non auto.
+- `bd38bc0` carte repliable desktop-only + liste doublon supprimee.
+
+### Monetisation "A la une" (placements AdCampaign)
+- `agenda_featured` + `featured_event` (`d9e3b79`, migration `0003`).
+- `directory_featured` + `featured_business` (`5fd7050`, migration `0004`).
+- Bandeau affiche la fiche (evenement ou commercant), mention "Presente par X ·
+  Publicite", clic tracke via `/r/<id>/` puis redirige vers la fiche. Desactiver la
+  campagne = bandeau masque (composant rend null si 204). Gestion 100% admin.
+- 2 campagnes demo en prod (id=1 agenda, id=2 annuaire, "A VELO").
+
+### Generalisation (`f86abd4`)
+- Mutualises : `collapsible-filters`, `collapsible-map`.
+- Lignes denses : `business-row`, `place-row`, `listing-row`.
+- Pages refondues : `/commerces` (carte repliable + commercant a la une), `/decouvrir`,
+  `/emploi`, `/locations-annuelles`.
+
+### Nettoyage (`7dad271`)
+- Supprimes : `place-card`, `listing-card`, `business-featured-section` (orphelins).
+- Conserves : `business-card`, `event-card` (utilises par `/marches`, non refaite).
+
+Verifie : tsc/eslint 0 erreur, migrations 0003/0004 appliquees (backup PG), pages
+agenda/commerces/decouvrir/emploi → 200, rendus mobile+desktop OK (Playwright).
+
+**Reste** : `/marches` a refaire (puis supprimer `business-card`/`event-card`).
