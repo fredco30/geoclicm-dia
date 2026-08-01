@@ -311,31 +311,31 @@ export function BusinessImportsAdmin({
                 </div>
               )}
               <div className="p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-medium uppercase text-[#a8533a]">
-                      {row.crawl_source_label} ·{" "}
-                      {row.extraction_method === "ai"
-                        ? "Extraction IA à vérifier"
-                        : "JSON-LD"}
-                    </p>
-                    <h2 className="font-serif text-xl font-semibold">{row.name}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {row.address || row.city || row.commune_name || "Adresse manquante"}
-                      {row.postal_code ? ` · ${row.postal_code}` : ""}
-                    </p>
-                    {row.phone ? (
-                      <p className="mt-1 text-sm text-slate-600">{row.phone}</p>
-                    ) : null}
-                  </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium uppercase text-[#a8533a]">
+                    {row.crawl_source_label} ·{" "}
+                    {row.extraction_method === "ai"
+                      ? "Extraction IA à vérifier"
+                      : "JSON-LD"}
+                  </p>
                   <a
                     href={row.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-[#1a4d6e] underline"
+                    className="inline-flex shrink-0 items-center gap-1 text-xs text-[#1a4d6e] underline"
                   >
                     Source officielle <ExternalLink className="h-3 w-3" />
                   </a>
+                </div>
+                <div>
+                  <h2 className="font-serif text-xl font-semibold">{row.name}</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {row.address || row.city || row.commune_name || "Adresse manquante"}
+                    {row.postal_code ? ` · ${row.postal_code}` : ""}
+                  </p>
+                  {row.phone ? (
+                    <p className="mt-1 text-sm text-slate-600">{row.phone}</p>
+                  ) : null}
                 </div>
                 {row.short_description ? (
                   <p className="mt-3 line-clamp-3 text-sm text-slate-600">
@@ -352,11 +352,12 @@ export function BusinessImportsAdmin({
                     {row.validation_errors.join(" · ")}
                   </p>
                 ) : null}
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 flex flex-wrap items-center gap-2">
                   <Select
                     aria-label="Commune"
                     value={row.commune ?? ""}
                     onChange={(event) => update(row.id, "commune", event.target.value)}
+                    className="w-44"
                   >
                     <option value="">Choisir la commune *</option>
                     {communes.map((item) => (
@@ -369,6 +370,7 @@ export function BusinessImportsAdmin({
                     aria-label="Catégorie"
                     value={row.category ?? ""}
                     onChange={(event) => update(row.id, "category", event.target.value)}
+                    className="w-56"
                   >
                     <option value="">Choisir la catégorie *</option>
                     {categories.map((item) => (
@@ -377,21 +379,21 @@ export function BusinessImportsAdmin({
                       </option>
                     ))}
                   </Select>
-                </div>
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button
-                    variant="secondary"
-                    disabled={pending}
-                    onClick={() => act(row, "reject")}
-                  >
-                    <X className="h-4 w-4" /> Rejeter
-                  </Button>
-                  <Button
-                    disabled={pending || !row.commune || !row.category}
-                    onClick={() => act(row, "approve")}
-                  >
-                    <Check className="h-4 w-4" /> Approuver et publier
-                  </Button>
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      variant="secondary"
+                      disabled={pending}
+                      onClick={() => act(row, "reject")}
+                    >
+                      <X className="h-4 w-4" /> Rejeter
+                    </Button>
+                    <Button
+                      disabled={pending || !row.commune || !row.category}
+                      onClick={() => act(row, "approve")}
+                    >
+                      <Check className="h-4 w-4" /> Approuver et publier
+                    </Button>
+                  </div>
                 </div>
               </div>
             </article>
