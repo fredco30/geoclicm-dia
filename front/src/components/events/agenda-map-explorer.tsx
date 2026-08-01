@@ -18,7 +18,7 @@ const OSM_STYLE: StyleSpecification = {
 };
 
 function formatDate(value?: string): string {
-  if (!value) return "Date à confirmer";
+  if (!value || Number.isNaN(new Date(value).getTime())) return "Date à confirmer";
   return new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(value));
 }
 

@@ -14,7 +14,11 @@ export const metadata: Metadata = {
 };
 
 function monthKey(iso: string): string {
-  return new Intl.DateTimeFormat("fr-FR", { year: "numeric", month: "2-digit", timeZone: "Europe/Paris" }).format(new Date(iso));
+  // Clé ISO "YYYY-MM" (tri/fiable), indépendante du format d'affichage localisé.
+  const parts = new Intl.DateTimeFormat("fr-FR", { year: "numeric", month: "2-digit", timeZone: "Europe/Paris" }).formatToParts(new Date(iso));
+  const year = parts.find((p) => p.type === "year")?.value ?? "";
+  const month = parts.find((p) => p.type === "month")?.value ?? "";
+  return `${year}-${month}`;
 }
 
 // Certaines occurrences en prod ont un starts_at vide/invalide : on ne groupe
