@@ -154,6 +154,12 @@ def save_chunks(
 
     for ci in chunks:
         seen_ids.add(ci.source_id)
+        # La colonne title est varchar(300) ; le crawl tronque les titres de
+        # page à 500. Sans garde-fou, un titre > 300 fait échouer tout le lot
+        # d'indexation de la source (erreur "value too long"). On tronque ici,
+        # au point d'écriture unique, pour protéger toutes les sources.
+        if len(ci.title) > 300:
+            ci.title = ci.title[:297] + "..."
         existing = (
             KnowledgeChunk.objects
             .filter(source_kind=ci.source_kind, source_id=ci.source_id)
