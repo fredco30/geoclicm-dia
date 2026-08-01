@@ -825,3 +825,48 @@ Mesures (code de production) : petites pages ~1,4 s ; grosses pages 0,8-17 s,
 Commits : `17fe9bc` (provider), `73988bf` (modèle v4-flash explicite +
 tarifs), docs mises à jour. Passe complète multi-catégories relancée en tâche
 de fond (lots Celery, short_first) sur les 4 corpus ; mesurer coût/durée/qualité.
+
+## 1er aoùt 2026 — Dates fiables, catégories métier, validation en masse, correctifs admin
+
+Lot livré et déployé sur media.geoclic.fr (branche main, feu vert de Fred).
+
+### Fiabilité des dates d’événements (multi-v4 / events-v4)
+
+Constat : des événements actifs affichaient des dates passées (juin 2022, janv. 2024)
+car l’IA utilisait l’année de publication de la page comme année de l’événement.
+
+- Crawl : extraction de `published_at` / `modified_at` (meta HTML + repli JSON-LD `datePublished`),
+  stockés dans `CrawledPage.metadata` (`assistant/services/shared_crawl.py`, `discovery/page_dates.py`).
+- Prompt IA : injection de `today` + `page_dates` ; règles — date sans année à
+  prochaine occurrence future ; jamais l’année de publication comme année d’événement ;
+  pas de date à `occurrences: []` ; activités permanentes à `places` (pas `events`).
+- Front Agenda : « Récurrence ou période non datée — à préciser » quand aucune occurrence.
+- Recrawl forcé (5 sources, 1864 pages) + passe multi-v4 relancée : plus aucune date fabriquée.
+
+### Bug source 6 « terre de camargues »
+
+Cause : 2 pages avec titre de 325 caractères > `KnowledgeChunk.title` varchar(300) : tout le
+lot échouait. Correctif : troncature à 300 dans `save_chunks` (`assistant/indexers/base.py`).
+Run zombie clôturé, source réinitialisée. Sentinelle VPS (`back/_sentinel.py`) : attend la fin
+de la file multi-v4 puis lance le recrawl source 6 automatiquement.
+
+### Validation en masse des candidats IA
+
+- Endpoints POST `bulk-approve` sur business/place/event import candidates (`ids`, max 500,
+  PENDING + complets uniquement, réutilise la logique d’import unitaire).
+- Front : cases à cocher par carte, « Sélectionner les fiables (N) » (commune + catégorie +
+  preuve, + date future pour les événements), « Tout décocher », « Approuver la sélection (N) ».
+- Filtre Tout / Associations / Commerces & services sur les candidats commerçants.
+
+### Correctifs navigation et encodage admin
+
+- Bug : « page suivante » et filtres « À valider » / « Incomplets » ne rafraîchissaient
+  pas la liste (liste React jamais resynchronisée). Correctif : resync via derived state (sans useEffect).
+- Mojibake UTF-8 sur les 4 écrans d’imports (accents écrasés en « ? » lors d’éditions
+  via le shell). Correctif : réécriture des libellés en générant les accents par code Unicode
+  (chr) pour éviter la corruption shell ; vérifié au niveau octet.
+
+### Commits
+
+`e0aaaf0` dates, `0e3a7c6` repli JSON-LD, `d3d23ea` troncature chunk, `52696b3` bulk-approve +
+navigation, `9e11505` + `86afcee` encodage UTF-8 admin.

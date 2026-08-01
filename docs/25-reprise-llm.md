@@ -1,6 +1,6 @@
 ﻿# 25 — Reprise GeoClic Média par un LLM
 
-**Document prioritaire de reprise. État vérifié le 29 juillet 2026.**
+**Document prioritaire de reprise. État vérifié le 1er aoùt 2026.**
 
 Ce fichier donne l'état réellement observé du dépôt et de la production. Il
 prévaut sur les statuts historiques des anciens documents et ne contient aucun
@@ -12,7 +12,7 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 |---|---|
 | Dépôt | `fredco30/geoclicm-dia` |
 | Branche de production | `main` |
-| Version déployée | `main`, lot fonctionnel Agenda `7d9c51f` |
+| Version déployée | `main`, lot validation en masse `86afcee` |
 | Domaine | `https://media.geoclic.fr` |
 | VPS | `135.125.159.142`, utilisateur `ubuntu` |
 | Dépôt serveur | `/var/www/geoclicmedia` |
@@ -603,3 +603,45 @@ une seule passe IA par page récupère et classe toutes les catégories définie
 (événements, marchés, lieux, extensible), avec validation humaine par boîte.
 Voie A prudente (tout à l'IA, aucune perte). Premier chantier : les lieux
 (Découvrir), seul module non alimenté.
+
+## 21. Lot du 1er aoùt 2026 — dates fiables, catégories métier, validation en masse
+
+Déployé sur `main` (prod media.geoclic.fr), feu vert de Fred. Détails
+dans `14-journal-avancement.md` (entrée du 1er aoùt).
+
+| Élément | Valeur |
+|---|---|
+| Prompt extraction | `multi-v4` (multi-catégories), `events-v4` (événements) |
+| Dates événements | `today` + `page_dates` injectés au prompt ; jamais l’année de publication |
+| Sans date | `occurrences: []` à affiché « Récurrence ou période non datée » |
+| Validation | POST `bulk-approve` (business/place/event), max 500, PENDING+complets |
+| Filtre commerçants | Tout / Associations / Commerces & services |
+
+### Bugs corrigés
+
+- **Dates fabriquées** (2022/2024) : l’IA utilisait l’année de publication de la page.
+  Correctif prompt + métadonnées de page (crawl), recrawl + multi-v4 relancée.
+- **Source 6 « terre de camargues »** : 2 pages à titre de 325 car. > varchar(300)
+  faisaient échouer tout le lot. Troncature à 300 dans `save_chunks`.
+- **Navigation admin** : page suivante / filtres « À valider » ne rafraîchissaient pas.
+  Resync via derived state (sans useEffect).
+- **Mojibake UTF-8** sur 4 écrans d’imports (accents à « ? »). Réécriture des libellés
+  en générant les accents par code Unicode (chr) ; vérifié au niveau octet.
+
+### Point d’attention outil
+
+Le shell local (PowerShell) transmet mal les caractères accentués tapés directement
+dans les chaînes Python. Pour tout texte français à écrire dans un fichier, générer
+les accents avec `chr(0xE9)` etc., jamais en littéral. Vérifier le résultat au niveau octet
+(`read_bytes()`), pas à l’affichage console (trompeur).
+
+### Sentinelle VPS
+
+`back/_sentinel.py` : surveille la file d’extraction multi-v4 ; quand elle se vide, lance
+automatiquement le recrawl de la source 6. Nettoyer après usage.
+
+### Reste à faire
+
+- Vérifier le succès du recrawl source 6 (indexation de la page au titre long).
+- Mesurer coût/qualité de la passe multi-v4 complète.
+- Décider planification auto vs déclenchement manuel des passes IA (coût).
