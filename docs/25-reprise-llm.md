@@ -19,7 +19,7 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 | Services | Django, Next.js, Celery worker et beat actifs |
 | IA extraction | DeepSeek (`deepseek-v4-flash`), embeddings Mistral inchangés |
 | Prompts | `multi-v4` / `events-v4` (dates fiables) |
-| Candidats à valider | events 189, places 720, commerces 212, annonces 5 |
+| Candidats à valider | events 111, places 720, commerces 212, annonces 5 |
 | Source 6 « terre de camargues » | recrawl lancé par sentinelle après multi-v4 |
 
 Le healthcheck répond :
@@ -661,3 +661,39 @@ plusieurs sources ou de pages de listing multilingues. À traiter par règle, pa
    (même contenu analysé en 5 langues) — les exclure réduit la facture.
 
 Voir détail dans `14-journal-avancement.md` (entrée 1er aoùt soir).
+
+## 23. État final session 1er aoùt soir — Agenda nettoyé
+
+**À valider Agenda : 111 candidats** (départ 335). Tous avec date future.
+
+### Série de correctifs appliqués (déployés sur main)
+
+1. **Expiration IA** (`a2b8f14`) : `_normalize_agenda_item` (multi_sync) n’appelait pas
+   `apply_occurrence_filter` → candidats toutes dates passées restaient pending.
+   Corrigé + `repair_event_candidates --apply` sur les 4 sources.
+2. **Rejet dates fabriquées** : 25 candidats (2022/2024, 1er janvier) → expired.
+3. **Dédup étape 1** : 121 candidats (106 doublons URL exacte + 36 pages non-FR).
+4. **Dédup étape 2** : 17 même fingerprint + 29 cross-source (agrégateur
+   `tourisme-saint-laurent-daigouze.fr` rattachait à tort à Saint-Laurent) + 2 résiduels.
+
+### Prochain chantier prioritaire — correction à la source
+
+La dédup manuelle ne doit pas se répéter. Il faut empêcher la production de doublons :
+
+- **Exclure les pages de listing/pagination** (`?periode=`, `/tous-les-agendas`, `/l-agenda-*`,
+  `?l-41-*`) de l’extraction — elles génèrent des doublons d’expos et gonflent le coût IA.
+- **Exclure les pages non-françaises** (`/en/`, `/es/`, `/it/`, `/de/`) au crawl ou à la sélection IA.
+- **Agrégateur** : `tourisme-saint-laurent-daigouze.fr` relaie les événements des autres
+  communes ; décider si on ne retient que ses propres événements (commune Saint-Laurent).
+- **Dédup par fingerprint** : l’étendre aux candidats `pending` (pas seulement `IMPORTED`),
+  ou ajouter une clé titre normalisé + date + commune.
+
+Bénéfice double : moins de doublons à valider ET coût IA réduit (même contenu analysé
+en 5 langues + pages de listing).
+
+### Divers
+
+- Sentinelle VPS `back/_sentinel.py` à nettoyer après vérification du recrawl source 6.
+- Point outil : générer les accents Python avec `chr(0xE9)` etc. (le shell corrompt les
+  littéraux accentués) ; vérifier au niveau octet (`read_bytes()`).
+- 226 candidats Agenda en `expired` ; 636 occurrences passées retirées par la réparation.
