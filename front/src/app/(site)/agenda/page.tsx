@@ -17,6 +17,14 @@ function monthKey(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", { year: "numeric", month: "2-digit", timeZone: "Europe/Paris" }).format(new Date(iso));
 }
 
+// Certaines occurrences en prod ont un starts_at vide/invalide : on ne groupe
+// par mois que si la date est exploitable, sinon on renvoie null (groupe "à venir").
+function safeMonthKey(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : monthKey(iso);
+}
+
 function monthLabel(key: string): string {
   const [year, month] = key.split("-");
   const label = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(new Date(Number(year), Number(month) - 1, 1));
@@ -75,7 +83,7 @@ function EventGroups({ events }: { events: EventListItem[] }) {
   const groups = new Map<string, EventListItem[]>();
   for (const event of events) {
     const occ = event.next_occurrence;
-    const key = occ ? monthKey(occ.starts_at) : "à venir";
+    const key = (occ && safeMonthKey(occ.starts_at)) || "à venir";
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(event);
   }
