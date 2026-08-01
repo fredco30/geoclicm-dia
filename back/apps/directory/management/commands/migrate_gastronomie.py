@@ -42,6 +42,14 @@ CRAVINGS = [
     (r"\b(mediterrane)", "Mediterraneen"),
 ]
 
+# Cas tranches manuellement par Fred : ces lieux restent Restaurants meme si un
+# mot-cle glacier/snack apparait (ce sont des restaurants avec une offre annexe).
+FORCE_RESTAURANT = {
+    "le winch cafe",
+    "la dolce vita",
+    "azur plage",
+}
+
 
 def _norm(text):
     return (
@@ -53,12 +61,16 @@ def _norm(text):
 
 
 def primary_category(place):
+    title = _norm(place.title).strip()
+    if title in FORCE_RESTAURANT:
+        return "restaurants"
     hay = _norm(f"{place.title} {place.short_description} {place.description}")
-    if re.search(r"\b(glacier|glacerie)\b", hay) and "restaurant" not in hay:
+    # Sortir de "Restaurants" uniquement pour les cas francs et purs.
+    if re.search(r"\b(glacerie)\b", hay) and "restaurant" not in hay:
         return "glaciers"
-    if re.search(r"\b(caveau|cave a vin|domaine|producteur)\b", hay) and "restaurant" not in hay:
+    if re.search(r"\b(caveau)\b", hay) and "restaurant" not in hay:
         return "producteurs-caveaux"
-    if re.search(r"\b(food truck|foodtruck|snack|kebab|tacos)\b", hay):
+    if re.search(r"\b(food truck|foodtruck|kebab|tacos)\b", hay):
         return "food-trucks"
     if re.search(r"\b(bar a cocktail|lounge|pub)\b", hay) and "restaurant" not in hay:
         return "bars-cafes"
