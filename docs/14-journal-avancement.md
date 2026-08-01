@@ -894,3 +894,24 @@ Actions proposées à discuter :
    déduplication (titre normalisé + date + commune) ; le `fingerprint` actuel ne couvre
    pas le cross-source.
 3. Ne pas supprimer à la main sans règle : risque de perdre un événement réel.
+
+### Déduplication étape 2 (1er aoùt 2026, soir, suite)
+
+Après l’étape 1 (URL exacte + non-FR), nettoyage des doublons cross-source :
+
+- **17 doublons même fingerprint** (titre+date+commune identiques) rejetés ; garde la fiche la plus
+  canonique (hors page de listing `?periode=` / `/tous-les-agendas`).
+- **29 doublons cross-source** rejetés : le site agrégateur `tourisme-saint-laurent-daigouze.fr`
+  relaie les événements des communes voisines (Grau, Aigues-Mortes) en les rattachant à tort à
+  Saint-Laurent. Garde le candidat de la source spécialisée (letsgrau / ot-aiguesmortes).
+- **2 derniers doublons** « Rallumer les Étoiles » (page listing + agrégateur) rejetés.
+
+« À valider » Agenda : 335 → **111** candidats.
+
+**Cause racine** : la déduplication par `fingerprint` ne s’applique qu’aux candidats
+`IMPORTED` (imports.py), donc les doublons s’accumulent en `pending`. Et l’agrégateur
+Saint-Laurent produit des candidats rattachés à la mauvaise commune. À traiter à la source
+(exclusion pages de listing + agrégateur au crawl/sélection IA) dans un prochain lot.
+
+Note : les « animation sportive gratuite » (yoga/training/stretching, La Grande-Motte) ne
+sont PAS des doublons — programmes récurrents découpés par semaine (13, 9, 8 occurrences).
