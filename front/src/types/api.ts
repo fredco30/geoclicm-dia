@@ -613,9 +613,20 @@ export type AdPlacement =
   | "directory_top"
   | "directory_inline"
   | "agenda_top"
+  | "agenda_featured"
   | "weather_top"
   | "weather_sidebar"
   | "newsletter";
+
+export type AdFeaturedEvent = {
+  id: number;
+  title: string;
+  slug: string;
+  cover_image: ImageVariants | null;
+  venue_name: string;
+  commune_name: string;
+  next_occurrence: EventOccurrence | null;
+};
 
 export type AdServeResponse = {
   id: number;
@@ -626,6 +637,7 @@ export type AdServeResponse = {
   click_url: string;
   business_slug: string;
   business_name: string;
+  featured_event?: AdFeaturedEvent | null;
 };
 
 // ============================================================================

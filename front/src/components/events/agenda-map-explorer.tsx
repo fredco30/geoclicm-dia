@@ -26,7 +26,9 @@ export function AgendaMapExplorer({ events, initialSelectedSlug }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
-  const [selectedSlug, setSelectedSlug] = useState<string | undefined>(initialSelectedSlug ?? events[0]?.slug);
+  // Ne s'ouvre que sur sélection explicite (clic carte/liste ou ?event=slug) :
+  // plus d'ouverture automatique sur le 1er événement au chargement.
+  const [selectedSlug, setSelectedSlug] = useState<string | undefined>(initialSelectedSlug);
   const selected = useMemo(() => events.find((event) => event.slug === selectedSlug) ?? null, [events, selectedSlug]);
 
   const selectEvent = (event: EventListItem) => {

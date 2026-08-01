@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { AgendaFeatured } from "@/components/events/agenda-featured";
 import { EventRow } from "@/components/events/event-row";
 import { AgendaFilters } from "@/components/events/agenda-filters";
 import { AgendaMapExplorer } from "@/components/events/agenda-map-explorer";
@@ -75,6 +76,7 @@ export default async function AgendaPage({ searchParams }: Props) {
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-600">Aucun rendez-vous ne correspond à ces critères.</div>
       ) : (
         <>
+          <AgendaFeatured communeSlug={params.commune} />
           <EventGroups events={events.results} />
           <Pagination currentPage={page} totalCount={events.count} pageSize={20} baseUrl={baseUrl} />
         </>
