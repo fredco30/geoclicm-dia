@@ -2,13 +2,16 @@
 from django.db.models import Q
 import django_filters
 
-from .models import Business
+from .models import Business, BusinessCategory
 
 
 class BusinessFilter(django_filters.FilterSet):
     """Filtres exposés sur GET /api/businesses/?..."""
 
-    category = django_filters.CharFilter(field_name="category__slug", lookup_expr="exact")
+    # `category` matche la branche entiere : la categorie visee ET ses
+    # descendantes (les fiches sont rangees dans les sous-categories) :
+    # ?category=associations remonte toute la branche, pas la racine seule.
+    category = django_filters.CharFilter(method="filter_by_category_branch")
     commune = django_filters.CharFilter(field_name="commune__slug", lookup_expr="exact")
     # `area` matche commune principale OU une zone desservie (service_areas).
     # Utile pour la page publique d'une commune : afficher tous les commerçants
@@ -35,4 +38,27 @@ class BusinessFilter(django_filters.FilterSet):
             return queryset
         return queryset.filter(
             Q(commune__slug=value) | Q(service_areas__slug=value)
+        ).distinct()
+
+    def filter_by_category_branch(self, queryset, name, value):
+        if not value:
+            return queryset
+        category = BusinessCategory.objects.filter(slug=value).first()
+        if category is None:
+            return queryset.none()
+        # Descendance recursive (2 niveaux aujourd hui, generique si une
+        # 3e profondeur apparait).
+        ids = {category.id}
+        frontier = [category.id]
+        while frontier:
+            children = list(
+                BusinessCategory.objects.filter(parent_id__in=frontier).values_list(
+                    "id", flat=True
+                )
+            )
+            new = [c for c in children if c not in ids]
+            ids.update(new)
+            frontier = new
+        return queryset.filter(
+            Q(category_id__in=ids) | Q(secondary_categories__id__in=ids)
         ).distinct()
