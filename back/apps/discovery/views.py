@@ -133,3 +133,29 @@ class PlaceImportCandidateAdminViewSet(viewsets.ModelViewSet):
         candidate.status = PlaceImportCandidate.Status.REJECTED
         candidate.save(update_fields=["status", "last_seen_at"])
         return Response(self.get_serializer(candidate).data)
+
+    @action(detail=False, methods=["post"], url_path="bulk-approve")
+    def bulk_approve(self, request):
+        """Approuve une liste de candidats lieux par IDs (validation en masse)."""
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
+            return Response(
+                {"detail": "Fournir une liste d'ids non vide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ids = [i for i in ids if isinstance(i, int)][:500]
+        imported, skipped, errors = 0, 0, []
+        for candidate in PlaceImportCandidate.objects.filter(
+            pk__in=ids, status=PlaceImportCandidate.Status.PENDING
+        ):
+            if candidate.category_id is None or candidate.commune_id is None:
+                skipped += 1
+                continue
+            try:
+                import_place_candidate(candidate, user=request.user, publish=True)
+                imported += 1
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{candidate.title}: {str(exc)[:120]}")
+        return Response(
+            {"imported": imported, "skipped": skipped, "errors": errors[:20]}
+        )

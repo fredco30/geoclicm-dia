@@ -151,6 +151,39 @@ class BusinessImportCandidateAdminViewSet(viewsets.ModelViewSet):
         candidate.save(update_fields=["status", "last_seen_at"])
         return Response(self.get_serializer(candidate).data)
 
+    @action(detail=False, methods=["post"], url_path="bulk-approve")
+    def bulk_approve(self, request):
+        """Approuve une liste de candidats par IDs (validation en masse).
+
+        Chaque ID est importé avec la même règle que l'approbation unitaire
+        (commune + catégorie requises). Les candidats déjà importés/rejetés ou
+        incomplets sont ignorés et comptés, sans bloquer les autres.
+        """
+        from apps.discovery.multi_sync import import_business_candidate
+
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
+            return Response(
+                {"detail": "Fournir une liste d'ids non vide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ids = [i for i in ids if isinstance(i, int)][:500]
+        imported, skipped, errors = 0, 0, []
+        for candidate in BusinessImportCandidate.objects.filter(
+            pk__in=ids, status=BusinessImportCandidate.Status.PENDING
+        ):
+            if candidate.category_id is None or candidate.commune_id is None:
+                skipped += 1
+                continue
+            try:
+                import_business_candidate(candidate, user=request.user, publish=True)
+                imported += 1
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{candidate.name}: {str(exc)[:120]}")
+        return Response(
+            {"imported": imported, "skipped": skipped, "errors": errors[:20]}
+        )
+
 
 class AdvertiserBusinessViewSet(viewsets.ModelViewSet):
     """

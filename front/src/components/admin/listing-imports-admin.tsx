@@ -28,6 +28,11 @@ export function ListingImportsAdmin({
   hasNextPage: boolean;
 }) {
   const [rows, setRows] = useState(initialCandidates);
+  const [prevInitial, setPrevInitial] = useState(initialCandidates);
+  if (prevInitial !== initialCandidates) {
+    setPrevInitial(initialCandidates);
+    setRows(initialCandidates);
+  }
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const update = (id: number, field: "commune" | "category", value: string) =>
