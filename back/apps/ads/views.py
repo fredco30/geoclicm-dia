@@ -169,7 +169,7 @@ class AdServeView(APIView):
 
         chosen_id = random.choice(candidates)
         campaign = (
-            AdCampaign.objects.select_related("business", "featured_event")
+            AdCampaign.objects.select_related("business", "featured_event", "featured_business")
             .prefetch_related("featured_event__occurrences")
             .get(pk=chosen_id)
         )
@@ -200,4 +200,6 @@ def ad_redirect(request, pk: int):
     # l'événement mis en avant (target_url externe ignorée dans ce mode).
     if campaign.featured_event_id:
         return HttpResponseRedirect(f"/agenda/{campaign.featured_event.slug}")
+    if campaign.featured_business_id:
+        return HttpResponseRedirect(f"/commerces/{campaign.featured_business.slug}")
     return HttpResponseRedirect(campaign.target_url)
