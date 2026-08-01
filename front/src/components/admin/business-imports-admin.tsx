@@ -48,10 +48,10 @@ export function BusinessImportsAdmin({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Resynchronise l'?tat quand les donn?es serveur changent (changement de
-  // page ou de filtre). Pattern ? derived state from props ? : le reset se fait
+  // Resynchronise l'état quand les données serveur changent (changement de
+  // page ou de filtre). Pattern (derived state from props) : le reset se fait
   // pendant le render en comparant la source, sans useEffect (recommandation
-  // React ? you might not need an effect ?).
+  // React « you might not need an effect »).
   const [prevInitial, setPrevInitial] = useState(initialCandidates);
   if (prevInitial !== initialCandidates) {
     setPrevInitial(initialCandidates);
@@ -59,7 +59,7 @@ export function BusinessImportsAdmin({
     setSelected(new Set());
   }
 
-  // Cat?gories ? Associations ? : la racine + ses sous-cat?gories.
+  // Catégories « Associations » : la racine + ses sous-catégories.
   const associationCategoryIds = useMemo(() => {
     const roots = categories.filter((c) => c.name === "Associations");
     const rootIds = new Set(roots.map((c) => c.id));
@@ -157,8 +157,8 @@ export function BusinessImportsAdmin({
       });
       setMessage(
         action === "approve"
-          ? `? ${row.name} ? publi? dans l'annuaire Commer?ants.`
-          : `? ${row.name} ? rejet?.`,
+          ? `« ${row.name} » publié dans l'annuaire Commerçants.`
+          : `« ${row.name} » rejeté.`,
       );
     });
 
@@ -187,8 +187,8 @@ export function BusinessImportsAdmin({
       );
       setSelected(new Set());
       setMessage(
-        `${imported} commerce(s) publi?(s).` +
-          (errors.length ? ` ${errors.length} ?chec(s) : ${errors[0]}` : ""),
+        `${imported} commerce(s) publié(s).` +
+          (errors.length ? ` ${errors.length} échec(s) : ${errors[0]}` : ""),
       );
     });
 
@@ -196,13 +196,13 @@ export function BusinessImportsAdmin({
     <div>
       <div className="mb-4">
         <Link href="/admin/directory/businesses" className="text-sm text-slate-600">
-          ? Commer?ants
+         ← Commerçants
         </Link>
-        <h1 className="text-xl font-bold">Candidats Commer?ants</h1>
+        <h1 className="text-xl font-bold">Candidats Commerçants</h1>
         <p className="text-sm text-slate-500">
-          Commerces et services d?tect?s automatiquement par l&apos;assistant dans le
-          corpus crawl?. Chaque fiche doit ?tre v?rifi?e avant publication : rien
-          n&apos;est publi? automatiquement.
+          Commerces et services détectés automatiquement par l&apos;assistant dans le
+          corpus crawlé. Chaque fiche doit être vérifiée avant publication : rien
+          n&apos;est publié automatiquement.
         </p>
         <nav className="mt-3 flex flex-wrap gap-2">
           {[
@@ -249,21 +249,21 @@ export function BusinessImportsAdmin({
         {filterStatus === "pending" && pendingRows.length > 0 ? (
           <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3 shadow-sm">
             <Button variant="secondary" disabled={pending} onClick={selectReliable}>
-              <CheckSquare className="h-4 w-4" /> S?lectionner les fiables ({reliableCount})
+              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables ({reliableCount})
             </Button>
             <Button
               variant="secondary"
               disabled={pending || selectedCount === 0}
               onClick={clearSelection}
             >
-              <Square className="h-4 w-4" /> Tout d?cocher
+              <Square className="h-4 w-4" /> Tout décocher
             </Button>
             <Button disabled={pending || selectedCount === 0} onClick={bulkApprove}>
-              <Check className="h-4 w-4" /> Approuver la s?lection ({selectedCount})
+              <Check className="h-4 w-4" /> Approuver la sélection ({selectedCount})
             </Button>
             <span className="text-xs text-slate-500">
-              Les ? fiables ? ont commune + cat?gorie + preuve v?rifi?e. D?coche ceux
-              ? exclure avant d&apos;approuver.
+              Les « fiables » ont commune + catégorie + preuve vérifiée. Décoche ceux
+              à exclure avant d&apos;approuver.
             </span>
           </div>
         ) : null}
@@ -285,14 +285,14 @@ export function BusinessImportsAdmin({
               {row.status === "pending" ? (
                 <label
                   className="absolute left-2 top-2 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white/90 shadow"
-                  title={selected.has(row.id) ? "D?s?lectionner" : "S?lectionner"}
+                  title={selected.has(row.id) ? "Désélectionner" : "Sélectionner"}
                 >
                   <input
                     type="checkbox"
                     className="h-5 w-5 accent-[#1a4d6e]"
                     checked={selected.has(row.id)}
                     onChange={() => toggle(row.id)}
-                    aria-label={`S?lectionner ${row.name}`}
+                    aria-label={`Sélectionner ${row.name}`}
                   />
                 </label>
               ) : null}
@@ -307,22 +307,22 @@ export function BusinessImportsAdmin({
                 />
               ) : (
                 <div className="flex min-h-48 items-center justify-center bg-slate-100 text-xs text-slate-400">
-                  Pas d&apos;image d?tect?e
+                  Pas d&apos;image détectée
                 </div>
               )}
               <div className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="text-xs font-medium uppercase text-[#a8533a]">
-                      {row.crawl_source_label} ?{" "}
+                      {row.crawl_source_label} ·{" "}
                       {row.extraction_method === "ai"
-                        ? "Extraction IA ? v?rifier"
+                        ? "Extraction IA à vérifier"
                         : "JSON-LD"}
                     </p>
                     <h2 className="font-serif text-xl font-semibold">{row.name}</h2>
                     <p className="mt-1 text-sm text-slate-600">
                       {row.address || row.city || row.commune_name || "Adresse manquante"}
-                      {row.postal_code ? ` ? ${row.postal_code}` : ""}
+                      {row.postal_code ? ` · ${row.postal_code}` : ""}
                     </p>
                     {row.phone ? (
                       <p className="mt-1 text-sm text-slate-600">{row.phone}</p>
@@ -344,12 +344,12 @@ export function BusinessImportsAdmin({
                 ) : null}
                 {row.extraction_evidence.length ? (
                   <blockquote className="mt-3 border-l-2 border-[#1a4d6e] pl-3 text-xs italic text-slate-600">
-                    Preuve d?tect?e : ? {row.extraction_evidence[0]} ?
+                    Preuve détectée : « {row.extraction_evidence[0]} »
                   </blockquote>
                 ) : null}
                 {row.validation_errors.length ? (
                   <p className="mt-3 rounded bg-amber-50 p-2 text-xs text-amber-900">
-                    {row.validation_errors.join(" ? ")}
+                    {row.validation_errors.join(" · ")}
                   </p>
                 ) : null}
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -366,11 +366,11 @@ export function BusinessImportsAdmin({
                     ))}
                   </Select>
                   <Select
-                    aria-label="Cat?gorie"
+                    aria-label="Catégorie"
                     value={row.category ?? ""}
                     onChange={(event) => update(row.id, "category", event.target.value)}
                   >
-                    <option value="">Choisir la cat?gorie *</option>
+                    <option value="">Choisir la catégorie *</option>
                     {categories.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.parent_name ? `${item.parent_name} > ${item.name}` : item.name}
@@ -406,7 +406,7 @@ export function BusinessImportsAdmin({
               href={`/admin/directory/imports?status=${filterStatus}&page=${page - 1}`}
               className="rounded border bg-white px-3 py-2 text-sm"
             >
-              ? Pr?c?dente
+              ← Précédente
             </Link>
           ) : null}
           {hasNextPage ? (
@@ -414,7 +414,7 @@ export function BusinessImportsAdmin({
               href={`/admin/directory/imports?status=${filterStatus}&page=${page + 1}`}
               className="rounded border bg-white px-3 py-2 text-sm"
             >
-              Suivante ?
+              Suivante →
             </Link>
           ) : null}
         </div>
