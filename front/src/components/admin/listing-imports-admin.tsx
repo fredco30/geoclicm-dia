@@ -107,28 +107,28 @@ export function ListingImportsAdmin({
         <div className="space-y-4">
           {rows.map((row) => (
             <article key={row.id} className="overflow-hidden rounded-xl border bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs font-medium uppercase text-[#a8533a]">
-                    {row.crawl_source_label} ·{" "}
-                    {row.extraction_method === "ai" ? "Extraction IA à vérifier" : "JSON-LD"}
-                  </p>
-                  <h2 className="font-serif text-xl font-semibold">{row.title}</h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {row.employer_or_agency ? `${row.employer_or_agency} · ` : ""}
-                    {row.address || row.locality || row.commune_name || "Lieu manquant"}
-                    {row.contract_type ? ` · ${row.contract_type}` : ""}
-                    {row.price ? ` · ${row.price}` : ""}
-                  </p>
-                </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium uppercase text-[#a8533a]">
+                  {row.crawl_source_label} ·{" "}
+                  {row.extraction_method === "ai" ? "Extraction IA à vérifier" : "JSON-LD"}
+                </p>
                 <a
                   href={row.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-[#1a4d6e] underline"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs text-[#1a4d6e] underline"
                 >
                   Source officielle <ExternalLink className="h-3 w-3" />
                 </a>
+              </div>
+              <div>
+                <h2 className="font-serif text-xl font-semibold">{row.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {row.employer_or_agency ? `${row.employer_or_agency} · ` : ""}
+                  {row.address || row.locality || row.commune_name || "Lieu manquant"}
+                  {row.contract_type ? ` · ${row.contract_type}` : ""}
+                  {row.price ? ` · ${row.price}` : ""}
+                </p>
               </div>
               {row.short_description ? (
                 <p className="mt-3 line-clamp-3 text-sm text-slate-600">{row.short_description}</p>
@@ -143,11 +143,12 @@ export function ListingImportsAdmin({
                   {row.validation_errors.join(" · ")}
                 </p>
               ) : null}
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Select
                   aria-label="Commune"
                   value={row.commune ?? ""}
                   onChange={(event) => update(row.id, "commune", event.target.value)}
+                  className="w-52"
                 >
                   <option value="">Commune (optionnel — intercommunal si vide)</option>
                   {communes.map((item) => (
@@ -160,6 +161,7 @@ export function ListingImportsAdmin({
                   aria-label="Catégorie"
                   value={row.category ?? ""}
                   onChange={(event) => update(row.id, "category", event.target.value)}
+                  className="w-44"
                 >
                   <option value="">Choisir la catégorie *</option>
                   {categories.map((item) => (
@@ -168,14 +170,14 @@ export function ListingImportsAdmin({
                     </option>
                   ))}
                 </Select>
-              </div>
-              <div className="mt-4 flex justify-end gap-2">
-                <Button variant="secondary" disabled={pending} onClick={() => act(row, "reject")}>
-                  <X className="h-4 w-4" /> Rejeter
-                </Button>
-                <Button disabled={pending || !row.category} onClick={() => act(row, "approve")}>
-                  <Check className="h-4 w-4" /> Approuver et publier
-                </Button>
+                <div className="ml-auto flex gap-2">
+                  <Button variant="secondary" disabled={pending} onClick={() => act(row, "reject")}>
+                    <X className="h-4 w-4" /> Rejeter
+                  </Button>
+                  <Button disabled={pending || !row.category} onClick={() => act(row, "approve")}>
+                    <Check className="h-4 w-4" /> Approuver et publier
+                  </Button>
+                </div>
               </div>
             </article>
           ))}
