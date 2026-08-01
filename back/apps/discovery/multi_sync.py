@@ -164,7 +164,7 @@ def _normalize_agenda_item(
         f"{slugify(title)}|{start.isoformat() if start else ''}|{commune_id(resolved_commune)}".encode()
     ).hexdigest()
     image = select_event_image(crawl_page, title=title, generic_urls=generic_urls)
-    return {
+    data = {
         "source_uid": source_uid,
         "extraction_method": EventImportCandidate.ExtractionMethod.AI,
         "source_url": page_url,
@@ -195,6 +195,12 @@ def _normalize_agenda_item(
         "kind": kind,
         "validation_errors": errors,
     }
+    # Filtre les occurrences terminees et calcule le flag _expired, comme le
+    # chemin ICS/JSON-LD (imports.py), pour que _upsert_candidate marque le
+    # candidat EXPIRED quand toutes ses dates sont passees.
+    from apps.events.event_dates import apply_occurrence_filter
+
+    return apply_occurrence_filter(data)
 
 
 def _unique_place_slug(title: str, source_uid: str) -> str:
