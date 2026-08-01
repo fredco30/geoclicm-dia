@@ -585,3 +585,57 @@ V?rifications (1 ao?t 2026, local) : `py_compile` OK sur les modules touch?s,
 29 tests `apps.discovery` OK (dont `test_page_dates` : priorit? meta, repli
 JSON-LD, `@graph`, valeurs invalides ?cart?es ; et propagation `today` +
 `page_dates` au prompt), `tsc --noEmit` et ESLint OK c?t? front.
+
+## 22. Robustesse crawl — titre de chunk > varchar(300) (1er aoùt 2026)
+
+Constat : la source 6 « terre de camargues » échouait en erreur globale. Cause :
+2 pages avaient un titre de 325 caractères, supérieur à `KnowledgeChunk.title`
+(varchar(300)). L’écriture du lot de chunks levait une erreur qui faisait
+échouer l’indexation complète de la source.
+
+Correctif (`assistant/indexers/base.py`, `save_chunks`) : troncature du titre
+à 300 caractères avant insertion. Commit `d3d23ea`.
+
+Exploitation : le run zombie a été clôturé et la source réinitialisée.
+Une sentinelle (`back/_sentinel.py` sur le VPS) attend la vidange de la file
+d’extraction multi-v4 puis lance automatiquement le recrawl de la source 6.
+À nettoyer après usage.
+
+## 23. Validation en masse des candidats IA + correctifs admin (1er aoùt 2026)
+
+### Bulk approve
+
+Trois endpoints POST `bulk-approve` (DRF `@action`) sur les viewsets
+d’import : `directory` (BusinessImportCandidate), `discovery`
+(PlaceImportCandidate), `events` (EventImportCandidate). Corps : `{"ids": [int]}`
+(nettoyés, plafonnés à 500). Seuls les candidats PENDING et complets
+(commune + catégorie, + dates pour les événements) sont traités ; la
+logique d’import unitaire est réutilisée à l’identique.
+
+Front : chaque carte en attente a une case à cocher. Barre d’action :
+« Sélectionner les fiables (N) » (commune + catégorie + preuve, + date de
+fin future pour les événements), « Tout décocher », « Approuver la
+sélection (N) ». L’utilisateur peut décocher individuellement avant de
+valider. Filtre Tout / Associations / Commerces & services sur les candidats
+commerçants (catégorie racine « Associations » + enfants).
+
+### Correctif navigation (resync liste)
+
+Bug : « page suivante » et les filtres « À valider » / « Incomplets »
+semblaient inopérants — la liste React (useState initialisé depuis les props)
+n’était jamais resynchronisée quand le serveur renvoyait de nouvelles
+données. Correctif : resync via derived state (pattern React
+« you might not need an effect ») : comparaison `prevInitial !== initialCandidates`
+puis setState, sans useEffect (la règle ESLint `react-hooks/set-state-in-effect`
+rejette le setState dans useEffect). Appliqué aux 4 écrans d’imports.
+
+### Correctif encodage UTF-8 admin
+
+Les 4 écrans d’imports affichaient des « ? » à la place des accents
+(Commerçants, Sélectionner, À valider, flèches). Cause : éditions
+précédentes où le shell local a transmis les caractères accentués
+en les corruptant. Correctif : réécriture des libellés en générant
+chaque accent par `chr(0xE9)` etc. (jamais en littéral), vérification au
+niveau octet. Voir section outil dans `25-reprise-llm.md` section 21.
+
+Commits : `52696b3` (bulk-approve + navigation), `9e11505` + `86afcee` (UTF-8).

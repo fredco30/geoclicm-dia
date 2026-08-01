@@ -17,11 +17,10 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 | VPS | `135.125.159.142`, utilisateur `ubuntu` |
 | Dépôt serveur | `/var/www/geoclicmedia` |
 | Services | Django, Next.js, Celery worker et beat actifs |
-| IA Agenda | OVH AI Endpoints, `Qwen3.5-9B` |
-| Crawl Agenda | source `ot le grau du roi`, run `7`, en cours |
-| Progression relevée | `386/510`, `1` échec |
-| Cache intermédiaire | `378` événements détectés |
-| Candidats / publiés | `0 / 0` |
+| IA extraction | DeepSeek (`deepseek-v4-flash`), embeddings Mistral inchangés |
+| Prompts | `multi-v4` / `events-v4` (dates fiables) |
+| Candidats à valider | events 335, places 720, commerces 212, annonces 5 |
+| Source 6 « terre de camargues » | recrawl lancé par sentinelle après multi-v4 |
 
 Le healthcheck répond :
 
@@ -604,7 +603,7 @@ une seule passe IA par page récupère et classe toutes les catégories définie
 Voie A prudente (tout à l'IA, aucune perte). Premier chantier : les lieux
 (Découvrir), seul module non alimenté.
 
-## 21. Lot du 1er aoùt 2026 — dates fiables, catégories métier, validation en masse
+## 21. Lot du 1er 1er aoùt 2026 — dates fiables, catégories métier, validation en masse
 
 Déployé sur `main` (prod media.geoclic.fr), feu vert de Fred. Détails
 dans `14-journal-avancement.md` (entrée du 1er aoùt).
