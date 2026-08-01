@@ -612,6 +612,7 @@ export type AdPlacement =
   | "article_sidebar"
   | "directory_top"
   | "directory_inline"
+  | "directory_featured"
   | "agenda_top"
   | "agenda_featured"
   | "weather_top"
@@ -628,6 +629,15 @@ export type AdFeaturedEvent = {
   next_occurrence: EventOccurrence | null;
 };
 
+export type AdFeaturedBusiness = {
+  id: number;
+  name: string;
+  slug: string;
+  category_name: string;
+  commune_name: string;
+  logo: ImageVariants | null;
+};
+
 export type AdServeResponse = {
   id: number;
   placement: AdPlacement;
@@ -638,6 +648,7 @@ export type AdServeResponse = {
   business_slug: string;
   business_name: string;
   featured_event?: AdFeaturedEvent | null;
+  featured_business?: AdFeaturedBusiness | null;
 };
 
 // ============================================================================

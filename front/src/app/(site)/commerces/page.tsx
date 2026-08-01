@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { BusinessCard } from "@/components/businesses/business-card";
+import { BusinessRow } from "@/components/businesses/business-row";
 import { BusinessesMap } from "@/components/businesses/businesses-map";
+import { BusinessFilters } from "@/components/businesses/business-filters";
+import { DirectoryFeatured } from "@/components/businesses/directory-featured";
+import { CollapsibleMap } from "@/components/ui/collapsible-map";
 import { Pagination } from "@/components/ui/pagination";
-import { AdSlot } from "@/components/ads/ad-slot";
 
 export const revalidate = 600;
 
@@ -36,98 +38,33 @@ export default async function BusinessesPage({ searchParams }: Props) {
     api.communes(),
   ]);
 
-  // Garde uniquement les catégories racines pour le filtre (UX plus simple)
-  const rootCategories = categories
-    .filter((c) => c.parent === null)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const activeCategory = sp.category
-    ? categories.find((c) => c.slug === sp.category)
-    : null;
-  const activeCommune = sp.commune
-    ? communes.find((c) => c.slug === sp.commune)
-    : null;
+  const geoCount = businesses.results.filter(
+    (b) => b.latitude !== null && b.longitude !== null,
+  ).length;
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
-      <header className="mb-8 border-b border-slate-200 pb-6">
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
-          ← Accueil
-        </Link>
-        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-          Commerces du territoire
+      <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-4">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          Commerces
         </h1>
-        <p className="mt-2 max-w-2xl text-slate-600">
-          Annuaire des acteurs locaux du littoral camarguais : restaurants,
-          hébergements, artisans, services. Soutenez les commerces de proximité.
-        </p>
+        <p className="text-sm text-slate-500">{businesses.count} adresses</p>
       </header>
 
-      {/* Filtres */}
-      <div className="mb-6 flex flex-wrap gap-2 text-sm">
-        <FilterChip
-          href="/commerces"
-          active={!sp.category && !sp.commune}
-          label="Toutes"
-        />
-        {rootCategories.map((c) => (
-          <FilterChip
-            key={c.id}
-            href={`/commerces?category=${c.slug}`}
-            active={sp.category === c.slug}
-            label={c.name}
-          />
-        ))}
-      </div>
+      <BusinessFilters
+        categories={categories}
+        communes={communes}
+        values={{ category: sp.category, commune: sp.commune }}
+      />
 
-      <div className="mb-6 flex flex-wrap gap-2 text-sm">
-        {communes.map((c) => (
-          <FilterChip
-            key={c.id}
-            href={`/commerces?commune=${c.slug}${sp.category ? `&category=${sp.category}` : ""}`}
-            active={sp.commune === c.slug}
-            label={c.name}
-            small
-          />
-        ))}
-      </div>
+      {/* Commerçant à la une (emplacement premium monétisé) */}
+      <DirectoryFeatured communeSlug={sp.commune} categorySlug={sp.category} />
 
-      {(activeCategory || activeCommune) && (
-        <div className="mb-4 text-sm text-slate-600">
-          Filtres actifs :{" "}
-          {activeCategory ? (
-            <span className="rounded-full bg-slate-200 px-2 py-0.5">
-              {activeCategory.name}
-            </span>
-          ) : null}{" "}
-          {activeCommune ? (
-            <span className="rounded-full bg-slate-200 px-2 py-0.5">
-              {activeCommune.name}
-            </span>
-          ) : null}
-          <Link
-            href="/commerces"
-            className="ml-2 text-xs text-slate-500 hover:text-[#a8533a]"
-          >
-            Réinitialiser
-          </Link>
-        </div>
-      )}
-
-      {/* Encart top annuaire (ciblé selon les filtres actifs) */}
-      <div className="mb-6">
-        <AdSlot
-          placement="directory_top"
-          communeSlug={sp.commune}
-          categorySlug={sp.category}
-        />
-      </div>
-
-      {/* Carte d'ensemble — affichée au-dessus de la liste si fiches géolocalisées */}
-      {businesses.results.some((b) => b.latitude !== null && b.longitude !== null) ? (
-        <div className="mb-8">
+      {/* Carte d'ensemble — visible mais repliable par l'utilisateur */}
+      {geoCount > 0 ? (
+        <CollapsibleMap count={geoCount}>
           <BusinessesMap businesses={businesses.results} />
-        </div>
+        </CollapsibleMap>
       ) : null}
 
       {businesses.results.length === 0 ? (
@@ -148,9 +85,9 @@ export default async function BusinessesPage({ searchParams }: Props) {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="flex flex-col gap-2">
             {businesses.results.map((b) => (
-              <BusinessCard key={b.id} business={b} />
+              <BusinessRow key={b.id} business={b} />
             ))}
           </div>
           <Pagination
@@ -169,32 +106,5 @@ export default async function BusinessesPage({ searchParams }: Props) {
         </>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  href,
-  active,
-  label,
-  small = false,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  small?: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        `rounded-full px-3 py-1 transition ` +
-        (active
-          ? "bg-[#1a4d6e] text-white"
-          : "bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-[#1a4d6e]") +
-        (small ? " text-xs" : "")
-      }
-    >
-      {label}
-    </Link>
   );
 }

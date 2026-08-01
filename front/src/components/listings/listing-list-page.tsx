@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ListingCard } from "@/components/listings/listing-card";
+import { ListingRow } from "@/components/listings/listing-row";
+import { ListingFilters } from "@/components/listings/listing-filters";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api";
 
@@ -15,7 +15,7 @@ export function makeListingListPage(config: {
   description: string;
   emptyLabel: string;
 }) {
-  const { categorySlug, basePath, title, description, emptyLabel } = config;
+  const { categorySlug, basePath, title, emptyLabel } = config;
 
   async function ListingListPage({ searchParams }: Props) {
     const params = await searchParams;
@@ -29,43 +29,18 @@ export function makeListingListPage(config: {
     const baseUrl = query.size ? `${basePath}?${query}` : basePath;
     return (
       <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
-        <header className="mb-8 border-b border-slate-200 pb-6">
-          <Link href="/" className="text-sm text-slate-600">
-            ← Accueil
-          </Link>
-          <h1 className="mt-3 font-serif text-3xl font-semibold sm:text-5xl">{title}</h1>
-          <p className="mt-2 max-w-2xl text-slate-600">{description}</p>
+        <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-4">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            {title}
+          </h1>
+          <p className="text-sm text-slate-500">{listings.count} annonces</p>
         </header>
-        <form className="mb-7 flex flex-wrap items-end gap-3 rounded-xl border bg-white p-4">
-          <label className="min-w-48 flex-1 text-xs font-medium text-slate-600">
-            Commune
-            <select
-              name="commune"
-              defaultValue={params.commune ?? ""}
-              className="mt-1 h-10 w-full rounded-md border px-2 text-sm"
-            >
-              <option value="">Toutes</option>
-              {communes
-                .filter((item) => item.is_active)
-                .map((item) => (
-                  <option key={item.id} value={item.slug}>
-                    {item.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button className="h-10 rounded-md bg-[#1a4d6e] px-4 text-sm font-medium text-white">
-            Filtrer
-          </button>
-          <Link href={basePath} className="inline-flex h-10 items-center px-2 text-xs text-slate-500 underline">
-            Effacer
-          </Link>
-        </form>
+        <ListingFilters basePath={basePath} communes={communes} values={{ commune: params.commune }} />
         {listings.results.length ? (
           <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-2">
               {listings.results.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} basePath={basePath} />
+                <ListingRow key={listing.id} listing={listing} basePath={basePath} />
               ))}
             </div>
             <Pagination
