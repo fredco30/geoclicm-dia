@@ -1,26 +1,6 @@
-"""Migre la categorie Decouverte "Gastronomie" vers les Commerces (option A).
+﻿from __future__ import annotations
 
-Contexte : "Gastronomie" etait une categorie Decouverte (PlaceCategory) qui
-regroupait en realite des commerces de bouche (restaurants, bars, glaciers,
-caveaux, food trucks). Elle chevauchait la branche Commerces/Restauration
-(vide) et melangeait les deux mondes. On la sort de Decouverte pour en faire
-une vraie categorie commerciale avec specialites en sous-categories.
-
-Idempotent, dry-run par defaut (--apply pour appliquer). Actions :
-
-1. Taxonomie : renomme la branche "Restauration" en "Gastronomie" et s'assure
-   que les specialites existent (Restaurants, Bars & Cafes, Glaciers,
-   Fruits de mer / Poisson, Producteurs & Caveaux, Food trucks).
-2. Classification des 80 lieux Decouverte/Gastronomie par mots-cles
-   (titre + description) -> specialite. A revoir avant application.
-3. Migration Place -> Business (is_published=True), champs mappes.
-4. Depublication des Place d'origine (status=draft) — reversible.
-5. Tuile d'accueil "Gastronomie" -> /commerces?category=restauration.
-6. Affiche les redirections 301 (/decouvrir/<slug> -> /commerces/<slug>) a
-   ajouter dans next.config.ts.
-"""
-from __future__ import annotations
-
+import re
 import unicodedata
 
 from django.core.management.base import BaseCommand
@@ -31,9 +11,10 @@ from apps.discovery.models import Place
 from apps.tiles.models import Tile
 
 GASTRONOMY_PLACE_SLUG = "gastronomie"
-RESTAURATION_SLUG = "restauration"  # branche reutilisee, renommee "Gastronomie"
+GASTRONOMY_ROOT_SLUG = "gastronomie"
+GASTRONOMY_ROOT_NAME = "Gastronomie"
+RESTAURATION_SLUG = "restauration"
 
-# Specialites (slug -> nom). Le slug reste stable (SEO / filtres).
 SPECIALTIES = {
     "restaurants": "Restaurants",
     "bars-cafes": "Bars & Cafes",
@@ -43,15 +24,26 @@ SPECIALTIES = {
     "food-trucks": "Food trucks",
 }
 
-# Anciennes sous-cats a fusionner dans les nouvelles (renommage en place).
-RENAME_CHILDREN = {
-    "bars": "bars-cafes",
-    "cafes": "bars-cafes",
-}
+REMAP_CHILDREN = {"bars": "bars-cafes", "cafes": "bars-cafes"}
+
+CRAVINGS = [
+    (r"\b(pizza|pizzeria|pizzas)\b", "Pizzeria"),
+    (r"\bitalien", "Italien"),
+    (r"\b(sushi|japonais)\b", "Sushi"),
+    (r"\b(fruits? de mer|poisson|huitre|coquillage|crustace)\b", "Fruits de mer"),
+    (r"\b(glacier|glace|glacerie|gelato|sorbet)\b", "Glacier"),
+    (r"\b(tapas)\b", "Tapas"),
+    (r"\b(burger|hamburger)\b", "Burgers"),
+    (r"\b(creperie|crepe|galette)\b", "Creperie"),
+    (r"\b(vin|caveau|cave a vin|domaine)\b", "Vins & caveaux"),
+    (r"\b(vue mer|bord de mer|plage)\b", "Vue mer"),
+    (r"\b(cafe|coffee|salon de the|brunch)\b", "Cafe / Salon de the"),
+    (r"\b(traditionnel|traditionnelle|terroir|fait maison)\b", "Cuisine traditionnelle"),
+    (r"\b(mediterrane)", "Mediterraneen"),
+]
 
 
-def _norm(text: str) -> str:
-    """Minuscules sans accents pour le matching mots-cles."""
+def _norm(text):
     return (
         unicodedata.normalize("NFKD", text or "")
         .encode("ascii", "ignore")
@@ -60,110 +52,134 @@ def _norm(text: str) -> str:
     )
 
 
-def classify(place: Place) -> str:
-    """Renvoie le slug de specialite pour un lieu Gastronomie."""
+def primary_category(place):
     hay = _norm(f"{place.title} {place.short_description} {place.description}")
-    if any(k in hay for k in ("glace", "glacier", "gelato", "sorbet")):
+    if re.search(r"\b(glacier|glacerie)\b", hay) and "restaurant" not in hay:
         return "glaciers"
-    if any(k in hay for k in ("fruit de mer", "fruits de mer", "poisson", "huitre", "coquillage", "crustace", "bar a fruit")):
-        return "fruits-de-mer"
-    if any(k in hay for k in ("caveau", "cave", "vin", "domaine", "producteur", "ferme", "marche de producteur")):
+    if re.search(r"\b(caveau|cave a vin|domaine|producteur)\b", hay) and "restaurant" not in hay:
         return "producteurs-caveaux"
-    if any(k in hay for k in ("food truck", "foodtruck", "burger", "pizza", "snack", "kebab", "tacos")):
+    if re.search(r"\b(food truck|foodtruck|snack|kebab|tacos)\b", hay):
         return "food-trucks"
-    if any(k in hay for k in ("bar", "cafe", "coffee", "pub", "lounge", "brasserie")):
+    if re.search(r"\b(bar a cocktail|lounge|pub)\b", hay) and "restaurant" not in hay:
         return "bars-cafes"
     return "restaurants"
 
 
+def cravings(place):
+    hay = _norm(f"{place.title} {place.short_description} {place.description}")
+    found = []
+    for pattern, label in CRAVINGS:
+        if re.search(pattern, hay) and label not in found:
+            found.append(label)
+    return found
+
+
+def dedup_key(place):
+    return f"{_norm(place.title).strip()}|{_norm(place.commune.name)}"
+
+
 class Command(BaseCommand):
-    help = "Migre Decouverte/Gastronomie vers les Commerces (option A)."
+    help = "Migre Decouverte/Gastronomie vers une racine Commerces autonome."
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--apply",
-            action="store_true",
-            help="Applique les changements (defaut: dry-run).",
-        )
+        parser.add_argument("--apply", action="store_true", help="Applique (defaut: dry-run).")
 
     def handle(self, *args, **options):
         apply = options["apply"]
-        self.stdout.write(
-            self.style.WARNING("MODE " + ("APPLY" if apply else "DRY-RUN"))
-        )
+        self.stdout.write(self.style.WARNING("MODE " + ("APPLY" if apply else "DRY-RUN")))
         with transaction.atomic():
-            root = self._taxonomy()
-            classification = self._classify_all()
-            self._migrate(root, classification, apply)
+            self._taxonomy()
+            plan = self._classify_all()
+            self._migrate(plan, apply)
             self._tile(apply)
-            self._redirects(classification)
             if not apply:
                 transaction.set_rollback(True)
                 self.stdout.write(self.style.WARNING("dry-run : rien applique."))
             else:
                 self.stdout.write(self.style.SUCCESS("applique."))
 
-    def _taxonomy(self) -> BusinessCategory:
-        root = BusinessCategory.objects.filter(slug=RESTAURATION_SLUG).first()
-        if root is None:
-            self.stdout.write(self.style.ERROR("branche 'restauration' introuvable"))
-            raise SystemExit(1)
-        if root.name != "Gastronomie":
-            self.stdout.write(f"  renommage branche {root.name!r} -> 'Gastronomie'")
-            root.name = "Gastronomie"
-            root.save(update_fields=["name", "updated_at"])
-        else:
-            self.stdout.write("  branche 'Gastronomie' (restauration) deja nommee")
+    def _taxonomy(self):
+        root, created = BusinessCategory.objects.get_or_create(
+            slug=GASTRONOMY_ROOT_SLUG,
+            defaults={
+                "name": GASTRONOMY_ROOT_NAME,
+                "parent": None,
+                "icon": "UtensilsCrossed",
+                "is_active": True,
+                "sort_order": 2,
+            },
+        )
+        self.stdout.write(
+            f"  racine {GASTRONOMY_ROOT_NAME!r} (slug={GASTRONOMY_ROOT_SLUG}) "
+            f"{'creee' if created else 'existante'} id={root.id}"
+        )
 
-        # Fusion anciennes sous-cats (bars, cafes) dans bars-cafes.
+        restau = BusinessCategory.objects.filter(slug=RESTAURATION_SLUG).first()
+        if restau and restau.parent_id != root.id:
+            self.stdout.write(
+                f"  deplace 'restauration' sous Gastronomie (parent {restau.parent_id} -> {root.id})"
+            )
+            restau.parent = root
+            restau.save(update_fields=["parent", "updated_at"])
+
         bars_cafes, _ = BusinessCategory.objects.get_or_create(
             slug="bars-cafes",
             defaults={"name": "Bars & Cafes", "parent": root, "icon": "Coffee", "is_active": True},
         )
-        for old_slug, new_slug in RENAME_CHILDREN.items():
-            old = BusinessCategory.objects.filter(slug=old_slug, parent=root).first()
+        for old_slug in REMAP_CHILDREN:
+            old = BusinessCategory.objects.filter(slug=old_slug).first()
             if old is None:
                 continue
             moved = Business.objects.filter(category=old).update(category=bars_cafes)
-            self.stdout.write(f"  fusion {old_slug} -> {new_slug} ({moved} businesses)")
+            self.stdout.write(f"  fusion {old_slug} -> bars-cafes ({moved} businesses)")
             old.is_active = False
             old.save(update_fields=["is_active", "updated_at"])
 
-        # Assure toutes les specialites.
         for slug, name in SPECIALTIES.items():
-            cat, created = BusinessCategory.objects.get_or_create(
-                slug=slug,
-                defaults={"name": name, "parent": root, "is_active": True},
+            cat, was_created = BusinessCategory.objects.get_or_create(
+                slug=slug, defaults={"name": name, "parent": root, "is_active": True}
             )
             if cat.parent_id != root.id:
                 cat.parent = root
                 cat.save(update_fields=["parent", "updated_at"])
-            etat = "creee" if created else "existante"
-            self.stdout.write(f"  specialite {name!r} (slug={slug}) {etat} id={cat.id}")
+            self.stdout.write(
+                f"  categorie {name!r} (slug={slug}) {'creee' if was_created else 'existante'} id={cat.id}"
+            )
+
+        if restau:
+            restau.is_active = False
+            restau.save(update_fields=["is_active", "updated_at"])
+            self.stdout.write("  branche 'restauration' desactivee")
         return root
 
-    def _classify_all(self) -> dict[int, str]:
-        places = Place.objects.filter(
-            category__slug=GASTRONOMY_PLACE_SLUG, status="published"
-        ).select_related("commune")
-        classification: dict[int, str] = {}
+    def _classify_all(self):
+        places = (
+            Place.objects.filter(category__slug=GASTRONOMY_PLACE_SLUG, status="published")
+            .select_related("commune")
+            .order_by("id")
+        )
+        seen = {}
+        plan = []
         self.stdout.write(f"\n  classification de {places.count()} lieux :")
         for p in places:
-            slug = classify(p)
-            classification[p.id] = slug
-            self.stdout.write(f"    [{SPECIALTIES[slug]:26s}] {p.title} ({p.commune.name})")
-        return classification
+            key = dedup_key(p)
+            if key in seen:
+                self.stdout.write(f"    DOUBLON ignore (id deja vu {seen[key]}) : {p.title}")
+                continue
+            seen[key] = p.id
+            cat = primary_category(p)
+            tags = cravings(p)
+            plan.append({"place": p, "category": cat, "tags": tags})
+            extra = f"  -> envies: {', '.join(tags)}" if tags else ""
+            self.stdout.write(f"    [{SPECIALTIES[cat]:22s}] {p.title} ({p.commune.name}){extra}")
+        return plan
 
-    def _migrate(self, root, classification: dict[int, str], apply: bool) -> None:
-        places = Place.objects.filter(
-            category__slug=GASTRONOMY_PLACE_SLUG, status="published"
-        ).select_related("commune", "created_by")
+    def _migrate(self, plan, apply):
         created_count = 0
-        for p in places:
-            spec_slug = classification[p.id]
-            spec = BusinessCategory.objects.get(slug=spec_slug)
-            existing = Business.objects.filter(slug=p.slug).first()
-            if existing:
+        for item in plan:
+            p = item["place"]
+            spec = BusinessCategory.objects.get(slug=item["category"])
+            if Business.objects.filter(slug=p.slug).exists():
                 self.stdout.write(f"    SKIP (slug deja Business) : {p.slug}")
                 continue
             postal = (p.commune.postal_codes or [""])[0]
@@ -173,6 +189,7 @@ class Command(BaseCommand):
                 category=spec,
                 short_description=(p.short_description or "")[:200],
                 description=p.description or "",
+                specialties=item["tags"],
                 cover_image=p.cover_image,
                 address=p.address or p.commune.name,
                 postal_code=postal,
@@ -189,21 +206,20 @@ class Command(BaseCommand):
                 business.save()
             created_count += 1
         self.stdout.write(
-            self.style.SUCCESS(f"\n  {created_count} Business a creer (is_published=True)")
+            self.style.SUCCESS(f"\n  {created_count} Business a creer (is_published=True, avec envies)")
         )
         if apply:
-            depublished = places.update(status=Place.Status.DRAFT)
-            self.stdout.write(
-                self.style.SUCCESS(f"  {depublished} Place depublies (status=draft)")
-            )
+            ids = [item["place"].id for item in plan]
+            depublished = Place.objects.filter(id__in=ids).update(status=Place.Status.DRAFT)
+            self.stdout.write(self.style.SUCCESS(f"  {depublished} Place depublies (status=draft)"))
 
-    def _tile(self, apply: bool) -> None:
+    def _tile(self, apply):
         if not apply:
             self.stdout.write("  tuile Gastronomie : (dry-run, non creee)")
             return
         tile, created = Tile.objects.get_or_create(
             parent=None,
-            internal_path=f"/commerces?category={RESTAURATION_SLUG}",
+            internal_path=f"/commerces?category={GASTRONOMY_ROOT_SLUG}",
             defaults={
                 "label": "Gastronomie",
                 "icon": "UtensilsCrossed",
@@ -214,14 +230,4 @@ class Command(BaseCommand):
                 "show_on_home": True,
             },
         )
-        etat = "creee" if created else "existante"
-        self.stdout.write(f"  tuile Gastronomie {etat} id={tile.id}")
-
-    def _redirects(self, classification: dict[int, str]) -> None:
-        slugs = Place.objects.filter(
-            category__slug=GASTRONOMY_PLACE_SLUG
-        ).values_list("slug", flat=True)
-        self.stdout.write(
-            f"\n  {len(slugs)} redirections 301 a ajouter dans next.config.ts :"
-        )
-        self.stdout.write("  (generees par --emit-redirects si besoin)")
+        self.stdout.write(f"  tuile Gastronomie {'creee' if created else 'existante'} id={tile.id}")
