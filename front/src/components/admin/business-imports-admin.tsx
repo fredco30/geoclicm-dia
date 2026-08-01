@@ -206,7 +206,7 @@ export function BusinessImportsAdmin({
         </p>
         <nav className="mt-3 flex flex-wrap gap-2">
           {[
-            ["pending", "? valider"],
+            ["pending", "À valider"],
             ["invalid", "Incomplets"],
           ].map(([value, label]) => (
             <Link
