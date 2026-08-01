@@ -14,7 +14,11 @@ from apps.discovery.multi_extraction import (
     normalize_business,
     normalize_listing,
 )
-from apps.discovery.multi_sync import _download_cover_image, _select_primary_places
+from apps.discovery.multi_sync import (
+    _dedup_canonical,
+    _download_cover_image,
+    _select_primary_places,
+)
 
 
 class _FakePage:
@@ -42,6 +46,56 @@ class SelectPrimaryPlacesTests(SimpleTestCase):
         page = _FakePage("Nos partenaires")
         places = [{"title": "Restaurant A"}, {"title": "Hôtel B"}]
         self.assertEqual(_select_primary_places(page, places), [])
+
+
+class DedupCanonicalTests(SimpleTestCase):
+    def test_keeps_richest_page_per_canonical(self):
+        pages = [
+            SimpleNamespace(
+                canonical_url="https://ot.test/agenda",
+                final_url="https://ot.test/evenement/concert",
+                cleaned_text="court",
+            ),
+            SimpleNamespace(
+                canonical_url="https://ot.test/agenda",
+                final_url="https://ot.test/evenement/expo",
+                cleaned_text="un texte beaucoup plus riche et detaille",
+            ),
+        ]
+        kept = _dedup_canonical(pages)
+        self.assertEqual(len(kept), 1)
+        self.assertEqual(kept[0].final_url, "https://ot.test/evenement/expo")
+
+    def test_distinct_canonicals_all_kept_in_order(self):
+        pages = [
+            SimpleNamespace(
+                canonical_url="https://ot.test/a",
+                final_url="https://ot.test/a",
+                cleaned_text="alpha",
+            ),
+            SimpleNamespace(
+                canonical_url="https://ot.test/b",
+                final_url="https://ot.test/b",
+                cleaned_text="beta",
+            ),
+        ]
+        kept = _dedup_canonical(pages)
+        self.assertEqual(len(kept), 2)
+        self.assertEqual(
+            [page.canonical_url for page in kept],
+            ["https://ot.test/a", "https://ot.test/b"],
+        )
+
+    def test_falls_back_to_final_url_when_canonical_empty(self):
+        pages = [
+            SimpleNamespace(
+                canonical_url="",
+                final_url="https://ot.test/fiche",
+                cleaned_text="texte",
+            )
+        ]
+        kept = _dedup_canonical(pages)
+        self.assertEqual(len(kept), 1)
 
 
 def _result(answer: str) -> dict:

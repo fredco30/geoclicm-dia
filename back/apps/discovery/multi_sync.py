@@ -530,6 +530,27 @@ def _crawl_pages(crawl_source: CrawlSource) -> list:
     )
 
 
+def _dedup_canonical(pages: list) -> list:
+    """Une seule page active par URL canonique (la plus riche en texte).
+
+    Les fiches evenement de ce CMS partagent souvent une canonique d
+    agregation (ex: 512 fiches derriere une seule canonique au Grau) : sans
+    dedup, la passe IA analyse N fois le meme contenu canonique. On ne retient
+    que la page la plus riche par canonique. Reserve a la passe IA ; le crawl
+    partage garde toutes les pages pour l assistant.
+    """
+    best: dict[str, object] = {}
+    order: list[str] = []
+    for page in pages:
+        key = page.canonical_url or page.final_url
+        if key not in best:
+            best[key] = page
+            order.append(key)
+        elif len(page.cleaned_text or "") > len(best[key].cleaned_text or ""):
+            best[key] = page
+    return [best[key] for key in order]
+
+
 def source_page_urls(crawl_source: CrawlSource, *, short_first: bool = False) -> list[str]:
     """URLs analysables du corpus (texte suffisant).
 
@@ -539,7 +560,7 @@ def source_page_urls(crawl_source: CrawlSource, *, short_first: bool = False) ->
     """
     pages = [
         page
-        for page in _crawl_pages(crawl_source)
+        for page in _dedup_canonical(_crawl_pages(crawl_source))
         if len(page.cleaned_text or "") >= 200
     ]
     if short_first:
@@ -593,7 +614,9 @@ def run_multi_extraction(
     generic_urls = generic_image_urls(crawl_source)
 
     crawled_pages = list(
-        crawl_source.pages.filter(is_active=True).order_by("canonical_url")
+        _dedup_canonical(
+            list(crawl_source.pages.filter(is_active=True).order_by("canonical_url"))
+        )
     )
     pages = [
         {

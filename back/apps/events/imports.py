@@ -767,13 +767,22 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
     ).first()
     duplicate = None
     if existing is None:
+        # Dedup cross-source : le fingerprint (titre normalise + date +
+        # commune) identifie le meme evenement remonte par deux sources (ex:
+        # OT de la commune et agregateur). On marque DUPLICATE tout candidat
+        # dont le fingerprint est deja porte par un candidat IMPORTED (deja un
+        # Event) ou PENDING (deja vu, en attente de validation) d une autre
+        # source. Premier arrive gagne ; rien n est supprime, reste auditable.
         duplicate = (
             EventImportCandidate.objects.filter(
                 fingerprint=data["fingerprint"],
-                status=EventImportCandidate.Status.IMPORTED,
-                matched_event__isnull=False,
+                status__in=(
+                    EventImportCandidate.Status.IMPORTED,
+                    EventImportCandidate.Status.PENDING,
+                ),
             )
             .exclude(source=source)
+            .order_by("id")
             .select_related("matched_event")
             .first()
         )

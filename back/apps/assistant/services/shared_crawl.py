@@ -42,6 +42,23 @@ ASSET_SUFFIXES = (
     ".mp4",
 )
 SKIP_PARTS = ("/login", "/connexion", "/wp-admin", "/cart", "/panier", "/account")
+# Pages de listing / pagination : doublons d'extraction et cout IA multiplies
+# par le nombre de pages de la liste. Jamais utiles (ni assistant ni boites de
+# validation) : les fiches detaillees sont crawlees a part.
+LISTING_SKIP_PARTS = (
+    "?periode=",
+    "&periode=",
+    "/tous-les-agendas",
+    "/l-agenda-",
+    "?l-41-",
+    "&l-41-",
+    "?page=",
+    "&page=",
+)
+# Pages non francaises : meme contenu traduit, analyse inutilement par l IA en
+# plusieurs langues. Prefixes de chemin uniquement (evite les faux positifs sur
+# des segments en plein milieu d une URL).
+NON_FR_PATH_PARTS = ("/en/", "/es/", "/it/", "/de/")
 TRACKING_KEYS = {"fbclid", "gclid", "mc_cid", "mc_eid"}
 
 
@@ -84,8 +101,10 @@ def _allowed(source: CrawlSource, url: str) -> bool:
     if urlparse(url).scheme not in {"http", "https"}:
         return False
     if urlparse(url).path.lower().endswith(ASSET_SUFFIXES) or any(
-        part in lower for part in SKIP_PARTS
+        part in lower for part in SKIP_PARTS + LISTING_SKIP_PARTS
     ):
+        return False
+    if any(part in urlparse(url).path.lower() for part in NON_FR_PATH_PARTS):
         return False
     includes, excludes = _patterns(source.include_patterns), _patterns(source.exclude_patterns)
     return (not includes or any(item in lower for item in includes)) and not any(
