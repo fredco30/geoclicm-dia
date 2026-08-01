@@ -62,6 +62,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
         fields = (
             "id", "name", "slug", "city",
             "category", "category_name",
+            "specialties",
             "commune", "commune_name",
             "service_areas_count",
             "latitude", "longitude",

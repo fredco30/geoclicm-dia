@@ -3,7 +3,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { BusinessRow } from "@/components/businesses/business-row";
 import { BusinessesMap } from "@/components/businesses/businesses-map";
-import { BusinessFilters } from "@/components/businesses/business-filters";
+import { GastronomieFilters } from "@/components/businesses/gastronomie-filters";
 import { DirectoryFeatured } from "@/components/businesses/directory-featured";
 import { CollapsibleMap } from "@/components/ui/collapsible-map";
 import { Pagination } from "@/components/ui/pagination";
@@ -11,33 +11,32 @@ import { Pagination } from "@/components/ui/pagination";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "Commerces du territoire — geoclicMédia",
+  title: "Gastronomie — geoclicMédia",
   description:
-    "Annuaire des commerçants du littoral camarguais : restaurants, hébergements, artisans, services. Découvrez les acteurs locaux du Grau-du-Roi à Lunel.",
+    "Restaurants, bars, glaciers et producteurs du littoral camarguais. Trouvez une table par envie : pizzeria, fruits de mer, tapas, vue mer…",
 };
 
 type Props = {
   searchParams: Promise<{
     page?: string;
-    category?: string;
+    specialty?: string;
     commune?: string;
   }>;
 };
 
-export default async function BusinessesPage({ searchParams }: Props) {
+export default async function GastronomiePage({ searchParams }: Props) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
 
-  const [businesses, categories, communes] = await Promise.all([
+  const [businesses, communes] = await Promise.all([
     api.businesses.list({
       page,
-      category: sp.category,
+      // Section autonome : la branche gastronomie est forcee ici, jamais
+      // exposee dans l'URL. L'API matche toute la descendance.
+      category: "gastronomie",
+      specialty: sp.specialty,
       commune: sp.commune,
-      // La gastronomie a sa propre section autonome (/gastronomie) : on
-      // retire toute la branche de l'annuaire generaliste.
-      exclude_category: "gastronomie",
     }),
-    api.businessCategories(),
     api.communes(),
   ]);
 
@@ -49,19 +48,18 @@ export default async function BusinessesPage({ searchParams }: Props) {
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
       <header className="mb-5 flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-200 pb-4">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          Commerces
+          Gastronomie
         </h1>
-        <p className="text-sm text-slate-500">{businesses.count} adresses</p>
+        <p className="text-sm text-slate-500">{businesses.count} tables</p>
       </header>
 
-      <BusinessFilters
-        categories={categories}
+      <GastronomieFilters
         communes={communes}
-        values={{ category: sp.category, commune: sp.commune }}
+        values={{ specialty: sp.specialty, commune: sp.commune }}
       />
 
-      {/* Commerçant à la une (emplacement premium monétisé) */}
-      <DirectoryFeatured communeSlug={sp.commune} categorySlug={sp.category} />
+      {/* Table a la une (emplacement premium monétisé, scopé gastronomie) */}
+      <DirectoryFeatured communeSlug={sp.commune} categorySlug="gastronomie" />
 
       {/* Carte d'ensemble — visible mais repliable par l'utilisateur */}
       {geoCount > 0 ? (
@@ -73,15 +71,15 @@ export default async function BusinessesPage({ searchParams }: Props) {
       {businesses.results.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center">
           <p className="text-slate-600">
-            Aucun commerce ne correspond à ces critères pour l&apos;instant.
+            Aucune table ne correspond à cette envie pour l&apos;instant.
           </p>
           <p className="mt-2 text-sm text-slate-500">
-            L&apos;annuaire s&apos;étoffe au fil de la saison —{" "}
+            Essayez une autre envie, ou{" "}
             <Link
-              href="/contact"
+              href="/gastronomie"
               className="text-[#1a4d6e] underline hover:text-[#a8533a]"
             >
-              vous êtes commerçant ? Contactez-nous
+              réinitialisez les filtres
             </Link>
             .
           </p>
@@ -98,12 +96,12 @@ export default async function BusinessesPage({ searchParams }: Props) {
             totalCount={businesses.count}
             pageSize={20}
             baseUrl={
-              sp.category || sp.commune
-                ? `/commerces?${new URLSearchParams({
-                    ...(sp.category ? { category: sp.category } : {}),
+              sp.specialty || sp.commune
+                ? `/gastronomie?${new URLSearchParams({
+                    ...(sp.specialty ? { specialty: sp.specialty } : {}),
                     ...(sp.commune ? { commune: sp.commune } : {}),
                   }).toString()}`
-                : "/commerces"
+                : "/gastronomie"
             }
           />
         </>

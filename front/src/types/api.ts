@@ -551,6 +551,7 @@ export type BusinessListItem = {
   city: string;
   category: number;
   category_name: string;
+  specialties: string[];
   commune: number;
   commune_name: string;
   service_areas_count: number;
