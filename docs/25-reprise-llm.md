@@ -19,7 +19,7 @@ secret. Les compteurs du crawl sont temporels : toujours les relire sur le VPS.
 | Services | Django, Next.js, Celery worker et beat actifs |
 | IA extraction | DeepSeek (`deepseek-v4-flash`), embeddings Mistral inchangés |
 | Prompts | `multi-v4` / `events-v4` (dates fiables) |
-| Candidats à valider | events 335, places 720, commerces 212, annonces 5 |
+| Candidats à valider | events 189, places 720, commerces 212, annonces 5 |
 | Source 6 « terre de camargues » | recrawl lancé par sentinelle après multi-v4 |
 
 Le healthcheck répond :
@@ -644,3 +644,20 @@ automatiquement le recrawl de la source 6. Nettoyer après usage.
 - Vérifier le succès du recrawl source 6 (indexation de la page au titre long).
 - Mesurer coût/qualité de la passe multi-v4 complète.
 - Décider planification auto vs déclenchement manuel des passes IA (coût).
+
+## 22. Déduplication Agenda — étape 2 à faire (cross-source)
+
+Étape 1 faite (1er aoùt soir) : 121 candidats supprimés (106 doublons d’URL
+exacte + 36 pages non-FR). « À valider » events : 189.
+
+**Étape 2 restante** : 39 groupes de même titre = même événement extrait de
+plusieurs sources ou de pages de listing multilingues. À traiter par règle, pas à la main :
+
+1. À la source : ignorer pages de listing/pagination (`?periode=`, `/tous-les-agendas`)
+   et pages non-françaises (`/en/`, `/es/`, `/it/`, `/de/`) au crawl ou à la sélection IA.
+2. Déduplication métier : source canonique par événement (OT de la commune), clé =
+   titre normalisé + date + commune. Le `fingerprint` actuel ne couvre pas le cross-source.
+3. Coût IA : ces pages de listing multilingues font aussi gonfler le coût de la passe
+   (même contenu analysé en 5 langues) — les exclure réduit la facture.
+
+Voir détail dans `14-journal-avancement.md` (entrée 1er aoùt soir).

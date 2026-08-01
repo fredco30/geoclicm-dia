@@ -870,3 +870,27 @@ de la file multi-v4 puis lance le recrawl source 6 automatiquement.
 
 `e0aaaf0` dates, `0e3a7c6` repli JSON-LD, `d3d23ea` troncature chunk, `52696b3` bulk-approve +
 navigation, `9e11505` + `86afcee` encodage UTF-8 admin.
+
+### Nettoyage des candidats Agenda (1er aoùt 2026, soir)
+
+- 25 candidats à date fabriquée (année 2022/2024, 1er janvier inventé) passés en `expired`.
+- Étape 1 déduplication : 121 candidats supprimés — 106 doublons d’URL exacte
+  (même page crawlée plusieurs fois) + 36 candidats de pages non-françaises
+  (`/en/`, `/es/`, `/it/`, `/de/` sur ot-aiguesmortes). « À valider » : 335 → 189.
+- Vérifié : 0 doublon d’URL, 0 page non-FR restants.
+
+### Reste à faire — étape 2 déduplication (cross-source)
+
+39 groupes de même titre subsistent : même événement extrait depuis plusieurs
+sources (letsgrau.com + tourisme-saint-laurent + ot-aiguesmortes) ou depuis des
+pages de listing multilingues (`?periode=`, `/tous-les-agendas`) qui génèrent des
+doublons d’expositions.
+
+Actions proposées à discuter :
+1. **À la source (extraction)** : ignorer les pages de listing/pagination et les pages
+   non-françaises lors du crawl ou de la sélection IA, pour ne plus produire ces doublons.
+2. **Déduplication métier** : choisir une source canonique par événement (l’OT de la
+   commune de l’événement) et fusionner/rejeter les autres. Définir la clé de
+   déduplication (titre normalisé + date + commune) ; le `fingerprint` actuel ne couvre
+   pas le cross-source.
+3. Ne pas supprimer à la main sans règle : risque de perdre un événement réel.
