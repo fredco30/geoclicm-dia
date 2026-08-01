@@ -13,6 +13,7 @@ import {
 
 import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
 import { CrawlAllButton } from "@/components/admin/crawl-all-button";
+import { RunMultiButton } from "@/components/admin/run-multi-button";
 import { Button } from "@/components/ui/button";
 import type { AdminCrawlSource, CrawlSourceStatus } from "@/types/admin";
 
@@ -189,13 +190,20 @@ export default async function CrawlSourcesPage() {
                     )}
                   </td>
                   <td className="px-3 py-2 text-right">
-                    <Link
-                      href={`/admin/assistant/sources/${s.id}/edit`}
-                      className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
-                      aria-label="Éditer"
+                    <div className="flex items-center justify-end gap-1">
+                      <RunMultiButton
+                        sourceId={s.id}
+                        label={s.label}
+                        disabled={!s.is_active}
+                      />
+                      <Link
+                        href={`/admin/assistant/sources/${s.id}/edit`}
+                        className="rounded-md p-2 text-slate-600 hover:bg-slate-100"
+                        aria-label="Éditer"
                     >
-                      <Edit className="h-4 w-4" />
-                    </Link>
+                        <Edit className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

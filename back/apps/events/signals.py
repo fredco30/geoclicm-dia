@@ -31,7 +31,13 @@ def event_post_save_resize(sender, instance: Event, **kwargs) -> None:
 
 @receiver(post_migrate)
 def ensure_event_sync_schedule(sender, **kwargs) -> None:
-    """Synchronise les sources Agenda actives toutes les six heures."""
+    """Desactive la synchronisation automatique des sources Agenda.
+
+    Regle produit (1er aout 2026) : aucune depense IA sans declenchement
+    manuel. La tache ``events.sync_all_sources`` (toutes les 6 h) pouvait
+    appeler l IA ; on la force a ``enabled=False`` a chaque migrate. Les
+    extractions se lancent desormais a la main (passe IA multi ou sync par
+    source)."""
     if getattr(sender, "name", None) != "apps.events":
         return
     try:
@@ -46,7 +52,7 @@ def ensure_event_sync_schedule(sender, **kwargs) -> None:
             defaults={
                 "interval": schedule,
                 "task": "events.sync_all_sources",
-                "enabled": True,
+                "enabled": False,
             },
         )
     except Exception as exc:  # noqa: BLE001

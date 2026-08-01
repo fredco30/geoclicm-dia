@@ -189,6 +189,7 @@ class CrawlSourceAdminViewSet(viewsets.ModelViewSet):
     /api/admin/crawl-sources/        — list / create
     /api/admin/crawl-sources/<id>/   — retrieve / update / delete
     /api/admin/crawl-sources/<id>/run/  — POST : déclenche un crawl async
+    /api/admin/crawl-sources/<id>/run-multi/  -- POST : passe IA multi (payante, manuelle)
     /api/admin/crawl-sources/run-all/  — POST : actualise seulement les sources dues
 
     Réservé editor/admin/superuser. Les CrawlSource ne sont pas du contenu
@@ -234,6 +235,47 @@ class CrawlSourceAdminViewSet(viewsets.ModelViewSet):
             )
         return Response(
             {"detail": "Crawl lancé en arrière-plan.", "source_id": source.id},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="run-multi")
+    def run_multi(self, request, pk=None):
+        """Lance la passe IA multi-categories (payante) sur la source.
+
+        Declenchement strictement manuel : aucune tache periodique n appelle ce
+        endpoint, conformement a la regle "pas un centime sans action explicite".
+        La passe est decoupee en lots Celery et n analyse que les segments dont
+        le contenu a change (cache multi_extraction_cache).
+        """
+        source = self.get_object()
+        if not source.is_active:
+            return Response(
+                {"detail": "Cette source est desactivee. Activez-la d abord."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            from apps.discovery.tasks import multi_extract_source_chunked
+
+            multi_extract_source_chunked.delay(source.id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "multi_extract_source_chunked.delay(%s) failed: %s", source.id, exc,
+            )
+            return Response(
+                {"detail": (
+                    "La passe IA n a pas pu etre lancee en async "
+                    "(Celery indisponible)."
+                )},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response(
+            {
+                "detail": (
+                    "Passe IA multi lancee en arriere-plan : seuls les contenus "
+                    "modifies sont analyses (cache)."
+                ),
+                "source_id": source.id,
+            },
             status=status.HTTP_202_ACCEPTED,
         )
 
