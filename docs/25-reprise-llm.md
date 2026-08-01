@@ -697,3 +697,49 @@ en 5 langues + pages de listing).
 - Point outil : générer les accents Python avec `chr(0xE9)` etc. (le shell corrompt les
   littéraux accentués) ; vérifier au niveau octet (`read_bytes()`).
 - 226 candidats Agenda en `expired` ; 636 occurrences passées retirées par la réparation.
+
+## 24. Lot du 1er ao?t (soir) ? d?dup ? la source + cache IA multi r?par?
+
+**Deux lots d?ploy?s sur `main`.** Feu vert de Fred.
+
+### 24.1 D?duplication ? la source (commit `f785e52`)
+
+Emp?che la production de doublons au lieu de les nettoyer ? la main :
+
+- **Crawl** (`shared_crawl._allowed`) : exclusion des pages de listing/pagination
+  (`?periode=`, `/tous-les-agendas`, `/l-agenda-`, `?page=`) et non-fran?aises
+  (`/en/`, `/es/`, `/it/`, `/de/`), pour toutes les sources. Effet imm?diat au prochain crawl.
+- **Passe IA multi** (`multi_sync._dedup_canonical`) : une seule page par URL canonique
+  (la plus riche). 512 fiches ?taient derri?re une canonique d'agr?gation au Grau.
+- **D?dup cross-source** (`imports._upsert_candidate`) : le fingerprint (titre normalis?
+  + date + commune) matche aussi un candidat `PENDING` d'une autre source, pas seulement
+  `IMPORTED` ? le second arriv? est `DUPLICATE`. Couvre l'agr?gateur Saint-Laurent (option A).
+
+Tests : `_allowed` (listing + non-FR), `_dedup_canonical`, d?dup cross-source.
+33/33 tests sans BDD OK. Aucune migration. Frontend inchang?.
+
+### 24.2 Cache IA multi r?par? (commit `871956b`) ? le vrai levier de co?t
+
+Diagnostic chiffr? de la passe multi-v4 (DeepSeek `deepseek-v4-flash`) :
+
+- Cumul : 17 394 appels, 20,0 M tokens entr?e + 15,1 M sortie = **11,23 ?**.
+- Statuts : 9 605 `success` (11,23 ?) ; 6 979 `budget_exceeded` ; 814 `error`.
+- Par jour : 30/07 = 4,35 ? ; 31/07 = 1,81 ? ; 1er/08 = 5,06 ? ? **cap utilisateur
+  5 ?/jour** (`AI_ASSIST_BUDGET_USER_DAILY_EUR`) atteint le 1er ao?t, passe coup?e.
+- `multi_extraction_cache` restait **? 0 sur les 6 sources** malgr? la d?pense.
+
+**Bug racine** (`multi_extraction.extract_multi`) : la variable de boucle `key`
+(cat?gorie) ?crasait le hash de segment. Le cache ?tait ?crit sous la cl? `"listings"`
+au lieu du hash ? jamais de hit, chaque passe repayait l'int?gralit?. Reproduit en prod
+puis corrig? :
+
+- variable de boucle renomm?e (`category`) ? cache ?crit sous le **hash de segment** ;
+- **fusion** du cache au lieu de la purge par lot (`prune_cache` r?serv? ? une passe
+  compl?te) : un lot Celery de 15 pages n'efface plus les cl?s des autres lots.
+
+V?rifi? : cl?s = hash 64 car., fusion A+B entre lots, hit cache (0 appel IA au re-A).
+29/29 tests discovery OK.
+
+**Cons?quence** : la prochaine passe multi ne repaiera que les segments dont le contenu
+(ou prompt/provider) a chang?. Le cap de 5 ?/jour reste ? ajuster si une passe compl?te
+doit tenir en un jour (d?cision produit, non tranch?e).

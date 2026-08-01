@@ -915,3 +915,33 @@ Saint-Laurent produit des candidats rattachés à la mauvaise commune. À traite
 
 Note : les « animation sportive gratuite » (yoga/training/stretching, La Grande-Motte) ne
 sont PAS des doublons — programmes récurrents découpés par semaine (13, 9, 8 occurrences).
+
+---
+
+## 1er ao?t 2026 (soir) ? D?dup ? la source + cache IA multi r?par?
+
+**D?ploy? sur `main` (prod), feu vert Fred. Deux commits : `f785e52` (d?dup), `871956b` (cache).**
+
+### D?duplication Agenda ? la source (`f785e52`)
+
+- Crawl : exclusion listing/pagination (`?periode=`, `/tous-les-agendas`, `/l-agenda-`, `?page=`)
+  et pages non-FR (`/en/` `/es/` `/it/` `/de/`) pour toutes les sources.
+- Passe IA multi : une seule page par URL canonique (`_dedup_canonical`).
+- D?dup cross-source : fingerprint (titre+date+commune) matche aussi un `PENDING`
+  d'une autre source ? `DUPLICATE`. Couvre l'agr?gateur Saint-Laurent.
+- Tests 33/33 OK, aucune migration, frontend inchang?.
+
+### Cache IA multi r?par? (`871956b`) ? levier de co?t majeur
+
+Passe multi-v4 (DeepSeek) : 17 394 appels, 11,23 ? dont 5,06 ? le 1er/08
+(cap utilisateur 5 ?/jour atteint, passe coup?e). Cache `multi_extraction_cache`
+? 0 sur les 6 sources malgr? la d?pense.
+
+**Bug racine** : variable de boucle `key` (cat?gorie) ?crasait le hash de segment
+? cache ?crit sous la cl? `"listings"` au lieu du hash, jamais de hit, chaque passe
+repayait tout. Corrig? (renommage `category`) + **fusion** du cache au lieu de la
+purge par lot (un lot Celery de 15 pages n'efface plus les autres lots).
+
+V?rifi? : cl?s = hash, fusion A+B entre lots, hit cache (0 appel IA au re-appel).
+29/29 tests discovery OK. La prochaine passe ne paiera que les segments modifi?s.
+Cap 5 ?/jour ? ajuster si une passe compl?te doit tenir en un jour (non tranch?).
