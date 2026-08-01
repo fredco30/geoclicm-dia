@@ -26,6 +26,7 @@ class AdCampaign(models.Model):
         DIRECTORY_TOP = "directory_top", "Annuaire — Top"
         DIRECTORY_INLINE = "directory_inline", "Annuaire — Inline"
         AGENDA_TOP = "agenda_top", "Agenda — Top"
+        AGENDA_FEATURED = "agenda_featured", "Agenda — À la une"
         WEATHER_TOP = "weather_top", "Météo — Top"
         WEATHER_SIDEBAR = "weather_sidebar", "Météo — Sidebar"
         NEWSLETTER = "newsletter", "Newsletter"
@@ -60,6 +61,21 @@ class AdCampaign(models.Model):
     )
     target_url = models.URLField(
         help_text="URL de destination quand l'utilisateur clique sur l'encart.",
+    )
+
+    # --- Mise en avant éditoriale (placement "Agenda — À la une") ---
+    featured_event = models.ForeignKey(
+        "events.Event",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="featured_campaigns",
+        help_text=(
+            "Événement mis en avant dans le bandeau 'À la une'. "
+            "Vide = créa classique (image + headline). Si renseigné, le "
+            "bandeau affiche la fiche de l'événement et le clic renvoie vers "
+            "sa page (target_url ignorée)."
+        ),
     )
 
     # --- Ciblage ---

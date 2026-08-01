@@ -66,6 +66,7 @@ class AdCampaignWriteSerializer(serializers.ModelSerializer):
             "id", "name", "business",
             "placement",
             "image", "headline", "cta_text", "target_url",
+            "featured_event",
             "target_communes", "target_categories",
             "starts_at", "ends_at",
             "price_paid",
@@ -126,6 +127,7 @@ class AdServeSerializer(serializers.ModelSerializer):
     # URL de redirection trackée (pas l'URL cible directe — passe par /r/<id>/
     # pour incrémenter click_count avant redirect)
     click_url = serializers.SerializerMethodField()
+    featured_event = serializers.SerializerMethodField()
 
     class Meta:
         model = AdCampaign
@@ -134,7 +136,15 @@ class AdServeSerializer(serializers.ModelSerializer):
             "headline", "cta_text",
             "click_url",
             "business_slug", "business_name",
+            "featured_event",
         )
 
     def get_click_url(self, obj: AdCampaign) -> str:
         return f"/r/{obj.id}/"
+
+    def get_featured_event(self, obj: AdCampaign):
+        if not obj.featured_event_id:
+            return None
+        from apps.events.serializers import EventListSerializer
+
+        return EventListSerializer(obj.featured_event).data

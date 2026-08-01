@@ -168,7 +168,11 @@ class AdServeView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         chosen_id = random.choice(candidates)
-        campaign = AdCampaign.objects.select_related("business").get(pk=chosen_id)
+        campaign = (
+            AdCampaign.objects.select_related("business", "featured_event")
+            .prefetch_related("featured_event__occurrences")
+            .get(pk=chosen_id)
+        )
 
         # Incrément atomique impression_count
         AdCampaign.objects.filter(pk=chosen_id).update(
@@ -192,4 +196,8 @@ def ad_redirect(request, pk: int):
     AdCampaign.objects.filter(pk=campaign.pk).update(
         click_count=F("click_count") + 1
     )
+    # Bandeau "Agenda — À la une" : le clic renvoie vers la fiche de
+    # l'événement mis en avant (target_url externe ignorée dans ce mode).
+    if campaign.featured_event_id:
+        return HttpResponseRedirect(f"/agenda/{campaign.featured_event.slug}")
     return HttpResponseRedirect(campaign.target_url)
