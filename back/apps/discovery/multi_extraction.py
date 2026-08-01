@@ -209,6 +209,7 @@ def extract_multi(
     *,
     progress=None,
     crawl_source=None,
+    prune_cache: bool = False,
 ) -> tuple[dict[str, list[dict]], list[str]]:
     """Analyse chaque page une fois et classe son contenu par catégorie.
 
@@ -219,6 +220,12 @@ def extract_multi(
     cache sur la source : un segment dont le contenu (ou le prompt/provider) n'a
     pas changé depuis la dernière analyse n'est pas renvoyé à l'IA. Cela rend une
     passe de routine quasi gratuite hors nouveautés réelles.
+
+    ``prune_cache`` : ne pas activer sur un lot (la passe est decoupee en lots
+    Celery de quelques pages). Un lot ne connait que ses propres segments ;
+    purger les cles hors ``current_keys`` effacerait le cache des autres lots.
+    Reserver ``prune_cache=True`` a une passe complete pour oublier les pages
+    disparues du corpus.
     """
     results: dict[str, list[dict]] = {key: [] for key in CATEGORY_KEYS}
     errors: list[str] = []
@@ -292,19 +299,29 @@ def extract_multi(
         if error:
             errors.append(f"{segment['url']} ({segment['content_part']}) : {error}")
         else:
-            for key in CATEGORY_KEYS:
-                results[key].extend(accepted[key])
+            # Ne pas reutiliser le nom ``key`` ici : il porte le hash du
+            # segment (cle de cache). Une variable de boucle ``key`` ecrasait
+            # ce hash par la derniere categorie ("listings"), si bien que le
+            # cache etait ecrit sous "listings" au lieu du hash -> jamais de
+            # hit, chaque passe repayait l'integralite.
+            for category in CATEGORY_KEYS:
+                results[category].extend(accepted[category])
             cache[key] = {name: accepted[name] for name in CATEGORY_KEYS}
             cache_dirty = True
         if progress:
             progress(position, total)
 
     if crawl_source is not None and cache_dirty:
-        # On ne conserve que les clés du corpus actuel (les pages disparues ou
-        # devenues trop courtes sont oubliées) et on persiste en une écriture.
-        crawl_source.multi_extraction_cache = {
-            name: cache[name] for name in current_keys if name in cache
-        }
+        # Fusion, jamais remplacement : ``cache`` est deja charge depuis la
+        # source en debut d appel, puis enrichi des segments reussis. On le
+        # reecrit tel quel pour conserver les cles calculees par les autres
+        # lots de la passe. Sans fusion, chaque lot ecrasait le cache avec ses
+        # seules pages -> cache vide en fin de passe malgre le cout IA.
+        if prune_cache:
+            merged = {name: cache[name] for name in current_keys if name in cache}
+        else:
+            merged = cache
+        crawl_source.multi_extraction_cache = merged
         crawl_source.save(update_fields=["multi_extraction_cache", "updated_at"])
 
     for key in CATEGORY_KEYS:

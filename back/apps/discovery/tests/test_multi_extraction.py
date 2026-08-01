@@ -416,6 +416,67 @@ class DownloadCoverImageTests(SimpleTestCase):
         self.assertFalse(ok)
 
 
+class _FakeCrawlSource:
+    """CrawlSource minimale persistee en 'base' entre appels extract_multi.
+
+    Simule le rechargement ORM : chaque nouvelle instance repart de la
+    valeur persistee (``_db`` partagee), comme le font les lots Celery.
+    """
+
+    _db = {}
+
+    def __init__(self):
+        self.multi_extraction_cache = dict(self._db)
+        self.saved = 0
+
+    def save(self, update_fields=None):
+        type(self)._db = dict(self.multi_extraction_cache)
+        self.saved += 1
+
+
+class ExtractMultiCacheMergeTests(SimpleTestCase):
+    def _ok(self, source, prompt, *, system_prompt=None):
+        return {
+            "answer": "{\"events\":[],\"markets\":[],\"places\":[],\"businesses\":[],\"listings\":[]}",
+            "provider": "ovh",
+            "model": "Qwen3.5-9B",
+        }
+
+    def _pages(self, url):
+        return [{"url": url, "title": "T", "content": "contenu " * 40}]
+
+    def test_second_batch_merges_instead_of_replacing(self):
+        _FakeCrawlSource._db = {}
+        user = SimpleNamespace(pk=1, id=1)
+        with (
+            patch.object(me, "_provider_config", return_value=("ovh", "Qwen3.5-9B")),
+            patch.object(me, "_call_ai", side_effect=self._ok),
+        ):
+            # lot 1 : nouvelle instance (comme un worker Celery)
+            extract_multi(user, self._pages("https://ot.fr/a"), crawl_source=_FakeCrawlSource())
+            size_after_a = len(_FakeCrawlSource._db)
+            # lot 2 : autre instance rechargee depuis la 'base'
+            extract_multi(user, self._pages("https://ot.fr/b"), crawl_source=_FakeCrawlSource())
+        # le second lot ne connait que la page b : sans fusion il ecrasait
+        # le cache a une seule cle (b) ; avec fusion il conserve a + b.
+        self.assertEqual(size_after_a, 1)
+        self.assertEqual(len(_FakeCrawlSource._db), 2)
+
+    def test_prune_cache_keeps_only_current_keys(self):
+        _FakeCrawlSource._db = {}
+        user = SimpleNamespace(pk=1, id=1)
+        with (
+            patch.object(me, "_provider_config", return_value=("ovh", "Qwen3.5-9B")),
+            patch.object(me, "_call_ai", side_effect=self._ok),
+        ):
+            extract_multi(user, self._pages("https://ot.fr/a"), crawl_source=_FakeCrawlSource())
+            # passe complete prune : seule la page b subsiste.
+            extract_multi(
+                user, self._pages("https://ot.fr/b"), crawl_source=_FakeCrawlSource(), prune_cache=True
+            )
+        self.assertEqual(len(_FakeCrawlSource._db), 1)
+
+
 class ExtractMultiPromptTests(SimpleTestCase):
     def _call_capture(self, captured):
         def fake_call_ai(source, prompt, *, system_prompt=None):
