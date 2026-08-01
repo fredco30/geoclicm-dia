@@ -811,3 +811,32 @@ rendus mobile (390px) et desktop (1280px) valides par captures Playwright.
   supprimer `business-card` et `event-card` (fin du nettoyage).
 - `/decouvrir`, `/emploi`, `/locations-annuelles` affichent "0" tant qu'il n'y a pas de
   contenu publie (gabarit en place, pas un bug).
+
+## 26. Lot du 2 aout — candidats admin compacts (validation plus rapide)
+
+Lot deploye sur `main`. Demande de Fred : reduire la hauteur des fiches a valider
+dans l'admin (moins de scroll pour approuver en masse).
+
+### 26.1 Format compact generalise aux 4 pages candidats
+
+Meme presentation partout (`admin/*/imports`) :
+
+- **"Source officielle"** remontee sur la 1ere ligne, a l'extreme droite du badge
+  "Extraction IA a verifier" (plus de ligne separee).
+- **Selects + boutons sur une seule ligne** : `Commune` + `Categorie` a gauche,
+  `Rejeter` / `Approuver et publier` a droite (`ml-auto`).
+
+Commits :
+- `b0f67eb` candidats **commercants** (`business-imports-admin`).
+- `ed1e3cd` generalisation aux candidats **agenda** (`event-imports-admin`),
+  **decouvrir** (`place-imports-admin`) et **annonces** (`listing-imports-admin`).
+
+### 26.2 Reformatage des fichiers minifies
+
+`event-imports-admin.tsx` et `place-imports-admin.tsx` etaient minifies (une seule
+ligne), difficiles a editer (a cause d'une div non fermee introduite au patch precedent,
+corrigee). `718ac32` — passage Prettier, **aucun changement fonctionnel** (~400 lignes
+lisibles chacun). tsc + eslint 0 erreur.
+
+Verifie : build + restart Next OK, site 200. Pages admin derriere login (307 attendu
+en anonyme).

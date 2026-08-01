@@ -980,3 +980,14 @@ Verifie : tsc/eslint 0 erreur, migrations 0003/0004 appliquees (backup PG), page
 agenda/commerces/decouvrir/emploi → 200, rendus mobile+desktop OK (Playwright).
 
 **Reste** : `/marches` a refaire (puis supprimer `business-card`/`event-card`).
+
+## 2 aout 2026 — Candidats admin compacts + reformatage
+
+- `b0f67eb` candidats commercants : "Source officielle" en ligne 1 (droite du badge),
+  selects commune/categorie + boutons sur une seule ligne. Fiches moins hautes.
+- `ed1e3cd` meme format compact generalise aux candidats agenda / decouvrir / annonces.
+- `718ac32` reformatage Prettier des 2 fichiers minifies (`event-imports-admin`,
+  `place-imports-admin`) — aucun changement fonctionnel. Correction d'une div non
+  fermee introduite au patch precedent.
+
+tsc + eslint 0 erreur ; build + restart Next OK.
