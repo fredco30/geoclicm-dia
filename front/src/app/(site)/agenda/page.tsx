@@ -70,7 +70,11 @@ export default async function AgendaPage({ searchParams }: Props) {
 
       <div className="mb-7"><AdSlot placement="agenda_top" communeSlug={params.commune} /></div>
 
-      <AgendaMapExplorer events={mapEvents} initialSelectedSlug={params.event} />
+      {/* Carte : desktop only. En mobile on reste sur la liste dense (un seul
+          scroll, pas de doublon carte+liste). */}
+      <div className="hidden lg:block">
+        <AgendaMapExplorer events={mapEvents} initialSelectedSlug={params.event} />
+      </div>
 
       {events.results.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-600">Aucun rendez-vous ne correspond à ces critères.</div>

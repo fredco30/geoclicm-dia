@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, ExternalLink, MapPin, Navigation, X } from "lucide-react";
+import { CalendarDays, ExternalLink, Map, MapPin, Navigation, X } from "lucide-react";
 import maplibregl, { type Marker, type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -29,6 +29,9 @@ export function AgendaMapExplorer({ events, initialSelectedSlug }: Props) {
   // Ne s'ouvre que sur sélection explicite (clic carte/liste ou ?event=slug) :
   // plus d'ouverture automatique sur le 1er événement au chargement.
   const [selectedSlug, setSelectedSlug] = useState<string | undefined>(initialSelectedSlug);
+  // Carte repliée par défaut (desktop only, voir page.tsx). On n'initialise
+  // MapLibre que si l'utilisateur l'ouvre : zéro chargement carte sinon.
+  const [open, setOpen] = useState(false);
   const selected = useMemo(() => events.find((event) => event.slug === selectedSlug) ?? null, [events, selectedSlug]);
 
   const selectEvent = (event: EventListItem) => {
@@ -42,6 +45,7 @@ export function AgendaMapExplorer({ events, initialSelectedSlug }: Props) {
   };
 
   useEffect(() => {
+    if (!open) return;
     const container = containerRef.current;
     if (!container) return;
     const map = new maplibregl.Map({ container, style: OSM_STYLE, center: [4.15, 43.55], zoom: 10, attributionControl: { compact: true } });
@@ -63,22 +67,27 @@ export function AgendaMapExplorer({ events, initialSelectedSlug }: Props) {
     if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: { top: 55, right: 390, bottom: 75, left: 55 }, maxZoom: 13 });
     return () => { markersRef.current.forEach((marker) => marker.remove()); markersRef.current = []; map.remove(); mapRef.current = null; };
   // events are replaced only after a server-side filter navigation.
-  }, [events]);
+  }, [events, open]);
 
   if (events.length === 0) return null;
 
   return (
-    <section className="relative mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="grid min-h-[620px] lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="relative min-h-[440px]">
+    <section className="relative mb-8">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#1a4d6e] hover:text-[#1a4d6e]"
+      >
+        <Map className="h-4 w-4" />
+        {open ? "Masquer la carte" : `Voir la carte (${events.length})`}
+      </button>
+      {open ? (
+        <div className="relative h-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div ref={containerRef} className="absolute inset-0" role="region" aria-label="Carte des événements" />
           {selected ? <EventWindow event={selected} onClose={() => setSelectedSlug(undefined)} /> : null}
         </div>
-        <aside className="max-h-[620px] overflow-y-auto border-t border-slate-200 bg-[#fffdf8] lg:border-l lg:border-t-0" aria-label="Événements sur la carte">
-          <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur"><strong>{events.length} événement{events.length > 1 ? "s" : ""} géolocalisé{events.length > 1 ? "s" : ""}</strong></div>
-          <div className="divide-y divide-slate-200">{events.map((event) => <button key={event.id} type="button" onClick={() => selectEvent(event)} className={`w-full px-4 py-4 text-left transition hover:bg-white ${selected?.id === event.id ? "bg-white ring-1 ring-inset ring-[#a8533a]/30" : ""}`}><div className="flex gap-3"><span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: event.category.color }} /><span><span className="block font-semibold text-slate-900">{event.title}</span><span className="mt-1 block text-xs text-[#a8533a]">{formatDate(event.next_occurrence?.starts_at)}</span><span className="mt-1 block text-xs text-slate-500">{event.venue_name || event.commune_name}</span></span></div></button>)}</div>
-        </aside>
-      </div>
+      ) : null}
     </section>
   );
 }
