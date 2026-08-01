@@ -991,3 +991,21 @@ agenda/commerces/decouvrir/emploi → 200, rendus mobile+desktop OK (Playwright)
   fermee introduite au patch precedent.
 
 tsc + eslint 0 erreur ; build + restart Next OK.
+
+
+## 2 aout 2026 ? Section Gastronomie autonome + filtres par envie
+
+Commit `7ab18de`, deploye sur `main`. La gastronomie (77 tables migrees de
+Decouverte vers Business) devient une **section a part entiere**, separee de
+l'annuaire commerces.
+
+- **Backend** : filtre API `specialty` (envie, JSONField) + `exclude_category`
+  (branche) ; `specialties` expose dans le serializer liste.
+- **Frontend** : nouvelle section `/gastronomie` (dense, carte repliable, bandeau
+  premium scope) ; filtre envies FIXE (13 libelles) + commune ; annuaire
+  `/commerces` exclut la branche gastronomie (240 ? 163 fiches, separation stricte).
+- Fiches detail conservees sous `/commerces/<slug>` (pas de redirect).
+- Tuile home Gastronomie repointee vers `/gastronomie`.
+
+Verifie en prod : `/gastronomie` 200 (77 tables), Pizzeria ? 15, Fruits de mer ? 13,
+annuaire sans gastronomie ? 163. tsc 0 erreur. Build + restart Django/Next OK.

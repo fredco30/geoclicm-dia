@@ -840,3 +840,65 @@ lisibles chacun). tsc + eslint 0 erreur.
 
 Verifie : build + restart Next OK, site 200. Pages admin derriere login (307 attendu
 en anonyme).
+
+
+## 27. Lot du 2 aout ? section Gastronomie autonome + filtres par envie
+
+Lot deploye sur `main` (commit `7ab18de`). Suite de la migration Gastronomie
+(commande `migrate_gastronomie`, sections precedentes) : les 77 tables migrees de
+`Place` (Decouverte) vers `Business` deviennent une **section a part entiere**,
+au lieu d'un simple filtre `?category=gastronomie` dans l'annuaire commerces.
+
+Decision produit (Fred) : **section autonome + separation stricte** ? la gastronomie
+sort de l'annuaire generaliste, a sa tuile racine, sa page, ses propres filtres.
+
+### 27.1 Migration donnees (rappel, appliquee juste avant)
+
+- Racine `BusinessCategory` **Gastronomie** (slug `gastronomie`, parent=None) creee.
+- **77 Business** crees et publies (70 Restaurants, 3 Bars & Cafes, 1 Glacier,
+  2 Producteurs & Caveaux, 1 Food truck). Branche `restauration` deplacee sous
+  Gastronomie puis desactivee.
+- Envies stockees dans `Business.specialties` (JSONField) via regex `CRAVINGS`.
+- **80 Place Decouverte depubliees** (77 migrees + 3 doublons : Petite Prade,
+  Guinguette pieds nus, Paillote bambou, deja presentes en Business).
+- `PlaceCategory` Decouverte "Gastronomie" (id=8) desactivee.
+
+### 27.2 Backend ? 2 filtres API + specialties exposees
+
+- `serializers.py` : `specialties` ajoute au `BusinessListSerializer` (necessaire
+  pour le filtre envie et l'affichage).
+- `filters.py` :
+  - `specialty` ? matche une envie exacte dans le JSONField (`specialties__contains=[v]`).
+  - `exclude_category` ? retire toute une branche (meme logique de descendance
+    recursive que `category`, factorisee dans `_branch_ids`).
+
+### 27.3 Frontend ? nouvelle section `/gastronomie`
+
+- `gastronomie/page.tsx` (nouveau) : page dense qui force `category=gastronomie`
+  (jamais expose dans l'URL), filtre envie + commune, carte repliable, liste
+  `BusinessRow`, pagination, bandeau premium `DirectoryFeatured` scope gastronomie.
+- `gastronomie-filters.tsx` (nouveau) : selecteur d'**envies FIXE** (13 libelles
+  alignes migration : Cuisine traditionnelle, Pizzeria, Fruits de mer, Mediterraneen,
+  Vue mer, Italien, Cafe / Salon de the, Tapas, Glacier, Burgers, Creperie,
+  Vins & caveaux, Sushi) + commune. Choix assume : liste fixe plutot que generee
+  depuis les donnees (envies normalisees, pas de faute, stable).
+- `types/api.ts` : `specialties: string[]` sur `BusinessListItem`.
+- `commerces/page.tsx` : `exclude_category: "gastronomie"` ? les 77 sortent de
+  l'annuaire generaliste (240 ? 163 fiches). **Separation stricte.**
+
+### 27.4 Choix retenus (arbitrages Fred)
+
+- **Fiches detail** : conservees sous `/commerces/<slug>` (pas de redirect 301).
+- **Gastronomie exclue** de `/commerces` (vraie separation).
+- **Envies** : liste fixe alignee migration.
+
+### 27.5 Deploy + verification prod
+
+- Tuile home Gastronomie repointee de `/commerces?category=gastronomie` ? `/gastronomie`.
+- Backup PG (525M), pull `7ab18de`, build front OK (route `/gastronomie` generee),
+  restart Django + Next, services actifs.
+- Verifie en prod : `/gastronomie` 200 (77 tables), filtre Pizzeria ? 15,
+  Fruits de mer ? 13, annuaire sans gastronomie ? 163. tsc 0 erreur.
+
+Reste possible : page `/marches` a refaire (puis supprimer `business-card`/
+`event-card` devenus orphelins) ; campagnes demo id=1/2 "A VELO" toujours en base.
