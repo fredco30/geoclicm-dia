@@ -148,6 +148,14 @@ def _parse_html(html: str, page_url: str, method: str, status: int | None, depth
             payloads.append(json.loads(script.string or script.get_text()))
         except (TypeError, json.JSONDecodeError):
             continue
+    # Repli JSON-LD quand la meta HTML ne donne pas la date de publication
+    # (Yoast n'expose datePublished qu'en JSON-LD sur beaucoup de sites).
+    if not metadata["published_at"]:
+        from apps.discovery.page_dates import _json_ld_dates
+
+        ld_published, _ = _json_ld_dates(payloads)
+        if ld_published:
+            metadata["published_at"] = ld_published
     visible = BeautifulSoup(html, "lxml")
     for tag in visible.find_all(
         ["script", "style", "noscript", "svg", "nav", "footer", "header", "form"]
