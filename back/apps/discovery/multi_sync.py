@@ -357,9 +357,9 @@ def import_business_candidate(
     user: User,
     publish: bool = True,
 ) -> Business:
-    """Transforme un candidat validÃ© en Business (brouillon ou publiÃ©)."""
+    """Transforme un candidat validé en Business (brouillon ou publié)."""
     if candidate.category_id is None or candidate.commune_id is None:
-        raise ValueError("Commune et catÃ©gorie requises pour importer un commerce")
+        raise ValueError("Commune et catégorie requises pour importer un commerce")
     business = candidate.matched_business
     if business is None:
         business = Business(
