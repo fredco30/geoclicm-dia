@@ -162,6 +162,13 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        // iOS demande /apple-touch-icon.png à la racine, quelle que soit
+        // la balise ; le fichier est rangé dans /icons/.
+        source: "/apple-touch-icon.png",
+        destination: "/icons/apple-touch-icon.png",
+        permanent: true,
+      },
+      {
         source: "/annuaire",
         destination: "/commerces",
         permanent: true,

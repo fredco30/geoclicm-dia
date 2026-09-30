@@ -34,6 +34,8 @@ import type {
   WeatherResponse,
 } from "@/types/api";
 
+import { revalidateAfterWrite } from "@/lib/revalidate-actions";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
 class ApiError extends Error {
@@ -82,7 +84,7 @@ export async function apiFetch(
   init: RequestInit = {},
 ): Promise<Response> {
   const url = `${API_URL}${path}`;
-  return fetch(url, {
+  const res = await fetch(url, {
     ...init,
     credentials: "include",
     headers: {
@@ -93,6 +95,13 @@ export async function apiFetch(
       ...init.headers,
     },
   });
+  // Écriture réussie depuis le navigateur : invalide le cache des pages
+  // publiques concernées (sans bloquer ni faire échouer l'appel).
+  const method = (init.method ?? "GET").toUpperCase();
+  if (res.ok && method !== "GET" && typeof window !== "undefined") {
+    revalidateAfterWrite(path.split("?")[0]).catch(() => {});
+  }
+  return res;
 }
 
 // ============================================================================

@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api";
 import { ArticleBody } from "@/components/articles/article-body";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { ShareButtons } from "@/components/articles/share-buttons";
+import { ArticleViewTracker } from "@/components/articles/article-view-tracker";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { formatDate } from "@/lib/utils";
 import type { ArticleDetail } from "@/types/api";
@@ -65,6 +66,7 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-[68ch] px-4 py-6 sm:py-12">
+      <ArticleViewTracker slug={article.slug} />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-600" aria-label="Fil d'Ariane">
         <Link href="/" className="inline-flex items-center gap-1 hover:text-[#1a4d6e]">
