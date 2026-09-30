@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
 type Props = {
-  searchParams: Promise<{ plan?: string; checkout?: string }>;
+  searchParams: Promise<{ plan?: string; checkout?: string; business?: string }>;
 };
 
 async function fetchMyBusinesses(): Promise<AdminBusinessDetail[]> {
@@ -41,8 +41,10 @@ const PLAN_LABEL: Record<string, string> = {
 export default async function AbonnementPage({ searchParams }: Props) {
   const sp = await searchParams;
   const businesses = await fetchMyBusinesses();
-  // Pour la v1 : 1 user = 1 fiche → on prend la 1ère
-  const business = businesses[0];
+  // Un abonnement est rattaché à UNE fiche : ?business=<id> choisit la
+  // fiche, la première par défaut.
+  const business =
+    businesses.find((b) => String(b.id) === sp.business) ?? businesses[0];
 
   if (!business) {
     return (
@@ -85,9 +87,29 @@ export default async function AbonnementPage({ searchParams }: Props) {
       <h1 className="font-serif text-2xl font-semibold text-slate-900 sm:text-3xl">
         Mon abonnement
       </h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Pour la fiche : <span className="font-medium">{business.name}</span>
-      </p>
+      {businesses.length > 1 ? (
+        <nav aria-label="Choix de la fiche" className="mt-3 flex flex-wrap gap-2">
+          {businesses.map((b) => (
+            <Link
+              key={b.id}
+              href={`/advertiser/abonnement?business=${b.id}${sp.plan ? `&plan=${sp.plan}` : ""}`}
+              aria-current={b.id === business.id ? "page" : undefined}
+              className={`rounded-full px-3 py-1 text-sm ring-1 ${
+                b.id === business.id
+                  ? "bg-[#1a4d6e] text-white ring-[#1a4d6e]"
+                  : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {b.name}
+              <span className="ml-1 opacity-70">· {PLAN_LABEL[b.plan]?.split(" ")[0] ?? b.plan}</span>
+            </Link>
+          ))}
+        </nav>
+      ) : (
+        <p className="mt-1 text-sm text-slate-600">
+          Pour la fiche : <span className="font-medium">{business.name}</span>
+        </p>
+      )}
 
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">

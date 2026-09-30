@@ -15,10 +15,12 @@ remontent au Business via cette metadata.
 """
 from __future__ import annotations
 
+import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.conf import settings
+from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from django.utils import timezone
 from djstripe.signals import WEBHOOK_SIGNALS
@@ -26,6 +28,8 @@ from djstripe.signals import WEBHOOK_SIGNALS
 from apps.directory.models import Business
 
 from .models import Invoice, Subscription
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from djstripe.models import Customer, Event
@@ -236,3 +240,25 @@ def handle_invoice_payment_failed(sender, event: Event, **kwargs) -> None:
     Subscription.objects.filter(stripe_subscription_id=stripe_sub_id).update(
         status=Subscription.Status.PAST_DUE,
     )
+
+
+# ============================================================================
+# Tâche périodique : expiration des plans (créée au migrate)
+# ============================================================================
+
+@receiver(post_migrate)
+def ensure_plan_expiry_schedule(sender, **kwargs) -> None:
+    if getattr(sender, "name", None) != "apps.advertisers":
+        return
+    try:
+        from django_celery_beat.models import IntervalSchedule, PeriodicTask
+
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1, period=IntervalSchedule.DAYS
+        )
+        PeriodicTask.objects.get_or_create(
+            name="Annonceurs — expiration des plans échus (quotidien)",
+            defaults={"interval": schedule, "task": "advertisers.expire_business_plans"},
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Création de la tâche d'expiration des plans impossible : %s", exc)
