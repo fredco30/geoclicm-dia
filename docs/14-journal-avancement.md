@@ -1009,3 +1009,65 @@ l'annuaire commerces.
 
 Verifie en prod : `/gastronomie` 200 (77 tables), Pizzeria ? 15, Fruits de mer ? 13,
 annuaire sans gastronomie ? 163. tsc 0 erreur. Build + restart Django/Next OK.
+
+
+## 30 septembre 2026 — Audit complet et correctifs (branche `claude/determined-cerf-te5pvx`)
+
+Audit lecture seule (fonctionnel, sécurité, UX, SEO, exploitation), puis
+correction de la quasi-totalité des points en 9 commits. **Non déployé** :
+Fred merge puis déploie.
+
+| Commit | Contenu |
+|---|---|
+| `2f5ec10` | Listes admin complètes (plus de coupure à 20), comptes désactivés éditables, carrousel d'accueil sans saut de page |
+| `5a2e33b` | Navigation admin/annonceur sur mobile, lien actif, boîtes « À valider » avec compteurs (`/api/admin/pending-counts/`) |
+| `226c0df` | Sécurité : `is_superuser` non modifiable via l'API, `is_staff` réservé aux superusers, mots de passe validés ; campagne annonceur modifiée = repasse en validation et ne peut pas viser la fiche d'un autre ; IP lue via `X-Real-IP` + plafond quotidien de l'assistant ; blocage 15 min après 10 échecs de connexion |
+| `64ec1e7` | Vhost Nginx : `/r/` et `/stripe/` vers Django ; checkout refusé si abonnement en cours ; erreurs Stripe lisibles ; choix de la fiche sur Abonnement ; tâche quotidienne d'expiration des plans |
+| `453227d` | Agenda : fiche d'un événement passé accessible (état « terminé »), filtre de dates sur une même occurrence |
+| `dba5855` | Cache public invalidé après toute sauvegarde admin (Server Action `revalidateAfterWrite`), vraies vues d'articles, pages 404 / erreur / chargement, icône Apple |
+| `815c504` | Rubriques dans l'en-tête et le menu mobile, barre mobile Accueil/Agenda/Commerces/Assistant, `/tarifs` et politique de confidentialité alignés sur le réel, API publique sans email du propriétaire ni dates d'abonnement, purge des conversations > 12 mois |
+| `60bcffb` | Sitemap complet (fiches commerces et annonces incluses), JSON-LD NewsArticle/Event/Place, CI GitHub Actions, sauvegarde des médias + copie hors serveur optionnelle |
+| `f871a6f` | Libellés français corrompus (« Ã€ vÃ©rifier ») réparés ; migrations de libellés sans SQL |
+
+Vérifié : 128 tests Django (dont 25 nouveaux) sur PostgreSQL 16 + PostGIS +
+pgvector ; `makemigrations --check` propre ; tsc + eslint 0 erreur ; build
+Next OK ; rendus mobile/desktop contrôlés avec Playwright sur API simulée ;
+vhost validé par `nginx -t`.
+
+### Déploiement
+
+```bash
+cd /var/www/geoclicmedia && git pull && cd back && source .venv/bin/activate && python manage.py migrate && python manage.py seed_listing_categories && cd ../front && rm -rf .next && NODE_OPTIONS="--max-old-space-size=4096" npm run build && sudo systemctl restart geoclicmedia-django geoclicmedia-next geoclicmedia-celery-worker geoclicmedia-celery-beat
+```
+
+Puis, séparément (voir en-tête du fichier vhost pour certbot) :
+
+```bash
+sudo cp /var/www/geoclicmedia/deploy/nginx-media.geoclic.fr.conf /etc/nginx/sites-available/media.geoclic.fr && sudo certbot --nginx -d media.geoclic.fr --reinstall && sudo nginx -t && sudo systemctl reload nginx
+```
+
+Avant de copier le vhost, comparer avec la version en place
+(`diff`) : si `/r/` et `/stripe/` y sont déjà routés vers Django, seule la
+partie en-têtes `/media/` change.
+
+Contrôles après déploiement : `curl -sI https://media.geoclic.fr/r/1/`
+(302 ou 404 JSON Django, pas une page Next), webhook de test Stripe
+(dashboard → « Envoyer un événement test ») en 200, `/sitemap.xml` contient
+des `/commerces/<slug>`.
+
+### Nouveaux réglages `.env` (facultatifs, valeurs par défaut sûres)
+
+`ASSISTANT_GLOBAL_DAILY_LIMIT=2000`, `LOGIN_MAX_FAILURES=10`,
+`LOGIN_FAILURE_WINDOW_SECONDS=900`. Copie hors serveur des sauvegardes :
+`BACKUP_REMOTE=...` dans `/etc/default/geoclicmedia-backup`.
+
+### Non traité (décision de Fred requise)
+
+- Modération des modifications d'une fiche déjà publiée par un annonceur
+  (aujourd'hui en ligne immédiatement).
+- Identité visuelle : logo définitif, remplacement des couleurs codées en dur
+  par les tokens `globals.css`, allègement de la police Fraunces.
+- Tutoiement conservé dans l'espace annonceur (le site public vouvoie).
+- `/tarifs` annonce la gratuité pilote alors que les boutons ouvrent Stripe
+  (mode test) : trancher le message commercial.
+- Mise à niveau d'Ubuntu 25.04 (hors support) — opération serveur.
