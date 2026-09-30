@@ -486,3 +486,14 @@ export type AdminUsefulContactPayload = {
 };
 
 export type { ArticleStatus };
+
+/**
+ * Candidats « À valider » par boîte (statuts à vérifier + incomplet).
+ * Endpoint : GET /api/admin/pending-counts/
+ */
+export type PendingCounts = {
+  events: number;
+  places: number;
+  businesses: number;
+  listings: number;
+};

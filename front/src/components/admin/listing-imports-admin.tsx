@@ -73,7 +73,7 @@ export function ListingImportsAdmin({
         <Link href="/admin/annonces" className="text-sm text-slate-600">
           ← Annonces
         </Link>
-        <h1 className="text-xl font-bold">Candidats Annonces</h1>
+        <h1 className="text-xl font-bold">À valider — Annonces</h1>
         <p className="text-sm text-slate-500">
           Annonces (emploi…) détectées automatiquement par l&apos;assistant dans le corpus
           crawlé. Chaque annonce doit être vérifiée avant publication : rien n&apos;est

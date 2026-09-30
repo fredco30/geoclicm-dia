@@ -20,5 +20,6 @@ urlpatterns = [
         auth_views.AdvertiserRegisterView.as_view(),
         name="auth-register-advertiser",
     ),
+    path("admin/pending-counts/", views.pending_counts, name="admin-pending-counts"),
     path("", include(router.urls)),
 ]

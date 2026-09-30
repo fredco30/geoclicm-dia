@@ -184,7 +184,7 @@ export function EventImportsAdmin({
         <Link href="/admin/agenda" className="text-sm text-slate-600">
           ← Agenda
         </Link>
-        <h1 className="text-xl font-bold">Candidats Agenda</h1>
+        <h1 className="text-xl font-bold">À valider — Agenda</h1>
         <p className="text-sm text-slate-500">
           Les évènements terminés avant le crawl sont conservés comme expirés,
           mais ne sont jamais proposés à la validation.

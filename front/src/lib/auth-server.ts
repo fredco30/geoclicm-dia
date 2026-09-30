@@ -4,6 +4,7 @@
  * Lecture des cookies de la requête + forward vers Django pour valider la session.
  */
 import { cookies } from "next/headers";
+import type { PendingCounts } from "@/types/admin";
 import type { CurrentUser, Paginated } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
@@ -74,4 +75,17 @@ export async function fetchAllPages<T>(path: string): Promise<T[] | null> {
     if (!data.next || items.length >= data.count) break;
   }
   return items;
+}
+
+/** Compteurs « À valider » du back-office ; null si l'API ne répond pas. */
+export async function fetchPendingCounts(): Promise<PendingCounts | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/pending-counts/`, {
+      headers: { Cookie: await getCookieHeader(), Accept: "application/json" },
+      cache: "no-store",
+    });
+    return res.ok ? ((await res.json()) as PendingCounts) : null;
+  } catch {
+    return null;
+  }
 }

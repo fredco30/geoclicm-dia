@@ -198,7 +198,7 @@ export function BusinessImportsAdmin({
         <Link href="/admin/directory/businesses" className="text-sm text-slate-600">
          ← Commerçants
         </Link>
-        <h1 className="text-xl font-bold">Candidats Commerçants</h1>
+        <h1 className="text-xl font-bold">À valider — Commerçants</h1>
         <p className="text-sm text-slate-500">
           Commerces et services détectés automatiquement par l&apos;assistant dans le
           corpus crawlé. Chaque fiche doit être vérifiée avant publication : rien

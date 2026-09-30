@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, Edit, Eye } from "lucide-react";
-import { fetchAllPages } from "@/lib/auth-server";
+import { fetchAllPages, fetchPendingCounts } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { formatDate } from "@/lib/utils";
@@ -17,11 +17,48 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
   archived: { label: "Archivé", cls: "bg-slate-100 text-slate-500" },
 };
 
+const PENDING_BOXES = [
+  { key: "events", label: "Agenda", href: "/admin/agenda/imports" },
+  { key: "places", label: "Découvrir", href: "/admin/decouvrir/imports" },
+  { key: "businesses", label: "Commerçants", href: "/admin/directory/imports" },
+  { key: "listings", label: "Annonces", href: "/admin/annonces/imports" },
+] as const;
+
 export default async function AdminDashboard() {
-  const articles = await fetchAllArticles();
+  const [articles, pending] = await Promise.all([fetchAllArticles(), fetchPendingCounts()]);
+  const pendingTotal = pending
+    ? PENDING_BOXES.reduce((sum, box) => sum + pending[box.key], 0)
+    : 0;
 
   return (
     <div>
+      {pending && pendingTotal > 0 ? (
+        <section className="mb-6" aria-labelledby="pending-title">
+          <h2 id="pending-title" className="mb-2 text-sm font-semibold text-slate-700">
+            À valider{" "}
+            <span className="font-normal text-slate-500">({pendingTotal})</span>
+          </h2>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {PENDING_BOXES.map((box) => (
+              <Link
+                key={box.key}
+                href={box.href}
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-[#1a4d6e]/40 hover:shadow"
+              >
+                <div
+                  className={`text-2xl font-bold ${
+                    pending[box.key] > 0 ? "text-[#a8533a]" : "text-slate-300"
+                  }`}
+                >
+                  {pending[box.key]}
+                </div>
+                <div className="text-xs text-slate-600">{box.label}</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">
           Articles{" "}

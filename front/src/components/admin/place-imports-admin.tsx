@@ -159,7 +159,7 @@ export function PlaceImportsAdmin({
         <Link href="/admin/decouvrir" className="text-sm text-slate-600">
           ← Découvrir
         </Link>
-        <h1 className="text-xl font-bold">Candidats Découvrir</h1>
+        <h1 className="text-xl font-bold">À valider — Découvrir</h1>
         <p className="text-sm text-slate-500">
           Lieux détectés automatiquement par l&apos;assistant dans le corpus
           crawlé. Chaque lieu doit être vérifié avant publication : rien

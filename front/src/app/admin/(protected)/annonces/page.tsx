@@ -42,7 +42,7 @@ export default async function ListingsAdminPage() {
         <div className="flex gap-2">
           <Link href="/admin/annonces/imports">
             <Button variant="secondary" size="sm">
-              Candidats
+              À valider
             </Button>
           </Link>
           <Link href="/admin/annonces/new">
