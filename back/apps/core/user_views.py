@@ -14,9 +14,12 @@ Endpoint custom :
 """
 from __future__ import annotations
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Count, Q
 from rest_framework import permissions, serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -52,9 +55,36 @@ class UserAdminSerializer(serializers.ModelSerializer):
             "business_count",
             "date_joined", "last_login",
         )
+        # is_superuser ne se modifie jamais via l'API (createsuperuser en CLI).
         read_only_fields = (
             "id", "full_name", "business_count", "date_joined", "last_login",
+            "is_superuser",
         )
+
+    def _requester_is_superuser(self) -> bool:
+        request = self.context.get("request")
+        return bool(request and request.user.is_superuser)
+
+    def validate_password(self, value: str) -> str:
+        if value:
+            try:
+                validate_password(value, user=self.instance)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(list(exc.messages)) from exc
+        return value
+
+    def validate(self, attrs):
+        if not self._requester_is_superuser():
+            if self.instance is not None and self.instance.is_superuser:
+                raise PermissionDenied(
+                    "Seul un superuser peut modifier un compte superuser."
+                )
+            current_staff = self.instance.is_staff if self.instance else False
+            if "is_staff" in attrs and attrs["is_staff"] != current_staff:
+                raise serializers.ValidationError(
+                    {"is_staff": "Seul un superuser peut modifier l'accès Django Admin."}
+                )
+        return attrs
 
     def get_full_name(self, obj: User) -> str:
         return obj.get_full_name() or obj.username
@@ -175,6 +205,8 @@ class UserAdminViewSet(viewsets.ModelViewSet):
             raise serializers.ValidationError(
                 "Tu ne peux pas supprimer ton propre compte."
             )
+        if instance.is_superuser and not self.request.user.is_superuser:
+            raise PermissionDenied("Seul un superuser peut supprimer un compte superuser.")
         instance.delete()
 
     @action(detail=False, methods=["get"], url_path="counts")

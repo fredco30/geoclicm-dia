@@ -267,6 +267,12 @@ SHARED_CRAWL_FRESHNESS_SECONDS = env.int(
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
 ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default=20)
+# Plafond global (toutes IP) de questions par jour ; 0 = désactivé.
+ASSISTANT_GLOBAL_DAILY_LIMIT = env.int("ASSISTANT_GLOBAL_DAILY_LIMIT", default=2000)
+
+# Anti force brute sur /api/auth/login/ : échecs max par IP sur la fenêtre.
+LOGIN_MAX_FAILURES = env.int("LOGIN_MAX_FAILURES", default=10)
+LOGIN_FAILURE_WINDOW_SECONDS = env.int("LOGIN_FAILURE_WINDOW_SECONDS", default=15 * 60)
 
 # --- IA Assist (génération admin & annonceurs, app `ai_assist`) ---
 # Distinct de l'assistant public ci-dessus : ces réglages contrôlent les

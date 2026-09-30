@@ -21,7 +21,7 @@ from rest_framework.views import APIView
 
 from .models import AssistantConversation, AssistantMessage, CrawlSource
 from .prompts import SYSTEM_PROMPT, build_user_message
-from .rate_limit import check_rate_limit, get_client_ip
+from .rate_limit import check_global_daily_limit, check_rate_limit, get_client_ip
 from .serializers import (
     AskRequestSerializer,
     AskResponseSerializer,
@@ -60,6 +60,16 @@ class AssistantAskView(APIView):
                     "detail": "Trop de questions ces dernières minutes. "
                               "Réessayez dans 1 heure.",
                     "code": "rate_limit",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        if not check_global_daily_limit():
+            logger.warning("Plafond global quotidien de l'assistant atteint")
+            return Response(
+                {
+                    "detail": "L'assistant a atteint sa limite du jour. "
+                              "Réessayez demain.",
+                    "code": "daily_limit",
                 },
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )

@@ -23,6 +23,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from . import login_throttle
 from .models import User
 
 
@@ -63,6 +64,11 @@ class LoginView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        if login_throttle.is_blocked(request):
+            return Response(
+                {"detail": "Trop de tentatives de connexion. Réessayez dans 15 minutes."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -72,6 +78,7 @@ class LoginView(APIView):
             password=serializer.validated_data["password"],
         )
         if user is None:
+            login_throttle.record_failure(request)
             return Response(
                 {"detail": "Identifiants invalides."},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -82,6 +89,7 @@ class LoginView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        login_throttle.reset(request)
         login(request, user)
         return Response(UserMeSerializer(user).data)
 

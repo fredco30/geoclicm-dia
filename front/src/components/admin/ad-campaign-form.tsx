@@ -560,9 +560,9 @@ export function AdCampaignForm({
               Validation
             </legend>
             <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
-              ℹ️ Ta campagne est créée en attente de validation par
-              l&apos;équipe geoclicMédia. Une fois validée et le paiement
-              reçu, elle commencera à diffuser sur les pages ciblées.
+              {isEdit
+                ? "ℹ️ Toute modification repasse la campagne en attente de validation : sa diffusion est suspendue jusqu'à la relecture par l'équipe geoclicMédia."
+                : "ℹ️ Ta campagne est créée en attente de validation par l'équipe geoclicMédia. Une fois validée et le paiement reçu, elle commencera à diffuser sur les pages ciblées."}
             </p>
           </fieldset>
         )}
