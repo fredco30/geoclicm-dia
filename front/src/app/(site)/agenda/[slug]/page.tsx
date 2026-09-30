@@ -32,6 +32,11 @@ export default async function EventPage({ params }: Props) {
   try { event = await api.events.detail(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
   const upcoming = event.occurrences.filter((item) => new Date(item.ends_at) >= new Date()).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  // Événement terminé : la fiche reste consultable, avec la dernière date.
+  const isPast = upcoming.length === 0;
+  const lastOccurrences = isPast
+    ? [...event.occurrences].sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 1)
+    : [];
 
   return (
     <article className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
@@ -43,9 +48,10 @@ export default async function EventPage({ params }: Props) {
           <p className="mt-4 text-lg leading-relaxed text-slate-700">{event.short_description}</p>
         </div>
         <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900">Prochaines dates</h2>
-          <div className="mt-3 space-y-3">{upcoming.map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
-          <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a4d6e] underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>
+          <h2 className="font-semibold text-slate-900">{isPast ? "Événement terminé" : "Prochaines dates"}</h2>
+          {isPast ? <p className="mt-2 text-sm text-slate-600">Cet événement a eu lieu. <Link href="/agenda" className="text-[#1a4d6e] underline">Voir l’agenda à venir</Link></p> : null}
+          <div className="mt-3 space-y-3">{(isPast ? lastOccurrences : upcoming).map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
+          {isPast ? null : <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a4d6e] underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>}
         </aside>
       </header>
 

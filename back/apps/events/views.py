@@ -33,25 +33,35 @@ from .serializers import (
 )
 
 
-def _public_events_queryset():
-    now = timezone.now()
+def _published_events_queryset():
+    """Événements publiés, passés compris (fiche détail, ICS)."""
     return (
-        Event.objects.filter(
-            status=Event.Status.PUBLISHED,
-            occurrences__status=EventOccurrence.Status.SCHEDULED,
-            occurrences__ends_at__gte=now,
-        )
+        Event.objects.filter(status=Event.Status.PUBLISHED)
         .select_related("category", "commune", "business", "source")
         .prefetch_related("occurrences")
-        .annotate(
-            next_start=Min(
-                "occurrences__starts_at",
-                filter=Q(
-                    occurrences__status=EventOccurrence.Status.SCHEDULED,
-                    occurrences__ends_at__gte=now,
-                ),
-            ),
-        )
+    )
+
+
+def _public_events_queryset(start: datetime | None = None, end: datetime | None = None):
+    """Événements publiés ayant au moins une occurrence à venir.
+
+    Avec ``start``/``end``, c'est une MÊME occurrence qui doit tomber dans
+    la plage : toutes les conditions portent sur une seule jointure (des
+    filter() séparés sur une relation multiple créent des jointures
+    distinctes et laissaient passer un marché hebdomadaire sans date dans
+    la plage). ``next_start`` est la première occurrence de la plage.
+    """
+    now = timezone.now()
+    occurrence_q = Q(
+        occurrences__status=EventOccurrence.Status.SCHEDULED,
+        occurrences__ends_at__gte=max(now, start) if start else now,
+    )
+    if end:
+        occurrence_q &= Q(occurrences__starts_at__lte=end)
+    return (
+        _published_events_queryset()
+        .filter(occurrence_q)
+        .annotate(next_start=Min("occurrences__starts_at", filter=occurrence_q))
         .distinct()
     )
 
@@ -61,9 +71,30 @@ class EventPublicViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.AllowAny,)
     ordering = ("next_start",)
 
-    def get_queryset(self):
-        qs = _public_events_queryset()
+    def _date_range(self) -> tuple[datetime | None, datetime | None]:
         params = self.request.query_params
+        start = end = None
+        if date_from := parse_date(params.get("from", "")):
+            start = timezone.make_aware(datetime.combine(date_from, time.min))
+        if date_to := parse_date(params.get("to", "")):
+            end = timezone.make_aware(datetime.combine(date_to, time.max))
+        return start, end
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["occurrence_range"] = self._date_range()
+        return context
+
+    def get_queryset(self):
+        params = self.request.query_params
+        if self.action == "retrieve":
+            # Une fiche reste accessible une fois l'événement passé (liens
+            # partagés, pages indexées) ; le front affiche « terminé ».
+            # next_start reste annoté pour le tri par défaut (OrderingFilter).
+            return _published_events_queryset().annotate(
+                next_start=Min("occurrences__starts_at")
+            )
+        qs = _public_events_queryset(*self._date_range())
         kind = params.get("kind")
         if kind in Event.Kind.values:
             qs = qs.filter(kind=kind)
@@ -71,12 +102,6 @@ class EventPublicViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(category__slug=params["category"])
         if params.get("commune"):
             qs = qs.filter(commune__slug=params["commune"])
-        if date_from := parse_date(params.get("from", "")):
-            start = timezone.make_aware(datetime.combine(date_from, time.min))
-            qs = qs.filter(occurrences__ends_at__gte=start)
-        if date_to := parse_date(params.get("to", "")):
-            end = timezone.make_aware(datetime.combine(date_to, time.max))
-            qs = qs.filter(occurrences__starts_at__lte=end)
         return qs.order_by("next_start", "title").distinct()
 
     def get_serializer_class(self):
@@ -173,7 +198,7 @@ class EventCategoryAdminViewSet(viewsets.ModelViewSet):
 
 
 def event_ics(request, slug: str):
-    event = _public_events_queryset().filter(slug=slug).first()
+    event = _published_events_queryset().filter(slug=slug).first()
     if event is None:
         return HttpResponse(status=404)
 
