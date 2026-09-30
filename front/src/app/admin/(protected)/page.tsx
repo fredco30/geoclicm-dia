@@ -1,22 +1,13 @@
 import Link from "next/link";
 import { Plus, Edit, Eye } from "lucide-react";
-import { getCookieHeader } from "@/lib/auth-server";
+import { fetchAllPages } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { formatDate } from "@/lib/utils";
-import type { ArticleListItem, Paginated } from "@/types/api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
+import type { ArticleListItem } from "@/types/api";
 
 async function fetchAllArticles(): Promise<ArticleListItem[]> {
-  const cookieHeader = await getCookieHeader();
-  const res = await fetch(`${API_URL}/api/articles/?ordering=-created_at`, {
-    headers: { Cookie: cookieHeader, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  const data = (await res.json()) as Paginated<ArticleListItem>;
-  return data.results;
+  return (await fetchAllPages<ArticleListItem>("/api/articles/?ordering=-created_at")) ?? [];
 }
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {

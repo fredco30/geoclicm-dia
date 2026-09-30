@@ -4,7 +4,7 @@
  * Lecture des cookies de la requête + forward vers Django pour valider la session.
  */
 import { cookies } from "next/headers";
-import type { CurrentUser } from "@/types/api";
+import type { CurrentUser, Paginated } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
@@ -47,4 +47,31 @@ export async function getCookieHeader(): Promise<string> {
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
     .join("; ");
+}
+
+/**
+ * Charge toutes les pages d'une liste DRF paginée avec la session courante.
+ *
+ * Les listes admin ne doivent pas s'arrêter à la première page (20
+ * éléments). Pages de 200 (plafond API) ; garde-fou à 50 pages. Retourne
+ * null si l'API répond en erreur.
+ */
+export async function fetchAllPages<T>(path: string): Promise<T[] | null> {
+  const cookieHeader = await getCookieHeader();
+  const separator = path.includes("?") ? "&" : "?";
+  const items: T[] = [];
+  for (let page = 1; page <= 50; page++) {
+    const res = await fetch(
+      `${API_URL}${path}${separator}page=${page}&page_size=200`,
+      {
+        headers: { Cookie: cookieHeader, Accept: "application/json" },
+        cache: "no-store",
+      },
+    );
+    if (!res.ok) return page === 1 ? null : items;
+    const data = (await res.json()) as Paginated<T>;
+    items.push(...data.results);
+    if (!data.next || items.length >= data.count) break;
+  }
+  return items;
 }

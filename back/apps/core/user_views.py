@@ -138,6 +138,11 @@ class UserAdminViewSet(viewsets.ModelViewSet):
             User.objects.all()
             .annotate(business_count=Count("businesses"))
         )
+        # Filtres, recherche et tri ne concernent que la liste : le détail
+        # (édition, réactivation, suppression) doit trouver aussi les comptes
+        # désactivés, exclus par le filtre par défaut.
+        if self.action != "list":
+            return qs
 
         # Filtre par rôle / statut
         role = (self.request.query_params.get("role") or "").strip()

@@ -34,13 +34,18 @@ export function UneCarousel({ articles }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const userInteractionUntil = useRef<number>(0);
+  // Fenêtre pendant laquelle les événements scroll viennent de l'auto-advance
+  // (et non d'un swipe utilisateur).
+  const programmaticScrollUntil = useRef<number>(0);
 
   const total = articles.length;
   const canCycle = total > 1;
 
-  // Auto-advance — désactivé si pause manuelle, hover, ou interaction récente.
+  // Auto-advance — désactivé si pause manuelle, hover, interaction récente
+  // ou préférence système « réduire les animations ».
   useEffect(() => {
     if (!canCycle || isPaused || hovered) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const handle = setInterval(() => {
       // Si l'utilisateur a scrollé manuellement il y a moins de 12s,
       // on suspend l'auto-advance pour ne pas le contredire.
@@ -51,14 +56,18 @@ export function UneCarousel({ articles }: Props) {
   }, [canCycle, isPaused, hovered, total]);
 
   // Scroll programmatique vers le slide courant à chaque changement d'index.
+  // On fait défiler uniquement le conteneur horizontal : scrollIntoView
+  // faisait aussi défiler la fenêtre et ramenait la page vers le haut
+  // quand le carrousel était hors écran.
   useEffect(() => {
+    const container = containerRef.current;
     const card = cardRefs.current[currentIndex];
-    if (!card) return;
-    card.scrollIntoView({
-      behavior: "smooth",
-      inline: "start",
-      block: "nearest",
-    });
+    if (!container || !card) return;
+    const left = card.offsetLeft - container.offsetLeft;
+    if (Math.abs(container.scrollLeft - left) < 2) return;
+    programmaticScrollUntil.current = Date.now() + 1000;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    container.scrollTo({ left, behavior: reduceMotion ? "auto" : "smooth" });
   }, [currentIndex]);
 
   // Synchronisation : si l'utilisateur scrolle manuellement (swipe mobile),
@@ -71,6 +80,7 @@ export function UneCarousel({ articles }: Props) {
 
     let scrollTimer: number | null = null;
     const onScroll = () => {
+      if (Date.now() < programmaticScrollUntil.current) return;
       userInteractionUntil.current = Date.now() + 12_000;
       if (scrollTimer !== null) window.clearTimeout(scrollTimer);
       scrollTimer = window.setTimeout(() => {
@@ -80,7 +90,7 @@ export function UneCarousel({ articles }: Props) {
         let bestDist = Infinity;
         cardRefs.current.forEach((card, i) => {
           if (!card) return;
-          const dist = Math.abs(card.offsetLeft - containerLeft);
+          const dist = Math.abs(card.offsetLeft - container.offsetLeft - containerLeft);
           if (dist < bestDist) {
             bestDist = dist;
             bestIdx = i;

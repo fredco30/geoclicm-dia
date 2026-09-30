@@ -1,22 +1,10 @@
-import { getCookieHeader } from "@/lib/auth-server";
+import { fetchAllPages } from "@/lib/auth-server";
 import { api } from "@/lib/api";
 import { ArticleForm } from "@/components/admin/article-form";
-import type { BusinessListItem, Paginated } from "@/types/api";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
+import type { BusinessListItem } from "@/types/api";
 
 async function fetchBusinessesAuth(): Promise<BusinessListItem[]> {
-  const cookieHeader = await getCookieHeader();
-  const res = await fetch(
-    `${API_URL}/api/businesses/?ordering=name&page_size=200`,
-    {
-      headers: { Cookie: cookieHeader, Accept: "application/json" },
-      cache: "no-store",
-    },
-  );
-  if (!res.ok) return [];
-  const data = (await res.json()) as Paginated<BusinessListItem>;
-  return data.results;
+  return (await fetchAllPages<BusinessListItem>("/api/businesses/?ordering=name")) ?? [];
 }
 
 export default async function NewArticlePage() {

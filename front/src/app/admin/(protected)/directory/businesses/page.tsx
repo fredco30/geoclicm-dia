@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus, Edit, Eye, EyeOff, Star } from "lucide-react";
-import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
+import { fetchAllPages, getCurrentUser } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import type { Paginated } from "@/types/api";
 import type { AdminBusinessListItem } from "@/types/admin";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
 const PLAN_LABELS: Record<string, { label: string; className: string }> = {
   free: { label: "Gratuit", className: "bg-slate-100 text-slate-700" },
@@ -16,14 +13,7 @@ const PLAN_LABELS: Record<string, { label: string; className: string }> = {
 };
 
 async function fetchBusinesses(): Promise<AdminBusinessListItem[]> {
-  const cookieHeader = await getCookieHeader();
-  const res = await fetch(`${API_URL}/api/businesses/?ordering=name`, {
-    headers: { Cookie: cookieHeader, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  const data = (await res.json()) as Paginated<AdminBusinessListItem>;
-  return data.results;
+  return (await fetchAllPages<AdminBusinessListItem>("/api/businesses/?ordering=name")) ?? [];
 }
 
 export default async function BusinessesPage() {
