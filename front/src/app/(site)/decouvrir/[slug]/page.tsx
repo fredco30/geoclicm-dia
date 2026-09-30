@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd, compact } from "@/components/seo/json-ld";
 import { notFound } from "next/navigation";
 import { Accessibility, Clock, ExternalLink, Gauge, MapPin, Sun } from "lucide-react";
 import { ArticleBody } from "@/components/articles/article-body";
@@ -12,7 +13,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> { t
 export default async function PlacePage({ params }: Props) {
   let place: PlaceDetail; try { place = await api.discovery.detail((await params).slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
   const osmUrl = place.latitude != null && place.longitude != null ? `https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}#map=16/${place.latitude}/${place.longitude}` : null;
-  return <article className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10"><Link href="/decouvrir" className="text-sm text-slate-600">← Découvrir</Link><header className="mt-5"><span className="rounded-full px-2 py-1 text-xs font-medium text-white" style={{ backgroundColor: place.category.color }}>{place.category.name}</span><h1 className="mt-3 font-serif text-3xl font-semibold sm:text-5xl">{place.title}</h1><p className="mt-4 max-w-3xl text-lg leading-relaxed text-slate-700">{place.short_description}</p></header>{place.cover_image?.large ? (
+  const jsonLd = compact({
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    name: place.title,
+    description: place.short_description,
+    image: place.cover_image?.large ? [place.cover_image.large] : undefined,
+    address: place.address ? { "@type": "PostalAddress", streetAddress: place.address, addressCountry: "FR" } : undefined,
+    geo: place.latitude != null && place.longitude != null ? { "@type": "GeoCoordinates", latitude: place.latitude, longitude: place.longitude } : undefined,
+  });
+  return <article className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10"><JsonLd data={jsonLd} /><Link href="/decouvrir" className="text-sm text-slate-600">← Découvrir</Link><header className="mt-5"><span className="rounded-full px-2 py-1 text-xs font-medium text-white" style={{ backgroundColor: place.category.color }}>{place.category.name}</span><h1 className="mt-3 font-serif text-3xl font-semibold sm:text-5xl">{place.title}</h1><p className="mt-4 max-w-3xl text-lg leading-relaxed text-slate-700">{place.short_description}</p></header>{place.cover_image?.large ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={place.cover_image.large} alt="" className="mt-8 max-h-[560px] w-full rounded-2xl object-cover" />
   ) : null}<div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr),280px]"><ArticleBody content={place.description} /><aside className="space-y-3 rounded-xl bg-slate-50 p-5 text-sm text-slate-700"><h2 className="font-semibold text-slate-900">Informations pratiques</h2><p className="flex gap-2"><MapPin className="h-4 w-4 shrink-0" /> {place.address || place.commune_name}</p>{place.duration ? <p className="flex gap-2"><Clock className="h-4 w-4" /> {place.duration}</p> : null}{place.difficulty ? <p className="flex gap-2"><Gauge className="h-4 w-4" /> {place.difficulty}</p> : null}{place.best_season ? <p className="flex gap-2"><Sun className="h-4 w-4" /> {place.best_season}</p> : null}{place.accessibility ? <p className="flex gap-2"><Accessibility className="h-4 w-4 shrink-0" /> {place.accessibility}</p> : null}{place.practical_info ? <p>{place.practical_info}</p> : null}{osmUrl ? <a href={osmUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#1a4d6e] underline">Voir sur la carte <ExternalLink className="h-3.5 w-3.5" /></a> : null}{place.official_url ? <a href={place.official_url} target="_blank" rel="noopener noreferrer" className="block text-[#1a4d6e] underline">Site officiel</a> : null}</aside></div><Related title="À lire" items={place.related_articles} base="/articles" /><Related title="Acteurs locaux" items={place.related_businesses} base="/commerces" /><Related title="À l’agenda" items={place.related_events} base="/agenda" /></article>;

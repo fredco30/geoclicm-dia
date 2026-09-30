@@ -8,6 +8,7 @@ import { ArticleBody } from "@/components/articles/article-body";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { ShareButtons } from "@/components/articles/share-buttons";
 import { ArticleViewTracker } from "@/components/articles/article-view-tracker";
+import { JsonLd, compact } from "@/components/seo/json-ld";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { formatDate } from "@/lib/utils";
 import type { ArticleDetail } from "@/types/api";
@@ -67,6 +68,21 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <article className="mx-auto max-w-[68ch] px-4 py-6 sm:py-12">
       <ArticleViewTracker slug={article.slug} />
+      <JsonLd
+        data={compact({
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          headline: article.title,
+          description: article.chapeau,
+          image: article.cover_image?.large ? [article.cover_image.large] : undefined,
+          datePublished: article.published_at ?? undefined,
+          dateModified: article.updated_at,
+          author: { "@type": "Person", name: article.author.full_name },
+          publisher: { "@type": "Organization", name: "geoclicMédia", url: siteUrl || undefined },
+          mainEntityOfPage: articleUrl,
+          articleSection: article.category.name,
+        })}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-600" aria-label="Fil d'Ariane">
         <Link href="/" className="inline-flex items-center gap-1 hover:text-[#1a4d6e]">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/json-ld";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
@@ -155,10 +156,7 @@ export default async function BusinessDetailPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
       {/* JSON-LD schema.org pour SEO local Google (Knowledge Panel, résultats riches) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       <header className="mb-8">
         <Link

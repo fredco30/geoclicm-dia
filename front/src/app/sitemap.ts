@@ -1,9 +1,37 @@
 import type { MetadataRoute } from "next";
-import { api } from "@/lib/api";
+import { api, apiGet } from "@/lib/api";
+import type { Paginated } from "@/types/api";
 
 export const revalidate = 3600; // sitemap rafraîchi 1 fois par heure
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://media.geoclic.fr";
+
+/** Parcourt toutes les pages d'une liste publique (200 par page, 25 pages max). */
+async function fetchAll<T>(path: string): Promise<T[]> {
+  const items: T[] = [];
+  const separator = path.includes("?") ? "&" : "?";
+  try {
+    for (let page = 1; page <= 25; page++) {
+      const data = await apiGet<Paginated<T>>(
+        `${path}${separator}page=${page}&page_size=200`,
+        { revalidate: 3600 },
+      );
+      items.push(...data.results);
+      if (!data.next) break;
+    }
+  } catch {
+    /* API indisponible : on garde ce qui a été chargé */
+  }
+  return items;
+}
+
+type WithSlug = { slug: string; updated_at?: string; published_at?: string | null; is_featured?: boolean };
+type ListingItem = { slug: string; category: { slug: string }; published_at: string | null };
+
+const LISTING_BASE: Record<string, string> = {
+  "offres-d-emploi": "/emploi",
+  "locations-annuelles": "/locations-annuelles",
+};
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Pages statiques publiques
@@ -11,14 +39,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/`, changeFrequency: "daily", priority: 1.0 },
     { url: `${SITE_URL}/articles`, changeFrequency: "daily", priority: 0.9 },
     { url: `${SITE_URL}/commerces`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/gastronomie`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/agenda`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/marches`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/decouvrir`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/emploi`, changeFrequency: "daily", priority: 0.6 },
+    { url: `${SITE_URL}/locations-annuelles`, changeFrequency: "daily", priority: 0.6 },
     { url: `${SITE_URL}/meteo`, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/numeros-utiles`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/demarches`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/tarifs`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${SITE_URL}/recherche`, changeFrequency: "weekly", priority: 0.5 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/mentions-legales`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/politique-confidentialite`, changeFrequency: "yearly", priority: 0.2 },
@@ -26,73 +56,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/suppression-donnees`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  // Articles publiés
-  let articleUrls: MetadataRoute.Sitemap = [];
-  try {
-    // On charge jusqu'à ~5 pages (100 articles) — suffisant en sprint 1.
-    // Pour de très gros volumes, paginer ou faire un endpoint dédié.
-    const data = await api.articles.list({ ordering: "-published_at" });
-    articleUrls = data.results.map((a) => ({
-      url: `${SITE_URL}/articles/${a.slug}`,
-      lastModified: a.updated_at ?? a.published_at ?? undefined,
-      changeFrequency: "monthly",
-      priority: a.is_featured ? 0.9 : 0.7,
-    }));
-  } catch {
-    /* API indisponible : on sert quand même le sitemap statique */
-  }
+  const [articles, events, places, businesses, listings, categories, communes] =
+    await Promise.all([
+      fetchAll<WithSlug>("/api/articles/?ordering=-published_at"),
+      fetchAll<WithSlug>("/api/events/"),
+      fetchAll<WithSlug>("/api/places/"),
+      fetchAll<WithSlug>("/api/businesses/?ordering=name"),
+      fetchAll<ListingItem>("/api/listings/"),
+      api.categories().catch(() => []),
+      api.communes().catch(() => []),
+    ]);
 
-  // Catégories
-  let categoryUrls: MetadataRoute.Sitemap = [];
-  try {
-    const cats = await api.categories();
-    categoryUrls = cats.map((c) => ({
+  const entries = (
+    items: WithSlug[],
+    base: string,
+    changeFrequency: "daily" | "weekly" | "monthly",
+    priority: number,
+  ): MetadataRoute.Sitemap =>
+    items.map((item) => ({
+      url: `${SITE_URL}${base}/${item.slug}`,
+      lastModified: item.updated_at ?? item.published_at ?? undefined,
+      changeFrequency,
+      priority: item.is_featured ? Math.min(priority + 0.2, 1) : priority,
+    }));
+
+  const listingUrls: MetadataRoute.Sitemap = listings.flatMap((listing) => {
+    const base = LISTING_BASE[listing.category?.slug];
+    return base
+      ? [{
+          url: `${SITE_URL}${base}/${listing.slug}`,
+          lastModified: listing.published_at ?? undefined,
+          changeFrequency: "weekly" as const,
+          priority: 0.5,
+        }]
+      : [];
+  });
+
+  return [
+    ...staticPages,
+    ...entries(articles, "/articles", "monthly", 0.7),
+    ...categories.map((c) => ({
       url: `${SITE_URL}/categories/${c.slug}`,
-      changeFrequency: "weekly",
+      changeFrequency: "weekly" as const,
       priority: 0.6,
-    }));
-  } catch {
-    /* idem */
-  }
-
-  let eventUrls: MetadataRoute.Sitemap = [];
-  try {
-    const events = await api.events.list();
-    eventUrls = events.results.map((event) => ({
-      url: `${SITE_URL}/agenda/${event.slug}`,
-      lastModified: event.updated_at,
-      changeFrequency: "weekly",
-      priority: event.is_featured ? 0.8 : 0.6,
-    }));
-  } catch {
-    /* API indisponible : les pages statiques restent publiées. */
-  }
-
-  let placeUrls: MetadataRoute.Sitemap = [];
-  try {
-    const places = await api.discovery.list();
-    placeUrls = places.results.map((place) => ({
-      url: `${SITE_URL}/decouvrir/${place.slug}`,
-      lastModified: place.updated_at,
-      changeFrequency: "monthly",
-      priority: place.is_featured ? 0.8 : 0.6,
-    }));
-  } catch {
-    /* API indisponible : les pages statiques restent publiées. */
-  }
-
-  // Communes
-  let communeUrls: MetadataRoute.Sitemap = [];
-  try {
-    const communes = await api.communes();
-    communeUrls = communes.map((c) => ({
+    })),
+    ...entries(events, "/agenda", "weekly", 0.6),
+    ...entries(places, "/decouvrir", "monthly", 0.6),
+    ...entries(businesses, "/commerces", "monthly", 0.6),
+    ...listingUrls,
+    ...communes.map((c) => ({
       url: `${SITE_URL}/communes/${c.slug}`,
-      changeFrequency: "weekly",
+      changeFrequency: "weekly" as const,
       priority: 0.5,
-    }));
-  } catch {
-    /* idem */
-  }
-
-  return [...staticPages, ...articleUrls, ...categoryUrls, ...eventUrls, ...placeUrls, ...communeUrls];
+    })),
+  ];
 }

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     siteName: "geoclicMédia",
+    // Image par défaut des partages (les pages avec photo la remplacent).
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "geoclicMédia" }],
   },
   twitter: { card: "summary_large_image" },
   icons: {

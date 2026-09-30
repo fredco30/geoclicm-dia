@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd, compact } from "@/components/seo/json-ld";
 import { notFound } from "next/navigation";
 import { CalendarDays, Download, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
@@ -40,6 +41,30 @@ export default async function EventPage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
+      {(isPast ? lastOccurrences : upcoming).slice(0, 10).map((occurrence) => (
+        <JsonLd
+          key={occurrence.id}
+          data={compact({
+            "@context": "https://schema.org",
+            "@type": "Event",
+            name: event.title,
+            description: event.short_description,
+            startDate: occurrence.starts_at,
+            endDate: occurrence.ends_at,
+            eventStatus: occurrence.status === "cancelled" ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+            eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+            image: event.cover_image?.large ? [event.cover_image.large] : undefined,
+            location: compact({
+              "@type": "Place",
+              name: event.venue_name,
+              address: compact({ "@type": "PostalAddress", streetAddress: event.address, addressLocality: event.commune_name, addressCountry: "FR" }),
+              geo: event.latitude != null && event.longitude != null ? { "@type": "GeoCoordinates", latitude: event.latitude, longitude: event.longitude } : undefined,
+            }),
+            organizer: event.organizer ? { "@type": "Organization", name: event.organizer, url: event.official_url || undefined } : undefined,
+            offers: event.booking_url ? compact({ "@type": "Offer", url: event.booking_url, description: event.price || undefined }) : undefined,
+          })}
+        />
+      ))}
       <Link href="/agenda" className="text-sm text-slate-600 hover:text-[#1a4d6e]">← Agenda</Link>
       <header className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1fr),320px]">
         <div>
