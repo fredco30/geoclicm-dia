@@ -27,7 +27,7 @@ export default async function AdvertiserRegisterPage() {
           campagnes publicitaires sur geoclicMédia.
         </p>
         <p className="mt-1 text-xs text-slate-500">
-          Inscription gratuite — phase pilote été 2026.
+          Inscription gratuite — phase pilote 2026.
         </p>
       </div>
       <AdvertiserRegisterForm />

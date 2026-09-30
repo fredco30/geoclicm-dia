@@ -145,7 +145,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
             <PlanCard
               name="Basic"
               price="79 €/an"
-              tagline="Encart pub local + photos illimitées + stats"
+              tagline="Encart publicitaire local + support prioritaire"
               business={business}
               plan="basic"
               suggested={sp.plan === "basic"}
@@ -153,7 +153,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
             <PlanCard
               name="Premium"
               price="149 €/an"
-              tagline="Mise en avant home + multi-encarts + article partenaire"
+              tagline="Mise en avant annuaire + multi-encarts + badge Partenaire + article partenaire"
               business={business}
               plan="premium"
               suggested={sp.plan === "premium"}

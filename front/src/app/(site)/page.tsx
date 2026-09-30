@@ -30,6 +30,9 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-screen-xl space-y-6 px-4 py-4 sm:py-8">
+      <h1 className="sr-only">
+        geoclicMédia — le média local du littoral camarguais
+      </h1>
       <UneCarousel articles={sortedForUne} />
 
       <SearchTrigger />

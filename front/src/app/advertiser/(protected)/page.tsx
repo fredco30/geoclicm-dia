@@ -61,7 +61,7 @@ export default async function AdvertiserDashboardPage() {
           Besoin d&apos;aide ?
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Pendant la phase pilote été 2026, l&apos;inscription et la
+          Pendant la phase pilote 2026, l&apos;inscription et la
           diffusion des campagnes sont gratuites. L&apos;équipe geoclicMédia
           valide chaque fiche et campagne sous 24h ouvrées.
         </p>

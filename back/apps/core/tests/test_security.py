@@ -207,3 +207,27 @@ class PendingCountsAndPaginationTests(TestCase):
         big = client.get("/api/businesses/?page_size=500").json()
         self.assertEqual(len(big["results"]), 25)
         self.assertIsNone(big["next"])
+
+
+class BusinessPrivacyTests(TestCase):
+    def test_public_api_hides_owner_and_plan_dates(self):
+        commune = Commune.objects.create(
+            name="Lunel", slug="lunel", insee_code="34145", department="34"
+        )
+        category = BusinessCategory.objects.create(name="Mode", slug="mode")
+        owner = make_user("commercant@example.org", role=User.Role.ADVERTISER)
+        Business.objects.create(
+            name="Boutique", slug="boutique", category=category, commune=commune,
+            short_description="x", description="x", address="x", postal_code="34400",
+            city="Lunel", owner=owner, is_published=True, plan="premium",
+            plan_ends_at=timezone.now() + timedelta(days=30),
+        )
+        client = APIClient()
+        listed = client.get("/api/businesses/").json()["results"][0]
+        detail = client.get("/api/businesses/boutique/").json()
+        for payload in (listed, detail):
+            self.assertEqual(payload["plan"], "premium")
+            for field in ("owner", "owner_username", "plan_ends_at"):
+                self.assertNotIn(field, payload)
+        client.force_authenticate(owner)
+        self.assertIn("plan_ends_at", client.get("/api/businesses/boutique/").json())

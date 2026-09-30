@@ -7,35 +7,14 @@ import { Mail, MapPin, Menu, Smartphone, X, Home as HomeIcon } from "lucide-reac
 
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { useMounted } from "@/lib/use-mounted";
-
-type MenuLink = {
-  href: string;
-  label: string;
-};
-
-/**
- * Liste des 7 communes du territoire — raccourci pratique vers les pages
- * commune. Conservé dans le drawer mobile car les pages commune sont
- * fréquemment consultées et un visiteur sur mobile a peu d'écran pour
- * naviguer via les tuiles.
- */
-const TERRITOIRE: MenuLink[] = [
-  { href: "/communes/le-grau-du-roi", label: "Le Grau-du-Roi" },
-  { href: "/communes/aigues-mortes", label: "Aigues-Mortes" },
-  { href: "/communes/la-grande-motte", label: "La Grande-Motte" },
-  { href: "/communes/saint-laurent-d-aigouze", label: "Saint-Laurent-d'Aigouze" },
-  { href: "/communes/marsillargues", label: "Marsillargues" },
-  { href: "/communes/lunel", label: "Lunel" },
-  { href: "/communes/vauvert", label: "Vauvert" },
-];
+import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
 
 /**
  * Drawer mobile simplifié — pattern « city ».
  *
- * Les rubriques éditoriales (Mémoire, Patrimoine, Reportages…) sont
- * désormais accessibles via les tuiles de la home et des pages commune,
- * pas via ce drawer. Ne reste ici qu'un raccourci vers les communes du
- * territoire et les liens légaux.
+ * Rubriques principales et secondaires, communes du territoire, assistant,
+ * installation de l'application et liens légaux. Affiché sous le
+ * breakpoint lg (au-delà, l'en-tête porte les rubriques principales).
  */
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -71,7 +50,7 @@ export function MobileNav() {
     <>
       <div
         onClick={close}
-        className={`fixed inset-0 z-[100] bg-black/50 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-[100] bg-black/50 transition-opacity lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden
@@ -79,7 +58,7 @@ export function MobileNav() {
 
       <aside
         id="mobile-nav-panel"
-        className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 lg:hidden ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!open}
@@ -117,13 +96,33 @@ export function MobileNav() {
             Retour à l&apos;accueil
           </Link>
 
+          {/* Rubriques */}
+          <nav aria-label="Rubriques">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Rubriques
+            </h2>
+            <ul className="grid grid-cols-2 gap-0.5">
+              {[...MAIN_NAV, ...SECONDARY_NAV].map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    onClick={close}
+                    className="block rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
           {/* Communes du territoire — raccourci pratique */}
           <nav aria-label="Le territoire">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
               Le territoire
             </h2>
             <ul className="space-y-0.5">
-              {TERRITOIRE.map((l) => (
+              {COMMUNES_NAV.map((l) => (
                 <li key={l.href}>
                   <Link
                     href={l.href}
@@ -216,7 +215,7 @@ export function MobileNav() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 lg:hidden"
         aria-label="Ouvrir le menu"
         aria-expanded={open}
         aria-controls="mobile-nav-panel"

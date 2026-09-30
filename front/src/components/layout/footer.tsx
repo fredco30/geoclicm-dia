@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
+
 export function Footer() {
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
       <div className="mx-auto max-w-screen-xl px-4 py-10 text-sm text-slate-600">
-        <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <div className="mb-3 flex items-center gap-2 text-[#1a4d6e]">
               <span className="inline-block h-6 w-6 rounded-full bg-[#1a4d6e]" aria-hidden />
@@ -13,6 +15,15 @@ export function Footer() {
             <p className="text-slate-600">
               Le média local indépendant du littoral camarguais.
             </p>
+          </div>
+
+          <div>
+            <h3 className="mb-3 font-semibold text-slate-900">Explorer</h3>
+            <ul className="space-y-1.5">
+              {[...MAIN_NAV, ...SECONDARY_NAV.slice(0, 3)].map((l) => (
+                <li key={l.href}><FooterLink href={l.href}>{l.label}</FooterLink></li>
+              ))}
+            </ul>
           </div>
 
           <div>
@@ -28,11 +39,9 @@ export function Footer() {
           <div>
             <h3 className="mb-3 font-semibold text-slate-900">Le territoire</h3>
             <ul className="space-y-1.5">
-              <li><FooterLink href="/communes/le-grau-du-roi">Le Grau-du-Roi</FooterLink></li>
-              <li><FooterLink href="/communes/aigues-mortes">Aigues-Mortes</FooterLink></li>
-              <li><FooterLink href="/communes/la-grande-motte">La Grande-Motte</FooterLink></li>
-              <li><FooterLink href="/communes/lunel">Lunel</FooterLink></li>
-              <li><FooterLink href="/communes/vauvert">Vauvert</FooterLink></li>
+              {COMMUNES_NAV.map((l) => (
+                <li key={l.href}><FooterLink href={l.href}>{l.label}</FooterLink></li>
+              ))}
             </ul>
           </div>
 
@@ -40,6 +49,9 @@ export function Footer() {
             <h3 className="mb-3 font-semibold text-slate-900">Informations</h3>
             <ul className="space-y-1.5">
               <li><FooterLink href="/contact">Contact</FooterLink></li>
+              <li><FooterLink href="/tarifs">Commerçants : nos formules</FooterLink></li>
+              <li><FooterLink href="/numeros-utiles">Numéros utiles</FooterLink></li>
+              <li><FooterLink href="/demarches">Démarches</FooterLink></li>
               <li><FooterLink href="/mentions-legales">Mentions légales</FooterLink></li>
               <li><FooterLink href="/politique-confidentialite">Politique de confidentialité</FooterLink></li>
               <li><FooterLink href="/cgu">CGU</FooterLink></li>

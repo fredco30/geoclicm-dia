@@ -46,7 +46,29 @@ class BusinessCategorySerializer(serializers.ModelSerializer):
 # Business — listing (back-office)
 # ============================================================================
 
-class BusinessListSerializer(serializers.ModelSerializer):
+class TeamOrOwnerFieldsMixin:
+    """Masque au public les champs internes d'une fiche.
+
+    Visibles seulement par l'équipe (editor/admin) et le propriétaire :
+    identité du compte propriétaire (son identifiant est souvent son email)
+    et dates d'abonnement. Le public garde « plan » (badge Partenaire).
+    """
+
+    PRIVATE_FIELDS = ("owner", "owner_username", "plan_starts_at", "plan_ends_at")
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        is_team = bool(user and user.is_authenticated and getattr(user, "can_publish", False))
+        is_owner = bool(user and user.is_authenticated and instance.owner_id == user.id)
+        if not (is_team or is_owner):
+            for field in self.PRIVATE_FIELDS:
+                data.pop(field, None)
+        return data
+
+
+class BusinessListSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)
     owner_username = serializers.CharField(source="owner.username", read_only=True, default=None)
@@ -83,7 +105,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
 # Business — detail (read public + back-office)
 # ============================================================================
 
-class BusinessDetailSerializer(serializers.ModelSerializer):
+class BusinessDetailSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
     secondary_categories = BusinessCategorySerializer(many=True, read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)

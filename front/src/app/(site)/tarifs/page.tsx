@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth-server";
 export const metadata: Metadata = {
   title: "Tarifs commerçants — geoclicMédia",
   description:
-    "Trois formules pour rejoindre l'annuaire des commerçants du littoral camarguais : Gratuit, Basic 79€/an, Premium 149€/an. Phase pilote été 2026 entièrement gratuite.",
+    "Trois formules pour rejoindre l'annuaire des commerçants du littoral camarguais : Gratuit, Basic 79€/an, Premium 149€/an. Phase pilote 2026 entièrement gratuite.",
 };
 
 const PLANS = [
@@ -21,9 +21,8 @@ const PLANS = [
       { ok: true, label: "Géolocalisation sur la carte" },
       { ok: true, label: "Boutons navigation (Maps, Waze, Street View)" },
       { ok: true, label: "Lien direct depuis les pages communes" },
-      { ok: false, label: "Mise en avant sur la home" },
       { ok: false, label: "Encarts publicitaires" },
-      { ok: false, label: "Articles partenaires" },
+      { ok: false, label: "Badge « Partenaire »" },
     ],
     cta: "Créer ma fiche gratuite",
     href: "/advertiser/register",
@@ -37,12 +36,10 @@ const PLANS = [
     tagline: "Visibilité renforcée",
     features: [
       { ok: true, label: "Tout du plan Gratuit, plus :" },
-      { ok: true, label: "1 encart pub local (commune ou catégorie)" },
-      { ok: true, label: "Photos et galerie illimitées" },
-      { ok: true, label: "Stats consultations + clics" },
+      { ok: true, label: "1 encart publicitaire local (commune ou catégorie)" },
       { ok: true, label: "Support prioritaire" },
-      { ok: false, label: "Mise en avant sur la home" },
-      { ok: false, label: "Articles partenaires" },
+      { ok: false, label: "Mise en avant « À la une » de l'annuaire" },
+      { ok: false, label: "Article partenaire" },
     ],
     cta: "Choisir Basic",
     href: "/advertiser/abonnement?plan=basic",
@@ -57,11 +54,10 @@ const PLANS = [
     tagline: "Mise en avant éditoriale",
     features: [
       { ok: true, label: "Tout du plan Basic, plus :" },
-      { ok: true, label: "Plusieurs encarts pub multi-territoires" },
+      { ok: true, label: "Plusieurs encarts publicitaires multi-territoires" },
       { ok: true, label: "★ Badge « Partenaire » sur la fiche" },
-      { ok: true, label: "Mise en avant sur la home" },
+      { ok: true, label: "Mise en avant « À la une » de l'annuaire" },
       { ok: true, label: "1 article partenaire / an offert" },
-      { ok: true, label: "Newsletter mensuelle (encart dédié)" },
     ],
     cta: "Choisir Premium",
     href: "/advertiser/abonnement?plan=premium",
@@ -82,14 +78,14 @@ export default async function TarifsPage() {
           Tarifs commerçants
         </p>
         <h1 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-          Choisis ta formule
+          Choisissez votre formule
         </h1>
         <p className="mt-4 text-slate-600">
           Trois plans pour rejoindre l&apos;annuaire des commerçants du
           littoral camarguais. Aucun engagement, résiliation à tout moment.
         </p>
         <div className="mt-4 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900 ring-1 ring-amber-300">
-          🎁 Phase pilote été 2026 : tous les plans 100 % gratuits
+          🎁 Phase pilote 2026 : tous les plans 100 % gratuits
         </div>
       </header>
 
@@ -162,12 +158,17 @@ export default async function TarifsPage() {
         })}
       </div>
 
-      <p className="mx-auto mt-12 max-w-2xl text-center text-sm text-slate-500">
-        Tu as une question sur le bon plan pour ton commerce ?{" "}
+      <p className="mx-auto mt-10 max-w-2xl text-center text-xs text-slate-500">
+        Prochainement : statistiques de consultation et de clics dans votre
+        espace annonceur.
+      </p>
+
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
+        Une question sur la formule adaptée à votre commerce ?{" "}
         <Link href="/contact" className="text-[#1a4d6e] underline hover:text-[#a8533a]">
-          Contacte-nous
+          Contactez-nous
         </Link>
-        , on t&apos;aide à choisir.
+        , nous vous aidons à choisir.
       </p>
     </div>
   );

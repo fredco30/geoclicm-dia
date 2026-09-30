@@ -2,16 +2,17 @@ import Link from "next/link";
 
 import { MobileNav } from "./mobile-nav";
 import { HeaderSearchButton } from "./header-search-button";
+import { HeaderNav } from "./header-nav";
 
 /**
  * Header sobre — pattern « city » :
  *  - Logo geoclicMédia (lien home)
+ *  - Rubriques principales sur écran large (HeaderNav)
  *  - Bouton recherche qui ouvre l'AssistantDrawer (Mistral + RAG)
- *  - Drawer mobile (raccourci communes + liens légaux)
+ *  - Drawer (rubriques, communes, liens légaux) sous le breakpoint lg
  *
- * La navigation principale (rubriques éditoriales, météo, commerces) se
- * fait désormais via la grille de tuiles de la home et des pages commune.
- * Le footer fixe mobile (Accueil + Recherche) complète l'expérience tactile.
+ * Les tuiles de la home restent le point d'entrée principal ; le footer
+ * fixe mobile donne accès aux rubriques clés et à l'assistant.
  */
 export function Header() {
   return (
@@ -30,6 +31,8 @@ export function Header() {
             geoclicMédia
           </span>
         </Link>
+
+        <HeaderNav />
 
         <div className="flex items-center gap-1">
           <HeaderSearchButton />
