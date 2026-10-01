@@ -33,7 +33,7 @@ export function WeatherDaily({ daily }: Props) {
             >
               <span
                 className={`text-sm capitalize ${
-                  isToday ? "font-semibold text-[#1a4d6e]" : "text-slate-800"
+                  isToday ? "font-semibold text-camargue" : "text-slate-800"
                 }`}
               >
                 {formatDayLabel(d.date, isToday)}

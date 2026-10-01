@@ -185,7 +185,7 @@ export function UneCarousel({ articles }: Props) {
                   className={
                     "h-1.5 rounded-full transition-all " +
                     (isActive
-                      ? "w-6 bg-[#1a4d6e]"
+                      ? "w-6 bg-camargue"
                       : "w-1.5 bg-slate-300 hover:bg-slate-400")
                   }
                 />
@@ -216,7 +216,7 @@ function UneCard({ article }: { article: ArticleListItem }) {
             loading="lazy"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1a4d6e] to-[#2c6a93]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-camargue to-camargue-light" />
         )}
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">

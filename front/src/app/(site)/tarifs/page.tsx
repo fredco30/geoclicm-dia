@@ -26,7 +26,6 @@ const PLANS = [
     ],
     cta: "Créer ma fiche gratuite",
     href: "/advertiser/register",
-    color: "slate",
   },
   {
     key: "basic",
@@ -43,7 +42,6 @@ const PLANS = [
     ],
     cta: "Choisir Basic",
     href: "/advertiser/abonnement?plan=basic",
-    color: "[#1a4d6e]",
     highlight: false,
   },
   {
@@ -61,7 +59,6 @@ const PLANS = [
     ],
     cta: "Choisir Premium",
     href: "/advertiser/abonnement?plan=premium",
-    color: "[#a8533a]",
     highlight: true,
   },
 ];
@@ -74,7 +71,7 @@ export default async function TarifsPage() {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-10 sm:py-16">
       <header className="mx-auto mb-12 max-w-2xl text-center">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#a8533a]">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-terracotta">
           Tarifs commerçants
         </p>
         <h1 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
@@ -101,12 +98,12 @@ export default async function TarifsPage() {
               className={
                 "flex flex-col rounded-2xl border bg-white p-6 transition " +
                 (plan.highlight
-                  ? "border-[#a8533a] shadow-lg ring-2 ring-[#a8533a]/20"
+                  ? "border-terracotta shadow-lg ring-2 ring-terracotta/20"
                   : "border-slate-200 shadow-sm hover:shadow-md")
               }
             >
               {plan.highlight ? (
-                <div className="mb-3 inline-flex w-fit items-center rounded-full bg-[#a8533a] px-3 py-1 text-xs font-medium text-white">
+                <div className="mb-3 inline-flex w-fit items-center rounded-full bg-terracotta px-3 py-1 text-xs font-medium text-white">
                   ★ Recommandé
                 </div>
               ) : null}
@@ -145,9 +142,9 @@ export default async function TarifsPage() {
                 className={
                   "mt-6 inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium transition " +
                   (isPremium
-                    ? "bg-[#a8533a] text-white hover:bg-[#8e4530]"
+                    ? "bg-terracotta text-white hover:bg-terracotta-dark"
                     : plan.key === "basic"
-                      ? "bg-[#1a4d6e] text-white hover:bg-[#163d57]"
+                      ? "bg-camargue text-white hover:bg-camargue-dark"
                       : "bg-slate-100 text-slate-900 hover:bg-slate-200")
                 }
               >
@@ -165,7 +162,7 @@ export default async function TarifsPage() {
 
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-slate-500">
         Une question sur la formule adaptée à votre commerce ?{" "}
-        <Link href="/contact" className="text-[#1a4d6e] underline hover:text-[#a8533a]">
+        <Link href="/contact" className="text-camargue underline hover:text-terracotta">
           Contactez-nous
         </Link>
         , nous vous aidons à choisir.

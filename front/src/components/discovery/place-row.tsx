@@ -10,7 +10,7 @@ export function PlaceRow({ place }: { place: PlaceListItem }) {
   return (
     <Link
       href={`/decouvrir/${place.slug}`}
-      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-[#1a4d6e] hover:shadow-sm"
+      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-camargue hover:shadow-sm"
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
         {place.cover_image?.thumbnail || place.cover_image?.medium ? (
@@ -22,11 +22,11 @@ export function PlaceRow({ place }: { place: PlaceListItem }) {
             loading="lazy"
           />
         ) : (
-          <Compass className="h-5 w-5 text-[#1a4d6e]/50" />
+          <Compass className="h-5 w-5 text-camargue/50" />
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#1a4d6e] sm:whitespace-normal">
+        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-camargue sm:whitespace-normal">
           {place.title}
         </span>
         <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-600">

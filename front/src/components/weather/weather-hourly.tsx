@@ -43,7 +43,7 @@ export function WeatherHourly({ hourly, isDay }: Props) {
                 style={{ scrollSnapAlign: "start" }}
                 className={`flex min-w-[68px] flex-col items-center rounded-xl border px-3 py-2 text-center text-sm ${
                   isCurrent
-                    ? "border-[#1a4d6e] bg-[#1a4d6e]/5 font-semibold text-[#1a4d6e]"
+                    ? "border-camargue bg-camargue/5 font-semibold text-camargue"
                     : "border-slate-200 bg-white text-slate-700"
                 }`}
               >

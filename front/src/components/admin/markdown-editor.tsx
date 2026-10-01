@@ -40,7 +40,7 @@ export function MarkdownEditor({ value, onChange }: Props) {
           href="https://www.markdownguide.org/cheat-sheet/"
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-auto text-xs text-slate-500 hover:text-[#1a4d6e]"
+          className="ml-auto text-xs text-slate-500 hover:text-camargue"
         >
           Aide markdown ↗
         </a>
@@ -89,7 +89,7 @@ Bloc de code
                   a: ({ href, children }) => (
                     <a
                       href={href}
-                      className="text-[#1a4d6e] underline"
+                      className="text-camargue underline"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -103,7 +103,7 @@ Bloc de code
                     <ol className="my-3 list-decimal pl-6 space-y-1">{children}</ol>
                   ),
                   blockquote: ({ children }) => (
-                    <blockquote className="my-4 border-l-4 border-[#1a4d6e] bg-slate-50 px-4 py-2 italic">
+                    <blockquote className="my-4 border-l-4 border-camargue bg-slate-50 px-4 py-2 italic">
                       {children}
                     </blockquote>
                   ),

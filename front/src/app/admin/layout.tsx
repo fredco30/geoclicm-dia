@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s | Admin geoclicMédia" },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteSettings();
+  return {
+    title: { default: "Admin", template: `%s | Admin ${site.site_name}` },
+    robots: { index: false, follow: false },
+  };
+}
 
 export const dynamic = "force-dynamic";
 

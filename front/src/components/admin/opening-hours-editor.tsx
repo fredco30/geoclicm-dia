@@ -75,7 +75,7 @@ export function OpeningHoursEditor({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => addSlot(key)}
-                className="inline-flex items-center gap-1 text-xs text-[#1a4d6e] hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-camargue hover:underline"
               >
                 <Plus className="h-3 w-3" /> Ajouter un créneau
               </button>
@@ -118,7 +118,7 @@ export function OpeningHoursEditor({ value, onChange }: Props) {
         <button
           type="button"
           onClick={copyMondayToWeekdays}
-          className="text-xs text-[#1a4d6e] hover:underline"
+          className="text-xs text-camargue hover:underline"
         >
           Copier les horaires du lundi sur Mar–Ven
         </button>

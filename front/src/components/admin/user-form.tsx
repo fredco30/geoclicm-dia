@@ -124,7 +124,7 @@ export function UserForm({ user, currentUserId, currentUserIsSuperuser }: Props)
         <div className="flex items-center gap-2">
           <Link
             href="/admin/settings/users"
-            className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+            className="text-sm text-slate-600 hover:text-camargue"
           >
             ← Comptes
           </Link>

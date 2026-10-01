@@ -20,7 +20,7 @@ export function FooterFixed() {
   const { open } = useAssistant();
   const itemClass = (active: boolean) =>
     `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-xs font-medium ${
-      active ? "text-[#1a4d6e]" : "text-slate-600 hover:bg-slate-50 hover:text-[#1a4d6e]"
+      active ? "text-camargue" : "text-slate-600 hover:bg-slate-50 hover:text-camargue"
     }`;
 
   return (

@@ -154,7 +154,7 @@ export default async function UsersPage({ searchParams }: Props) {
                     {u.email ? (
                       <a
                         href={`mailto:${u.email}`}
-                        className="inline-flex items-center gap-1 hover:text-[#1a4d6e]"
+                        className="inline-flex items-center gap-1 hover:text-camargue"
                       >
                         <MailIcon className="h-3 w-3 opacity-60" aria-hidden />
                         <span className="truncate">{u.email}</span>
@@ -166,7 +166,7 @@ export default async function UsersPage({ searchParams }: Props) {
                   <td className="px-3 py-2">
                     <span className="inline-flex items-center gap-1">
                       {u.is_superuser ? (
-                        <ShieldCheck className="h-3.5 w-3.5 text-[#1a4d6e]" />
+                        <ShieldCheck className="h-3.5 w-3.5 text-camargue" />
                       ) : (
                         <Shield className="h-3.5 w-3.5 text-slate-400" />
                       )}
@@ -179,7 +179,7 @@ export default async function UsersPage({ searchParams }: Props) {
                         {u.phone ? (
                           <a
                             href={`tel:${u.phone}`}
-                            className="inline-flex items-center gap-1 hover:text-[#1a4d6e]"
+                            className="inline-flex items-center gap-1 hover:text-camargue"
                           >
                             <Phone className="h-3 w-3 opacity-60" aria-hidden />
                             {u.phone}
@@ -249,7 +249,7 @@ function BusinessesCell({ userId, count }: { userId: number; count: number }) {
   return (
     <Link
       href={`/admin/directory/businesses?owner=${userId}`}
-      className="inline-flex items-center gap-1.5 rounded-full bg-[#1a4d6e]/10 px-2 py-0.5 text-xs font-medium text-[#1a4d6e] hover:bg-[#1a4d6e]/15"
+      className="inline-flex items-center gap-1.5 rounded-full bg-camargue/10 px-2 py-0.5 text-xs font-medium text-camargue hover:bg-camargue/15"
       title="Voir les fiches commerce de ce compte"
     >
       <Store className="h-3 w-3" aria-hidden />

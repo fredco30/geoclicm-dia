@@ -174,7 +174,7 @@ export function AIBusinessAssistButton({
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#1a4d6e] to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
+        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-camargue to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
         Aide IA
@@ -197,7 +197,7 @@ export function AIBusinessAssistButton({
             </button>
 
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+              <Sparkles className="h-4 w-4 text-camargue" aria-hidden />
               <h2
                 id="ai-assist-title"
                 className="text-base font-semibold text-slate-900"
@@ -314,7 +314,7 @@ function DraftPreview({ draft }: { draft: AIBusinessDescribeResponse }) {
             {draft.specialties.map((s, i) => (
               <span
                 key={`${i}-${s}`}
-                className="rounded-full bg-[#1a4d6e]/10 px-2 py-0.5 text-xs text-[#1a4d6e]"
+                className="rounded-full bg-camargue/10 px-2 py-0.5 text-xs text-camargue"
               >
                 {s}
               </span>

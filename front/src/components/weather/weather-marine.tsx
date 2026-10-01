@@ -36,7 +36,7 @@ export function WeatherMarinePanel({ marine, communeName }: Props) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-cyan-50 to-blue-50 p-6">
       <header className="mb-4 flex items-center gap-2">
-        <Waves className="h-5 w-5 text-[#1a4d6e]" aria-hidden />
+        <Waves className="h-5 w-5 text-camargue" aria-hidden />
         <h2 className="font-serif text-xl font-semibold text-slate-900">
           État de la mer · {communeName}
         </h2>

@@ -12,7 +12,7 @@ export function BusinessCard({ business }: Props) {
   return (
     <Link
       href={`/commerces/${business.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-[#a8533a] hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-terracotta hover:shadow-md"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
         {business.logo?.medium ? (
@@ -30,7 +30,7 @@ export function BusinessCard({ business }: Props) {
           </div>
         )}
         {isPremium ? (
-          <span className="absolute right-2 top-2 rounded-full bg-[#a8533a] px-2 py-0.5 text-xs font-medium text-white">
+          <span className="absolute right-2 top-2 rounded-full bg-terracotta px-2 py-0.5 text-xs font-medium text-white">
             ★ Partenaire
           </span>
         ) : null}
@@ -40,7 +40,7 @@ export function BusinessCard({ business }: Props) {
         <div className="mb-1 text-xs uppercase tracking-wide text-slate-500">
           {business.category_name}
         </div>
-        <h3 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#1a4d6e]">
+        <h3 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-camargue">
           {business.name}
         </h3>
         <div className="mt-2 flex items-center gap-1 text-xs text-slate-500">

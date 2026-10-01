@@ -58,7 +58,7 @@ export function UsefulContactList({ items, emptyMessage }: Props) {
 
 function ContactCard({ entry }: { entry: UsefulContactPublic }) {
   const cardBase =
-    "flex h-full flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-[#1a4d6e] hover:shadow-sm";
+    "flex h-full flex-col gap-1.5 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-camargue hover:shadow-sm";
 
   const Body = (
     <>
@@ -120,7 +120,7 @@ function ValueLine({ entry }: { entry: UsefulContactPublic }) {
 }
 
 function ContactIcon({ type }: { type: UsefulContactPublic["contact_type"] }) {
-  const cls = "h-4 w-4 shrink-0 text-[#1a4d6e]";
+  const cls = "h-4 w-4 shrink-0 text-camargue";
   switch (type) {
     case "phone":
       return <Phone className={cls} aria-hidden />;

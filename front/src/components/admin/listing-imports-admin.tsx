@@ -88,7 +88,7 @@ export function ListingImportsAdmin({
               key={value}
               href={`/admin/annonces/imports?status=${value}`}
               className={`rounded-full border px-3 py-1 text-xs ${
-                filterStatus === value ? "bg-[#1a4d6e] text-white" : "bg-white text-slate-700"
+                filterStatus === value ? "bg-camargue text-white" : "bg-white text-slate-700"
               }`}
             >
               {label}
@@ -108,7 +108,7 @@ export function ListingImportsAdmin({
           {rows.map((row) => (
             <article key={row.id} className="overflow-hidden rounded-xl border bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium uppercase text-[#a8533a]">
+                <p className="text-xs font-medium uppercase text-terracotta">
                   {row.crawl_source_label} ·{" "}
                   {row.extraction_method === "ai" ? "Extraction IA à vérifier" : "JSON-LD"}
                 </p>
@@ -116,7 +116,7 @@ export function ListingImportsAdmin({
                   href={row.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 text-xs text-[#1a4d6e] underline"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs text-camargue underline"
                 >
                   Source officielle <ExternalLink className="h-3 w-3" />
                 </a>
@@ -134,7 +134,7 @@ export function ListingImportsAdmin({
                 <p className="mt-3 line-clamp-3 text-sm text-slate-600">{row.short_description}</p>
               ) : null}
               {row.extraction_evidence.length ? (
-                <blockquote className="mt-3 border-l-2 border-[#1a4d6e] pl-3 text-xs italic text-slate-600">
+                <blockquote className="mt-3 border-l-2 border-camargue pl-3 text-xs italic text-slate-600">
                   Preuve détectée : « {row.extraction_evidence[0]} »
                 </blockquote>
               ) : null}

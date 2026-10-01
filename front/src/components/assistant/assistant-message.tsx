@@ -16,7 +16,7 @@ export function AssistantMessage({ message, sourcesLabel }: Props) {
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-[#1a4d6e] px-4 py-2 text-sm text-white">
+        <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-camargue px-4 py-2 text-sm text-white">
           {message.content}
         </div>
       </div>
@@ -96,7 +96,7 @@ function renderInline(text: string): React.ReactNode {
         href={match[2]}
         target={match[2].startsWith("/") ? undefined : "_blank"}
         rel={match[2].startsWith("/") ? undefined : "noopener noreferrer"}
-        className="text-[#1a4d6e] underline hover:no-underline"
+        className="text-camargue underline hover:no-underline"
       >
         {match[1]}
       </a>,

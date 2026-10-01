@@ -80,7 +80,7 @@ export function SeasonalClosuresEditor({ value, onChange }: Props) {
       <button
         type="button"
         onClick={addClosure}
-        className="inline-flex items-center gap-1 text-xs text-[#1a4d6e] hover:underline"
+        className="inline-flex items-center gap-1 text-xs text-camargue hover:underline"
       >
         <Plus className="h-3 w-3" /> Ajouter une fermeture
       </button>

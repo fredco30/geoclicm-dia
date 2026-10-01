@@ -230,7 +230,7 @@ export function CrawlSourceForm({ source, communes }: Props) {
         </h1>
         <Link
           href="/admin/assistant/sources"
-          className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+          className="text-sm text-slate-600 hover:text-camargue"
         >
           ← Retour à la liste
         </Link>
@@ -293,7 +293,7 @@ export function CrawlSourceForm({ source, communes }: Props) {
             disabled={
               isRunning || !source.is_active || source.kind === "datatourisme"
             }
-            className="inline-flex items-center gap-1.5 rounded-md bg-[#1a4d6e] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#13384f] disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md bg-camargue px-3 py-1.5 text-sm font-medium text-white hover:bg-camargue-dark disabled:opacity-50"
             title={
               source.kind === "datatourisme"
                 ? "L'indexeur DataTourisme n'est pas encore implémenté"
@@ -408,7 +408,7 @@ export function CrawlSourceForm({ source, communes }: Props) {
                 href={form.seed_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 text-[#1a4d6e] hover:underline"
+                className="inline-flex items-center gap-0.5 text-camargue hover:underline"
               >
                 Tester l&apos;URL
                 <ExternalLink className="h-3 w-3" aria-hidden />

@@ -96,7 +96,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
               aria-current={b.id === business.id ? "page" : undefined}
               className={`rounded-full px-3 py-1 text-sm ring-1 ${
                 b.id === business.id
-                  ? "bg-[#1a4d6e] text-white ring-[#1a4d6e]"
+                  ? "bg-camargue text-white ring-camargue"
                   : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
               }`}
             >
@@ -162,7 +162,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
           </div>
 
           <p className="mt-6 text-center text-sm text-slate-500">
-            <Link href="/tarifs" className="underline hover:text-[#a8533a]">
+            <Link href="/tarifs" className="underline hover:text-terracotta">
               Voir le détail complet des plans
             </Link>
           </p>
@@ -200,9 +200,9 @@ function PlanCard({
       className={
         "flex flex-col rounded-xl border bg-white p-5 transition " +
         (highlight
-          ? "border-[#a8533a] shadow-md ring-2 ring-[#a8533a]/20"
+          ? "border-terracotta shadow-md ring-2 ring-terracotta/20"
           : suggested
-            ? "border-[#1a4d6e] shadow-md ring-2 ring-[#1a4d6e]/20"
+            ? "border-camargue shadow-md ring-2 ring-camargue/20"
             : "border-slate-200 shadow-sm hover:shadow-md")
       }
     >

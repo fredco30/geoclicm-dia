@@ -76,7 +76,7 @@ export function AgendaFeatured({ communeSlug }: Props) {
 
   return (
     <aside
-      className="mb-7 overflow-hidden rounded-2xl bg-white ring-1 ring-[#a8533a]/25"
+      className="mb-7 overflow-hidden rounded-2xl bg-white ring-1 ring-terracotta/25"
       aria-label="Événement à la une"
     >
       <div className="flex items-center justify-between border-b border-slate-100 px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400">
@@ -101,15 +101,15 @@ export function AgendaFeatured({ communeSlug }: Props) {
                 loading="lazy"
               />
             ) : (
-              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1a4d6e]/15 to-[#a8533a]/20 sm:h-28 sm:w-28">
-                <CalendarDays className="h-8 w-8 text-[#1a4d6e]" />
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-camargue/15 to-terracotta/20 sm:h-28 sm:w-28">
+                <CalendarDays className="h-8 w-8 text-camargue" />
               </div>
             )}
             <span className="min-w-0 flex-1">
-              <span className="block font-serif text-base font-semibold text-slate-900 group-hover:text-[#1a4d6e] sm:text-lg">
+              <span className="block font-serif text-base font-semibold text-slate-900 group-hover:text-camargue sm:text-lg">
                 {event.title}
               </span>
-              <span className="mt-1 block text-xs font-medium text-[#a8533a] sm:text-sm">
+              <span className="mt-1 block text-xs font-medium text-terracotta sm:text-sm">
                 {formatFeaturedDate(event.next_occurrence?.starts_at)}
               </span>
               <span className="mt-1 flex items-center gap-1 text-xs text-slate-600 sm:text-sm">
@@ -137,7 +137,7 @@ export function AgendaFeatured({ communeSlug }: Props) {
               </span>
             ) : null}
             {ad.cta_text ? (
-              <span className="mt-2 inline-block rounded-md bg-[#a8533a] px-3 py-1 text-xs font-medium text-white transition group-hover:bg-[#8e4530]">
+              <span className="mt-2 inline-block rounded-md bg-terracotta px-3 py-1 text-xs font-medium text-white transition group-hover:bg-terracotta-dark">
                 {ad.cta_text} →
               </span>
             ) : null}

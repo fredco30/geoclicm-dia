@@ -7,6 +7,7 @@ import { Mail, MapPin, Menu, Smartphone, X, Home as HomeIcon } from "lucide-reac
 
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { useMounted } from "@/lib/use-mounted";
+import { BrandMark } from "./brand-mark";
 import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
 
 /**
@@ -16,7 +17,7 @@ import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
  * installation de l'application et liens légaux. Affiché sous le
  * breakpoint lg (au-delà, l'en-tête porte les rubriques principales).
  */
-export function MobileNav() {
+export function MobileNav({ siteName, logoUrl }: { siteName: string; logoUrl: string | null }) {
   const [open, setOpen] = useState(false);
   const mounted = useMounted();
   const { open: openAssistant } = useAssistant();
@@ -67,13 +68,9 @@ export function MobileNav() {
           <Link
             href="/"
             onClick={close}
-            className="flex items-center gap-2 font-semibold text-[#1a4d6e]"
+            className="flex items-center gap-2 font-semibold text-camargue"
           >
-            <span
-              className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]"
-              aria-hidden
-            />
-            geoclicMédia
+            <BrandMark name={siteName} logoUrl={logoUrl} />
           </Link>
           <button
             type="button"
@@ -90,7 +87,7 @@ export function MobileNav() {
           <Link
             href="/"
             onClick={close}
-            className="flex items-center gap-2 rounded-md bg-[#1a4d6e] px-3 py-2 text-sm font-medium text-white hover:bg-[#13384f]"
+            className="flex items-center gap-2 rounded-md bg-camargue px-3 py-2 text-sm font-medium text-white hover:bg-camargue-dark"
           >
             <HomeIcon className="h-4 w-4" />
             Retour à l&apos;accueil
@@ -107,7 +104,7 @@ export function MobileNav() {
                   <Link
                     href={l.href}
                     onClick={close}
-                    className="block rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+                    className="block rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-camargue"
                   >
                     {l.label}
                   </Link>
@@ -127,7 +124,7 @@ export function MobileNav() {
                   <Link
                     href={l.href}
                     onClick={close}
-                    className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+                    className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-camargue"
                   >
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
                     {l.label}
@@ -138,9 +135,9 @@ export function MobileNav() {
           </nav>
 
           {/* Astuce assistant IA */}
-          <div className="rounded-md border border-[#1a4d6e]/20 bg-[#1a4d6e]/5 p-3 text-xs text-slate-600">
+          <div className="rounded-md border border-camargue/20 bg-camargue/5 p-3 text-xs text-slate-600">
             <p>
-              <strong className="text-[#1a4d6e]">💡 Astuce</strong> — pour
+              <strong className="text-camargue">💡 Astuce</strong> — pour
               trouver un commerce, une activité ou une info pratique, utilisez
               l&apos;assistant IA.
             </p>
@@ -150,7 +147,7 @@ export function MobileNav() {
                 close();
                 openAssistant();
               }}
-              className="mt-2 text-[#1a4d6e] underline hover:no-underline"
+              className="mt-2 text-camargue underline hover:no-underline"
             >
               Ouvrir l&apos;assistant
             </button>
@@ -167,7 +164,7 @@ export function MobileNav() {
               close();
               window.dispatchEvent(new CustomEvent("gm:open-install"));
             }}
-            className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#1a4d6e]"
+            className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-camargue"
             aria-label="Installer l'application sur votre téléphone ou ordinateur"
           >
             <Smartphone className="h-4 w-4" aria-hidden />
@@ -179,7 +176,7 @@ export function MobileNav() {
             <Link
               href="/contact"
               onClick={close}
-              className="mb-2 inline-flex items-center gap-1 hover:text-[#1a4d6e]"
+              className="mb-2 inline-flex items-center gap-1 hover:text-camargue"
             >
               <Mail className="h-3 w-3" /> Contact
             </Link>

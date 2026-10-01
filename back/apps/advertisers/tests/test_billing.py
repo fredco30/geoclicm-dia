@@ -37,7 +37,7 @@ class PlanExpiryTests(TestCase):
             self.assertEqual(business.plan, plan)
 
 
-@override_settings(STRIPE_TEST_SECRET_KEY="sk_test_dummy")
+@override_settings(STRIPE_TEST_SECRET_KEY="sk_test_dummy", BILLING_ENABLED=True)
 class CheckoutGuardTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user("adv", password="x", role=User.Role.ADVERTISER)
@@ -61,3 +61,22 @@ class CheckoutGuardTests(TestCase):
             )
         self.assertEqual(res.status_code, 409)
         create.assert_not_called()
+
+
+class BillingDisabledTests(TestCase):
+    def test_checkout_and_portal_refused_while_billing_closed(self):
+        user = User.objects.create_user("adv2", password="x", role=User.Role.ADVERTISER)
+        business = make_business(owner=user)
+        client = APIClient()
+        client.force_authenticate(user)
+        with patch("apps.advertisers.views.stripe.checkout.Session.create") as create:
+            res = client.post(
+                "/api/advertiser/checkout/",
+                {"plan": "basic", "business_id": business.pk},
+                format="json",
+            )
+        self.assertEqual(res.status_code, 403)
+        self.assertEqual(res.json()["code"], "billing_disabled")
+        create.assert_not_called()
+        res = client.post("/api/advertiser/portal/", {"business_id": business.pk}, format="json")
+        self.assertEqual(res.status_code, 403)

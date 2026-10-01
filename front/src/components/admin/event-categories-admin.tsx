@@ -56,7 +56,7 @@ export function EventCategoriesAdmin({ initialCategories, apiBase = "/api/admin/
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div><Link href={backHref} className="text-sm text-slate-600 hover:text-[#1a4d6e]">← Retour</Link><h1 className="text-xl font-bold text-slate-900">{title}</h1></div>
+        <div><Link href={backHref} className="text-sm text-slate-600 hover:text-camargue">← Retour</Link><h1 className="text-xl font-bold text-slate-900">{title}</h1></div>
         <Button size="sm" onClick={beginCreate}><Plus className="h-4 w-4" /> Nouvelle catégorie</Button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr),360px]">

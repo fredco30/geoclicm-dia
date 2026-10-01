@@ -44,7 +44,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
       <header className="mb-8 border-b border-slate-200 pb-6">
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/" className="text-sm text-slate-600 hover:text-camargue">
           ← Accueil
         </Link>
         <div className="mt-3 flex items-center gap-3">

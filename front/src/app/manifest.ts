@@ -1,15 +1,17 @@
 import type { MetadataRoute } from "next";
+import { getSiteSettings } from "@/lib/site-settings";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const site = await getSiteSettings();
   return {
-    name: "geoclicMédia — le littoral camarguais",
-    short_name: "geoclicMédia",
+    name: site.tagline ? `${site.site_name} — ${site.tagline}` : site.site_name,
+    short_name: site.site_name,
     description:
       "Le média local indépendant du littoral camarguais : actualités, patrimoine, mémoire vivante, portraits.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#1a4d6e",
+    theme_color: site.primary_color,
     orientation: "portrait",
     lang: "fr-FR",
     categories: ["news", "magazines", "lifestyle"],

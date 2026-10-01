@@ -20,8 +20,8 @@ export function CommuneSelector({ communes, activeSlug }: Props) {
                 className={
                   "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition " +
                   (active
-                    ? "bg-[#1a4d6e] text-white"
-                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-[#1a4d6e]")
+                    ? "bg-camargue text-white"
+                    : "bg-white text-slate-700 ring-1 ring-slate-200 hover:ring-camargue")
                 }
               >
                 {c.name}

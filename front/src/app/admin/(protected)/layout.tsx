@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { fetchPendingCounts, getCurrentUser } from "@/lib/auth-server";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getRoleLabel } from "@/lib/roles";
 import { BackofficeShell, type NavSection } from "@/components/admin/backoffice-shell";
 import { HelpProvider } from "@/components/help/help-context";
@@ -23,7 +24,7 @@ export default async function AdminProtectedLayout({
 
   // Seul un superuser (ou role admin) accède aux paramètres comptes
   const canManageUsers = user.is_superuser || user.role === "admin";
-  const pending = await fetchPendingCounts();
+  const [pending, site] = await Promise.all([fetchPendingCounts(), getSiteSettings()]);
 
   const sections: NavSection[] = [
     {
@@ -66,7 +67,10 @@ export default async function AdminProtectedLayout({
         { href: "/admin/tiles", label: "Tuiles d'accueil", icon: "tiles" },
         { href: "/admin/assistant/sources", label: "Sources IA", icon: "ai" },
         ...(canManageUsers
-          ? [{ href: "/admin/settings/users", label: "Comptes & droits", icon: "settings" as const }]
+          ? [
+              { href: "/admin/settings/users", label: "Comptes & droits", icon: "settings" as const },
+              { href: "/admin/settings/site", label: "Identité du site", icon: "palette" as const },
+            ]
           : []),
         { href: "/", label: "Voir le site", icon: "home", external: true },
       ],
@@ -78,7 +82,8 @@ export default async function AdminProtectedLayout({
       <BackofficeShell
         sections={sections}
         brandHref="/admin"
-        brandLabel="geoclicMédia"
+        brandLabel={site.site_name}
+        brandLogoUrl={site.logo_url}
         userName={user.full_name}
         userMeta={getRoleLabel(user)}
         logoutRedirect="/admin/login"

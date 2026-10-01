@@ -53,7 +53,7 @@ export function UsersTabs({
                 className={
                   "inline-flex items-center gap-1.5 border-b-2 px-3 py-2 transition " +
                   (isActive
-                    ? "border-[#1a4d6e] font-semibold text-[#1a4d6e]"
+                    ? "border-camargue font-semibold text-camargue"
                     : "border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900")
                 }
               >
@@ -63,7 +63,7 @@ export function UsersTabs({
                     className={
                       "rounded-full px-1.5 py-0.5 text-[11px] font-medium " +
                       (isActive
-                        ? "bg-[#1a4d6e]/10 text-[#1a4d6e]"
+                        ? "bg-camargue/10 text-camargue"
                         : "bg-slate-100 text-slate-600")
                     }
                   >

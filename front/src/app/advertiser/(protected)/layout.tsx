@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-server";
+import { getSiteSettings } from "@/lib/site-settings";
 import { BackofficeShell, type NavSection } from "@/components/admin/backoffice-shell";
 import { HelpProvider } from "@/components/help/help-context";
 import { HelpButton } from "@/components/help/help-button";
@@ -34,6 +35,7 @@ export default async function AdvertiserProtectedLayout({
   if (user.role === "reader") {
     redirect("/advertiser/login?error=forbidden");
   }
+  const site = await getSiteSettings();
 
   return (
     <HelpProvider>
@@ -41,6 +43,7 @@ export default async function AdvertiserProtectedLayout({
         sections={SECTIONS}
         brandHref="/advertiser"
         brandLabel="Espace annonceur"
+        brandLogoUrl={site.logo_url}
         userName={user.full_name}
         userMeta={user.email}
         logoutRedirect="/advertiser/login"

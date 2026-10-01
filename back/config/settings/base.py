@@ -202,6 +202,12 @@ STRIPE_LIVE_PUBLIC_KEY = env("STRIPE_LIVE_PUBLIC_KEY", default="")
 STRIPE_LIVE_SECRET_KEY = env("STRIPE_LIVE_SECRET_KEY", default="")
 STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE", default=False)
 
+# Paiement en ligne des formules annonceurs. Désactivé tant que la vente
+# n'est pas ouverte (phase pilote gratuite) : aucun parcours ne mène à
+# Stripe, les formules sont activées par l'équipe. À passer à True
+# uniquement avec les clés LIVE et les Price IDs configurés.
+BILLING_ENABLED = env.bool("BILLING_ENABLED", default=False)
+
 # Webhook secret — différent en TEST et LIVE (un endpoint webhook chacun)
 DJSTRIPE_WEBHOOK_SECRET = env("DJSTRIPE_WEBHOOK_SECRET", default="")
 

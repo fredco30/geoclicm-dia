@@ -19,8 +19,8 @@ export function HeaderNav() {
             aria-current={active ? "page" : undefined}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
               active
-                ? "bg-[#1a4d6e]/10 text-[#1a4d6e]"
-                : "text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+                ? "bg-camargue/10 text-camargue"
+                : "text-slate-700 hover:bg-slate-100 hover:text-camargue"
             }`}
           >
             {item.label}

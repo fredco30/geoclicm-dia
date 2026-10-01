@@ -44,11 +44,11 @@ export default async function AdminDashboard() {
               <Link
                 key={box.key}
                 href={box.href}
-                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-[#1a4d6e]/40 hover:shadow"
+                className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-camargue/40 hover:shadow"
               >
                 <div
                   className={`text-2xl font-bold ${
-                    pending[box.key] > 0 ? "text-[#a8533a]" : "text-slate-300"
+                    pending[box.key] > 0 ? "text-terracotta" : "text-slate-300"
                   }`}
                 >
                   {pending[box.key]}
@@ -79,7 +79,7 @@ export default async function AdminDashboard() {
           Aucun article pour l&apos;instant.{" "}
           <Link
             href="/admin/articles/new"
-            className="font-medium text-[#1a4d6e] underline"
+            className="font-medium text-camargue underline"
           >
             Créer le premier
           </Link>

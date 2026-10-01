@@ -80,7 +80,7 @@ export function AdSlot({
 
   return (
     <aside
-      className={`overflow-hidden rounded-xl bg-white ring-1 ring-[#a8533a]/20 ${className ?? ""}`}
+      className={`overflow-hidden rounded-xl bg-white ring-1 ring-terracotta/20 ${className ?? ""}`}
       aria-label="Encart publicitaire"
     >
       <div className="flex items-center justify-between px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400">
@@ -110,7 +110,7 @@ export function AdSlot({
               </p>
             ) : null}
             {ad.cta_text ? (
-              <span className="mt-2 inline-block rounded-md bg-[#a8533a] px-3 py-1 text-xs font-medium text-white transition group-hover:bg-[#8e4530]">
+              <span className="mt-2 inline-block rounded-md bg-terracotta px-3 py-1 text-xs font-medium text-white transition group-hover:bg-terracotta-dark">
                 {ad.cta_text} →
               </span>
             ) : null}

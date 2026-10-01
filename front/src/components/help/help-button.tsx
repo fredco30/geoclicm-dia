@@ -15,7 +15,7 @@ export function HelpButton() {
       onClick={() => setOpen(true)}
       aria-expanded={open}
       aria-controls="help-drawer"
-      className="fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-[#1a4d6e] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-900/20 transition hover:bg-[#13384f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a4d6e] focus-visible:ring-offset-2"
+      className="fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-camargue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-slate-900/20 transition hover:bg-camargue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-camargue focus-visible:ring-offset-2"
       title={`Aide — ${workflow.title}`}
     >
       <HelpCircle className="h-4 w-4" aria-hidden />

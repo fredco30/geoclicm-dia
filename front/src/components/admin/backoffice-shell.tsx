@@ -16,6 +16,7 @@ import {
   Megaphone,
   Menu,
   Newspaper,
+  Palette,
   Phone,
   Plus,
   Settings,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { LogoutButton } from "@/components/admin/logout-button";
+import { BrandMark } from "@/components/layout/brand-mark";
 
 // Les icônes sont désignées par une clé : le layout (server component) ne
 // peut pas transmettre de composants à ce composant client.
@@ -46,6 +48,7 @@ const ICONS = {
   inbox: Inbox,
   dashboard: LayoutDashboard,
   billing: CreditCard,
+  palette: Palette,
   stats: BarChart3,
 } as const;
 
@@ -71,6 +74,8 @@ type Props = {
   sections: NavSection[];
   brandHref: string;
   brandLabel: string;
+  /** Logo défini dans « Identité du site » (sinon pastille de couleur). */
+  brandLogoUrl?: string | null;
   userName: string;
   userMeta: string;
   logoutRedirect: string;
@@ -98,6 +103,7 @@ export function BackofficeShell({
   sections,
   brandHref,
   brandLabel,
+  brandLogoUrl = null,
   userName,
   userMeta,
   logoutRedirect,
@@ -160,9 +166,8 @@ export function BackofficeShell({
     <div className="flex min-h-screen flex-col sm:flex-row">
       {/* Mobile : barre supérieure */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-3 sm:hidden">
-        <Link href={brandHref} className="flex items-center gap-2 text-[#1a4d6e]">
-          <span className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]" aria-hidden />
-          <span className="font-semibold">{brandLabel}</span>
+        <Link href={brandHref} className="flex items-center gap-2 text-camargue">
+          <BrandMark name={brandLabel} logoUrl={brandLogoUrl} nameClassName="font-semibold" />
         </Link>
         <button
           type="button"
@@ -174,7 +179,7 @@ export function BackofficeShell({
         >
           <Menu className="h-5 w-5" />
           {totalBadge > 0 ? (
-            <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-[#a8533a] ring-2 ring-white" aria-hidden />
+            <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-terracotta ring-2 ring-white" aria-hidden />
           ) : null}
         </button>
       </header>
@@ -196,7 +201,7 @@ export function BackofficeShell({
         inert={!open}
       >
         <div className="mb-4 flex items-center justify-between px-2">
-          <span className="font-semibold text-[#1a4d6e]">{brandLabel}</span>
+          <span className="font-semibold text-camargue">{brandLabel}</span>
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -212,9 +217,8 @@ export function BackofficeShell({
 
       {/* Tablette / ordinateur : barre latérale fixe */}
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-3 sm:flex sm:flex-col">
-        <Link href={brandHref} className="mb-5 flex items-center gap-2 px-2 text-[#1a4d6e]">
-          <span className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]" aria-hidden />
-          <span className="font-semibold">{brandLabel}</span>
+        <Link href={brandHref} className="mb-5 flex items-center gap-2 px-2 text-camargue">
+          <BrandMark name={brandLabel} logoUrl={brandLogoUrl} nameClassName="font-semibold" />
         </Link>
         <div className="flex-1">{nav}</div>
         <div className="mt-4">{userBlock}</div>
@@ -234,7 +238,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       <Icon className="h-4 w-4 shrink-0" aria-hidden />
       <span className="truncate">{item.label}</span>
       {item.badge ? (
-        <span className="ml-auto rounded-full bg-[#a8533a] px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
+        <span className="ml-auto rounded-full bg-terracotta px-1.5 py-0.5 text-[11px] font-semibold leading-none text-white">
           {item.badge > 999 ? "999+" : item.badge}
         </span>
       ) : item.hint ? (
@@ -258,7 +262,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       aria-current={active ? "page" : undefined}
       className={`flex items-center gap-2 rounded-md px-2.5 py-2 sm:py-1.5 ${
         active
-          ? "bg-[#1a4d6e]/10 font-medium text-[#1a4d6e]"
+          ? "bg-camargue/10 font-medium text-camargue"
           : "text-slate-700 hover:bg-slate-100"
       }`}
     >

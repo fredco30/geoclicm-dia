@@ -14,7 +14,7 @@ export const TILE_COLOR_PRESETS: Record<
 > = {
   camargue: {
     label: "Bleu camargue",
-    bg: "bg-[#1a4d6e]",
+    bg: "bg-camargue",
     text: "text-white",
   },
   sel: {
@@ -24,7 +24,7 @@ export const TILE_COLOR_PRESETS: Record<
   },
   terre: {
     label: "Terre cuite",
-    bg: "bg-[#a8533a]",
+    bg: "bg-terracotta",
     text: "text-white",
   },
   mer: {

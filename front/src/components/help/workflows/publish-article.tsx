@@ -157,7 +157,7 @@ export const PUBLISH_ARTICLE: Workflow = {
           />
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
-            <ImagePlus className="mr-1.5 inline-block h-4 w-4 align-text-bottom text-[#1a4d6e]" />
+            <ImagePlus className="mr-1.5 inline-block h-4 w-4 align-text-bottom text-camargue" />
             Images
           </h4>
           <p>
@@ -195,7 +195,7 @@ export const PUBLISH_ARTICLE: Workflow = {
           </Warning>
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
-            <Send className="mr-1.5 inline-block h-4 w-4 align-text-bottom text-[#1a4d6e]" />
+            <Send className="mr-1.5 inline-block h-4 w-4 align-text-bottom text-camargue" />
             Publier
           </h4>
           <SubSteps
@@ -267,7 +267,7 @@ export const PUBLISH_ARTICLE: Workflow = {
                   href="https://plausible.io"
                   target="_blank"
                   rel="noopener"
-                  className="text-[#1a4d6e] underline"
+                  className="text-camargue underline"
                 >
                   plausible.io
                 </a>

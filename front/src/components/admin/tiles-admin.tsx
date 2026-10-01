@@ -244,7 +244,7 @@ export function TilesAdmin({ initialTiles }: Props) {
       <section className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <Smartphone className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+            <Smartphone className="h-4 w-4 text-camargue" aria-hidden />
             Aperçu de la home
             <span className="ml-1 text-xs font-normal text-slate-500">
               ({previewTiles.length} tuile{previewTiles.length > 1 ? "s" : ""}{" "}
@@ -340,7 +340,7 @@ function ViewportToggle({
             className={
               "inline-flex items-center gap-1 rounded px-2 py-1 transition " +
               (isActive
-                ? "bg-white font-semibold text-[#1a4d6e] shadow-sm"
+                ? "bg-white font-semibold text-camargue shadow-sm"
                 : "text-slate-600 hover:text-slate-900")
             }
           >
@@ -527,7 +527,7 @@ function TileRow({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-medium text-slate-900">{tile.label}</span>
             {tile.has_children ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-[#1a4d6e]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#1a4d6e]">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-camargue/10 px-1.5 py-0.5 text-[10px] font-medium text-camargue">
                 <Layers className="h-2.5 w-2.5" />
                 avec sous-tuiles
               </span>

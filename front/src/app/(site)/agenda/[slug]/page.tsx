@@ -65,7 +65,7 @@ export default async function EventPage({ params }: Props) {
           })}
         />
       ))}
-      <Link href="/agenda" className="text-sm text-slate-600 hover:text-[#1a4d6e]">← Agenda</Link>
+      <Link href="/agenda" className="text-sm text-slate-600 hover:text-camargue">← Agenda</Link>
       <header className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1fr),320px]">
         <div>
           <div className="mb-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full px-2 py-1 font-medium text-white" style={{ backgroundColor: event.category.color }}>{event.category.name}</span>{event.kind === "market" ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-900">Marché</span> : null}</div>
@@ -74,9 +74,9 @@ export default async function EventPage({ params }: Props) {
         </div>
         <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-slate-900">{isPast ? "Événement terminé" : "Prochaines dates"}</h2>
-          {isPast ? <p className="mt-2 text-sm text-slate-600">Cet événement a eu lieu. <Link href="/agenda" className="text-[#1a4d6e] underline">Voir l’agenda à venir</Link></p> : null}
+          {isPast ? <p className="mt-2 text-sm text-slate-600">Cet événement a eu lieu. <Link href="/agenda" className="text-camargue underline">Voir l’agenda à venir</Link></p> : null}
           <div className="mt-3 space-y-3">{(isPast ? lastOccurrences : upcoming).map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
-          {isPast ? null : <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a4d6e] underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>}
+          {isPast ? null : <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-camargue underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>}
         </aside>
       </header>
 
@@ -94,9 +94,9 @@ export default async function EventPage({ params }: Props) {
           {event.organizer ? <p><strong>Organisateur :</strong> {event.organizer}</p> : null}
           {event.contact_phone ? <a href={`tel:${event.contact_phone}`} className="flex items-center gap-2 underline"><Phone className="h-4 w-4" /> {event.contact_phone}</a> : null}
           {event.contact_email ? <a href={`mailto:${event.contact_email}`} className="flex items-center gap-2 underline"><Mail className="h-4 w-4" /> {event.contact_email}</a> : null}
-          {event.booking_url ? <a href={event.booking_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#a8533a] px-3 py-2 font-medium text-white"><ExternalLink className="h-4 w-4" /> Réserver</a> : null}
-          {event.official_url ? <a href={event.official_url} target="_blank" rel="noopener noreferrer" className="block text-[#1a4d6e] underline">Site officiel</a> : null}
-          {event.business_slug ? <Link href={`/commerces/${event.business_slug}`} className="block text-[#1a4d6e] underline">Voir {event.business_name} dans l’annuaire</Link> : null}
+          {event.booking_url ? <a href={event.booking_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-terracotta px-3 py-2 font-medium text-white"><ExternalLink className="h-4 w-4" /> Réserver</a> : null}
+          {event.official_url ? <a href={event.official_url} target="_blank" rel="noopener noreferrer" className="block text-camargue underline">Site officiel</a> : null}
+          {event.business_slug ? <Link href={`/commerces/${event.business_slug}`} className="block text-camargue underline">Voir {event.business_name} dans l’annuaire</Link> : null}
         </aside>
       </div>
     </article>

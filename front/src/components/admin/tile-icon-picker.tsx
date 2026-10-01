@@ -54,7 +54,7 @@ export function TileIconPicker({ value, onChange, className }: Props) {
     <div className={className}>
       <div className="mb-2 flex items-center gap-2">
         {SelectedIcon ? (
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-[#1a4d6e] text-white">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-camargue text-white">
             <SelectedIcon className="h-5 w-5" />
           </span>
         ) : (
@@ -93,8 +93,8 @@ export function TileIconPicker({ value, onChange, className }: Props) {
               className={
                 "inline-flex h-9 w-9 items-center justify-center rounded-md transition " +
                 (active
-                  ? "bg-[#1a4d6e] text-white"
-                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-[#1a4d6e]")
+                  ? "bg-camargue text-white"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-camargue")
               }
             >
               <Icon className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function TileIconPicker({ value, onChange, className }: Props) {
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
-          className="mt-2 text-xs text-[#1a4d6e] hover:underline"
+          className="mt-2 text-xs text-camargue hover:underline"
         >
           {showAll ? "Réduire" : `Voir les ${CURATED_ICONS.length - 18} autres`}
         </button>

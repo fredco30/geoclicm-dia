@@ -108,7 +108,7 @@ export default async function UtilityListPage({ searchParams }: Props) {
                   className={
                     "inline-flex items-center gap-1.5 border-b-2 px-3 py-2 transition " +
                     (isActive
-                      ? "border-[#1a4d6e] font-semibold text-[#1a4d6e]"
+                      ? "border-camargue font-semibold text-camargue"
                       : "border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900")
                   }
                 >

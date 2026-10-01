@@ -37,6 +37,20 @@ LIVE_SUBSCRIPTION_STATUSES = (
 )
 
 
+BILLING_DISABLED_DETAIL = (
+    "Le paiement en ligne n'est pas encore ouvert. Pendant la phase pilote, "
+    "les formules sont activées gratuitement par l'équipe geoclicMédia : "
+    "écrivez-nous à annonceurs@geoclic.fr."
+)
+
+
+def _billing_disabled_response() -> Response:
+    return Response(
+        {"detail": BILLING_DISABLED_DETAIL, "code": "billing_disabled"},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 def _stripe_error_response(exc: Exception) -> Response:
     logger.exception("Erreur Stripe : %s", exc)
     return Response(
@@ -71,6 +85,9 @@ def checkout_create(request):
     Auth requise. Le business doit appartenir à request.user (ou le user
     doit être editor/admin).
     """
+    if not settings.BILLING_ENABLED:
+        return _billing_disabled_response()
+
     plan = request.data.get("plan")
     business_id = request.data.get("business_id")
 
@@ -175,6 +192,9 @@ def portal_create(request):
     - Annuler son abonnement
     - Changer de plan (si Stripe Portal configuré pour permettre)
     """
+    if not settings.BILLING_ENABLED:
+        return _billing_disabled_response()
+
     business_id = request.data.get("business_id")
 
     secret_key = _get_stripe_secret_key()

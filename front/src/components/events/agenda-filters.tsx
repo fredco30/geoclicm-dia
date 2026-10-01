@@ -31,13 +31,13 @@ export function AgendaFilters({ categories, communes, values }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex h-10 w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-[#1a4d6e]"
+        className="flex h-10 w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:border-camargue"
       >
         <span className="inline-flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+          <SlidersHorizontal className="h-4 w-4 text-camargue" aria-hidden />
           Filtres
           {activeCount > 0 ? (
-            <span className="rounded-full bg-[#1a4d6e] px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded-full bg-camargue px-2 py-0.5 text-xs font-semibold text-white">
               {activeCount}
             </span>
           ) : null}
@@ -104,7 +104,7 @@ export function AgendaFilters({ categories, communes, values }: Props) {
             />
           </label>
           <div className="flex items-end gap-2">
-            <button className="h-10 flex-1 rounded-md bg-[#1a4d6e] px-3 text-sm font-medium text-white">
+            <button className="h-10 flex-1 rounded-md bg-camargue px-3 text-sm font-medium text-white">
               Filtrer
             </button>
             <Link

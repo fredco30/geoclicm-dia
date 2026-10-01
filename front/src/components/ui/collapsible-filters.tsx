@@ -24,13 +24,13 @@ export function CollapsibleFilters({ children, summary, activeCount = 0 }: Props
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-[#1a4d6e]"
+        className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:border-camargue"
       >
         <span className="inline-flex items-center gap-2">
           <SlidersHorizontal className="h-4 w-4" />
           Filtres
           {activeCount > 0 ? (
-            <span className="rounded-full bg-[#1a4d6e] px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded-full bg-camargue px-2 py-0.5 text-xs font-semibold text-white">
               {activeCount}
             </span>
           ) : null}

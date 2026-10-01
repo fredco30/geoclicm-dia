@@ -96,7 +96,7 @@ export function GastronomieFilters({ communes, values }: Props) {
         <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-2">
           <button
             type="submit"
-            className="h-10 flex-1 rounded-md bg-[#1a4d6e] px-3 text-sm font-medium text-white"
+            className="h-10 flex-1 rounded-md bg-camargue px-3 text-sm font-medium text-white"
           >
             Filtrer
           </button>

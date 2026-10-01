@@ -41,9 +41,9 @@ export function EventRow({ event }: { event: EventListItem }) {
   return (
     <Link
       href={`/agenda/${event.slug}`}
-      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-[#1a4d6e] hover:shadow-sm"
+      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-camargue hover:shadow-sm"
     >
-      <span className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-[#1a4d6e] text-white" style={{ height: 52, width: 52 }}>
+      <span className="flex shrink-0 flex-col items-center justify-center rounded-lg bg-camargue text-white" style={{ height: 52, width: 52 }}>
         {occ && hasDate ? (
           <>
             <span className="text-lg font-bold leading-none">{dayNumber(occ.starts_at)}</span>
@@ -56,7 +56,7 @@ export function EventRow({ event }: { event: EventListItem }) {
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#1a4d6e] sm:whitespace-normal">
+        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-camargue sm:whitespace-normal">
           {event.title}
         </span>
         <span className="mt-0.5 block truncate text-xs text-slate-600">

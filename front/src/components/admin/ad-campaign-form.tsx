@@ -234,7 +234,7 @@ export function AdCampaignForm({
         <div className="flex items-center gap-2">
           <Link
             href={listHref}
-            className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+            className="text-sm text-slate-600 hover:text-camargue"
           >
             ← Campagnes
           </Link>
@@ -450,7 +450,7 @@ export function AdCampaignForm({
                     Array.from(e.target.selectedOptions, (o) => Number(o.value)),
                   )
                 }
-                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
               >
                 {communes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -472,7 +472,7 @@ export function AdCampaignForm({
                     Array.from(e.target.selectedOptions, (o) => Number(o.value)),
                   )
                 }
-                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>

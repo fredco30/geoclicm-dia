@@ -17,6 +17,7 @@ const RULES: { match: (path: string) => boolean; tags: string[] }[] = [
   { match: (p) => p.includes("listing"), tags: ["listings", "listing-categories"] },
   { match: (p) => p.includes("tiles"), tags: ["tiles"] },
   { match: (p) => p.includes("utility"), tags: ["utility"] },
+  { match: (p) => p.includes("site-settings"), tags: ["site-settings"] },
 ];
 
 /**

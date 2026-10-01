@@ -35,7 +35,7 @@ export function ImageUploader({ currentUrl, onFileSelected }: Props) {
         </div>
       ) : null}
 
-      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-sm text-slate-600 transition hover:border-[#1a4d6e] hover:text-[#1a4d6e]">
+      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-sm text-slate-600 transition hover:border-camargue hover:text-camargue">
         <Upload className="h-5 w-5" />
         <span>{currentUrl ? "Remplacer l'image" : "Cliquer pour uploader"}</span>
         <input

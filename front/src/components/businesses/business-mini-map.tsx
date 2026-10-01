@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { brandColor } from "@/lib/brand-colors";
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -55,7 +56,7 @@ export function BusinessMiniMap({
       ? new maplibregl.Popup({ offset: 25, closeButton: false }).setText(label)
       : undefined;
 
-    new maplibregl.Marker({ color: "#a8533a" })
+    new maplibregl.Marker({ color: brandColor("accent") })
       .setLngLat([longitude, latitude])
       .setPopup(popup)
       .addTo(map);

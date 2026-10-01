@@ -25,7 +25,7 @@ export default async function SearchPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
       <header className="mb-8">
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/" className="text-sm text-slate-600 hover:text-camargue">
           ← Accueil
         </Link>
         <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
@@ -44,13 +44,13 @@ export default async function SearchPage({ searchParams }: Props) {
               name="q"
               defaultValue={query}
               placeholder="Rechercher un article, un thème, un lieu..."
-              className="h-11 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-[#1a4d6e] focus:outline-none focus:ring-2 focus:ring-[#1a4d6e]/20"
+              className="h-11 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-camargue focus:outline-none focus:ring-2 focus:ring-camargue/20"
               autoFocus
             />
           </div>
           <button
             type="submit"
-            className="h-11 rounded-md bg-[#1a4d6e] px-4 text-sm font-medium text-white hover:bg-[#133a55]"
+            className="h-11 rounded-md bg-camargue px-4 text-sm font-medium text-white hover:bg-camargue-dark"
           >
             Rechercher
           </button>

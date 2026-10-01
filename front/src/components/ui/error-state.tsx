@@ -24,7 +24,7 @@ export function ErrorState({
         <button
           type="button"
           onClick={reset}
-          className="rounded-md bg-[#1a4d6e] px-4 py-2 font-medium text-white hover:bg-[#13384f]"
+          className="rounded-md bg-camargue px-4 py-2 font-medium text-white hover:bg-camargue-dark"
         >
           Réessayer
         </button>
@@ -40,7 +40,7 @@ export function ErrorState({
 export function LoadingState() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
-      <span className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#1a4d6e]" aria-hidden />
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-camargue" aria-hidden />
       <span className="sr-only">Chargement…</span>
     </div>
   );

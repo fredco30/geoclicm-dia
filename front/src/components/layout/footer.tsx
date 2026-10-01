@@ -1,17 +1,23 @@
 import Link from "next/link";
 
 import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
+import { getSiteSettings } from "@/lib/site-settings";
+import { BrandMark } from "./brand-mark";
 
-export function Footer() {
+export async function Footer() {
+  const site = await getSiteSettings();
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
       <div className="mx-auto max-w-screen-xl px-4 py-10 text-sm text-slate-600">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
           <div>
-            <div className="mb-3 flex items-center gap-2 text-[#1a4d6e]">
-              <span className="inline-block h-6 w-6 rounded-full bg-[#1a4d6e]" aria-hidden />
-              <span className="font-serif text-lg font-semibold">geoclicMédia</span>
-            </div>
+            <BrandMark
+              name={site.site_name}
+              logoUrl={site.logo_url}
+              size={24}
+              className="mb-3 text-camargue"
+              nameClassName="font-serif text-lg font-semibold"
+            />
             <p className="text-slate-600">
               Le média local indépendant du littoral camarguais.
             </p>
@@ -61,7 +67,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 border-t border-slate-200 pt-6 text-xs text-slate-500">
-          © {new Date().getFullYear()} geoclicMédia. Tous droits réservés.
+          © {new Date().getFullYear()} {site.site_name}. Tous droits réservés.
         </div>
       </div>
     </footer>
@@ -70,7 +76,7 @@ export function Footer() {
 
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="hover:text-[#1a4d6e] hover:underline">
+    <Link href={href} className="hover:text-camargue hover:underline">
       {children}
     </Link>
   );

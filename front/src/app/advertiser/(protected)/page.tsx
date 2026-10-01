@@ -20,11 +20,11 @@ export default async function AdvertiserDashboardPage() {
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
           href="/advertiser/fiches"
-          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-terracotta hover:shadow-md"
         >
-          <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
+          <div className="mb-2 flex items-center gap-2 text-terracotta">
             <Store className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-terracotta">
               Ma fiche commerce
             </h2>
           </div>
@@ -32,17 +32,17 @@ export default async function AdvertiserDashboardPage() {
             Crée une fiche détaillée (description, horaires, photos) pour
             apparaître dans l&apos;annuaire et sur la carte du territoire.
           </p>
-          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+          <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes fiches →
           </p>
         </Link>
         <Link
           href="/advertiser/campagnes"
-          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-terracotta hover:shadow-md"
         >
-          <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
+          <div className="mb-2 flex items-center gap-2 text-terracotta">
             <Megaphone className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-terracotta">
               Mes campagnes pub
             </h2>
           </div>
@@ -50,13 +50,13 @@ export default async function AdvertiserDashboardPage() {
             Diffuse des encarts publicitaires sur les pages clés du média :
             home, articles, annuaire.
           </p>
-          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+          <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes campagnes →
           </p>
         </Link>
       </div>
 
-      <div className="mt-8 rounded-xl bg-[#fbf9f5] p-5 ring-1 ring-[#a8533a]/30">
+      <div className="mt-8 rounded-xl bg-[#fbf9f5] p-5 ring-1 ring-terracotta/30">
         <h2 className="font-serif text-lg font-semibold text-slate-900">
           Besoin d&apos;aide ?
         </h2>
@@ -67,7 +67,7 @@ export default async function AdvertiserDashboardPage() {
         </p>
         <Link
           href="/contact"
-          className="mt-3 inline-block rounded-md bg-[#a8533a] px-4 py-2 text-sm font-medium text-white hover:bg-[#8e4530]"
+          className="mt-3 inline-block rounded-md bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-dark"
         >
           Nous contacter
         </Link>

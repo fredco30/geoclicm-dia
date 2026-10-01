@@ -21,7 +21,7 @@ export default async function ProceduresPage() {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
       <header className="mb-8 border-b border-slate-200 pb-6">
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/" className="text-sm text-slate-600 hover:text-camargue">
           ← Accueil
         </Link>
         <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">

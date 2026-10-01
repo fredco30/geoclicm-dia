@@ -4,14 +4,10 @@
   --font-geoclic-sans: "Inter Variable";
   --font-geoclic-serif: "Fraunces Variable";
 
-  /* Palette geoclicMédia — direction "magazine littéraire ancré local" */
-  --color-camargue: #1a4d6e;        /* primaire — bleu lagune */
-  --color-camargue-light: #2c6a93;  /* lift */
-  --color-camargue-dark: #0d2d3f;   /* nuit */
-  --color-sand: #e8dfd1;            /* sable — fond de section secondaire */
-  --color-salt: #fbf9f5;            /* sel — fond pages publiques */
-  --color-terracotta: #a8533a;      /* terre cuite — accent rare */
-  --color-neutral: #5a6b78;         /* gris neutre — méta */
+  /* Couleurs de marque : valeurs par défaut, remplacées par les réglages
+     du site (back-office → Identité du site) via le style de <html>. */
+  --brand-primary: #1a4d6e;         /* principale — bleu lagune */
+  --brand-accent: #a8533a;          /* accent — terre cuite */
 }
 
 @theme inline {
@@ -19,13 +15,17 @@
   --font-sans: var(--font-geoclic-sans);
   --font-serif: var(--font-geoclic-serif);
 
-  /* Couleurs custom utilisables via classes Tailwind (ex: bg-camargue, text-terracotta) */
-  --color-camargue: var(--color-camargue);
-  --color-camargue-light: var(--color-camargue-light);
-  --color-camargue-dark: var(--color-camargue-dark);
-  --color-sand: var(--color-sand);
-  --color-salt: var(--color-salt);
-  --color-terracotta: var(--color-terracotta);
+  /* Couleurs utilisables en classes Tailwind (bg-camargue, text-terracotta,
+     hover:bg-camargue-dark, bg-camargue/10…). Les variantes claires et
+     foncées sont dérivées de la couleur choisie : un seul réglage suffit. */
+  --color-camargue: var(--brand-primary);
+  --color-camargue-light: color-mix(in srgb, var(--brand-primary) 80%, white);
+  --color-camargue-dark: color-mix(in srgb, var(--brand-primary) 75%, black);
+  --color-terracotta: var(--brand-accent);
+  --color-terracotta-dark: color-mix(in srgb, var(--brand-accent) 82%, black);
+  --color-sand: #e8dfd1;            /* sable — fond de section secondaire */
+  --color-salt: #fbf9f5;            /* sel — fond pages publiques */
+  --color-neutral: #5a6b78;         /* gris neutre — méta */
 }
 
 html {
@@ -53,11 +53,11 @@ body {
   font-weight: 600;
   float: left;
   padding: 0.35rem 0.6rem 0 0;
-  color: var(--color-camargue);
+  color: var(--brand-primary);
 }
 
 /* Sélection de texte aux couleurs marque */
 ::selection {
-  background-color: var(--color-camargue);
+  background-color: var(--brand-primary);
   color: white;
 }

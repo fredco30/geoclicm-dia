@@ -74,7 +74,7 @@ export function RunMultiButton({
         disabled={disabled || isRunning}
         title="Lancer la passe IA multi (payant, manuel)"
         aria-label={`Lancer la passe IA multi sur ${label}`}
-        className="rounded-md p-2 text-[#1a4d6e] hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+        className="rounded-md p-2 text-camargue hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
       >
         {isRunning ? (
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

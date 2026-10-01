@@ -296,7 +296,7 @@ export function EventForm({
       <div className="sticky top-0 z-10 -mx-4 -mt-6 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Link href="/admin/agenda" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+            <Link href="/admin/agenda" className="text-sm text-slate-600 hover:text-camargue">
               ← Agenda
             </Link>
             <h1 className="text-lg font-semibold text-slate-900">
@@ -376,7 +376,7 @@ export function EventForm({
           <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
             <h2 className="font-semibold text-slate-900">Publication</h2>
             <div><Label htmlFor="kind">Type *</Label><Select id="kind" value={form.kind} onChange={(e) => update("kind", e.target.value as FormState["kind"])}><option value="event">Événement</option><option value="market">Marché</option></Select></div>
-            <div><Label htmlFor="category">Catégorie *</Label><Select id="category" required value={form.category} onChange={(e) => update("category", e.target.value)}><option value="">Choisir…</option>{categories.filter((category) => category.is_active || category.id === event?.category_id).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</Select><Link href="/admin/agenda/categories" className="mt-1 inline-block text-xs text-[#1a4d6e] underline">Gérer les catégories</Link></div>
+            <div><Label htmlFor="category">Catégorie *</Label><Select id="category" required value={form.category} onChange={(e) => update("category", e.target.value)}><option value="">Choisir…</option>{categories.filter((category) => category.is_active || category.id === event?.category_id).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</Select><Link href="/admin/agenda/categories" className="mt-1 inline-block text-xs text-camargue underline">Gérer les catégories</Link></div>
             <div><Label htmlFor="commune">Commune *</Label><Select id="commune" required value={form.commune} onChange={(e) => update("commune", e.target.value)}><option value="">Choisir…</option>{communes.filter((commune) => commune.is_active).map((commune) => <option key={commune.id} value={commune.id}>{commune.name}</option>)}</Select></div>
             <div><Label htmlFor="status">Statut</Label><Select id="status" value={form.status} onChange={(e) => update("status", e.target.value as FormState["status"])}>{STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</Select></div>
             <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={form.is_featured} onChange={(e) => update("is_featured", e.target.checked)} /> Mettre en avant</label>

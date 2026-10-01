@@ -42,7 +42,7 @@ export function MapsLinks({ latitude, longitude, label }: Props) {
         rel="noopener noreferrer"
         aria-label={`Ouvrir dans Google Maps${aria}`}
         title="Ouvrir dans Google Maps"
-        className="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-[#1a4d6e]/10 hover:text-[#1a4d6e]"
+        className="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-camargue/10 hover:text-camargue"
       >
         <MapPin className="h-3 w-3" aria-hidden />
         Maps
@@ -53,7 +53,7 @@ export function MapsLinks({ latitude, longitude, label }: Props) {
         rel="noopener noreferrer"
         aria-label={`Ouvrir dans Waze${aria}`}
         title="Ouvrir dans Waze"
-        className="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-[#1a4d6e]/10 hover:text-[#1a4d6e]"
+        className="inline-flex items-center gap-0.5 rounded bg-slate-100 px-1 py-0.5 text-[10px] font-medium text-slate-700 hover:bg-camargue/10 hover:text-camargue"
       >
         <Navigation className="h-3 w-3" aria-hidden />
         Waze

@@ -35,7 +35,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
             ({businesses.length})
           </span>
           {onlyPending ? (
-            <Link href="/admin/directory/businesses" className="ml-3 text-sm font-normal text-[#1a4d6e] underline">
+            <Link href="/admin/directory/businesses" className="ml-3 text-sm font-normal text-camargue underline">
               Voir toutes les fiches
             </Link>
           ) : null}

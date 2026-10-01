@@ -43,7 +43,7 @@ export function Pagination({ currentPage, totalCount, pageSize, baseUrl, pagePar
         ) : p === currentPage ? (
           <span
             key={p}
-            className="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-[#1a4d6e] px-3 text-sm font-semibold text-white"
+            className="inline-flex h-9 min-w-9 items-center justify-center rounded-md bg-camargue px-3 text-sm font-semibold text-white"
             aria-current="page"
           >
             {p}
