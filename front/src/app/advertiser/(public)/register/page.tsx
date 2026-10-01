@@ -23,7 +23,7 @@ export default async function AdvertiserRegisterPage() {
           Inscription annonceur
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Crée ton compte pour publier ta fiche commerce et lancer des
+          Créez votre compte pour publier votre fiche commerce et lancer des
           campagnes publicitaires sur geoclicMédia.
         </p>
         <p className="mt-1 text-xs text-slate-500">

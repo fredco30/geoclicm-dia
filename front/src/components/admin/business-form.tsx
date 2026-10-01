@@ -159,7 +159,7 @@ export function BusinessForm({
     setGeoMessage(null);
     const query = `${form.address}, ${form.postal_code} ${form.city}`.trim();
     if (!form.address || !form.city) {
-      setGeoMessage("Saisis au moins l'adresse et la ville avant de géocoder.");
+      setGeoMessage("Saisissez au moins l'adresse et la ville avant de géocoder.");
       return;
     }
     setIsGeocoding(true);
@@ -173,7 +173,7 @@ export function BusinessForm({
         );
       } else {
         setGeoMessage(
-          "Adresse introuvable via Nominatim. Vérifie l'orthographe ou saisis lat/lng manuellement.",
+          "Adresse introuvable via Nominatim. Vérifiez l'orthographe ou saisissez lat/lng manuellement.",
         );
       }
     } finally {
@@ -287,7 +287,7 @@ export function BusinessForm({
         router.push(`${editHrefPrefix}/${saved.slug}/edit`);
         router.refresh();
       } catch {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, veuillez réessayer.");
       }
     });
   };
@@ -932,10 +932,10 @@ export function BusinessForm({
             </>
           ) : (
             <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
-              ℹ️ La publication de ta fiche est validée par l&apos;équipe
+              ℹ️ La publication de votre fiche est validée par l&apos;équipe
               geoclicMédia après vérification (généralement sous 24h ouvrées).
-              Tu peux modifier ta fiche à tout moment, les changements seront
-              visibles publiquement après validation.
+              Vous pouvez modifier votre fiche à tout moment : une fois en
+              ligne, chaque modification est relue avant d&apos;être publiée.
             </p>
           )}
           <div className="space-y-1">

@@ -218,7 +218,7 @@ def portal_create(request):
     if not business.stripe_customer_id:
         return Response(
             {
-                "detail": "Aucun abonnement actif. Choisis d'abord un plan via /tarifs.",
+                "detail": "Aucun abonnement actif. Choisissez d'abord une formule via /tarifs.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )

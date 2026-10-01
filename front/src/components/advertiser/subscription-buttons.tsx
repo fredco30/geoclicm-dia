@@ -55,7 +55,7 @@ export function CheckoutButton({
       const { checkout_url } = (await res.json()) as { checkout_url: string };
       window.location.href = checkout_url;
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError("Erreur réseau, veuillez réessayer.");
       setBusy(false);
     }
   };
@@ -114,7 +114,7 @@ export function PortalButton({ businessId, className }: PortalProps) {
       const { portal_url } = (await res.json()) as { portal_url: string };
       window.location.href = portal_url;
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError("Erreur réseau, veuillez réessayer.");
       setBusy(false);
     }
   };

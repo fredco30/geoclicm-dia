@@ -105,7 +105,7 @@ class AdvertiserAdCampaignViewSet(viewsets.ModelViewSet):
             business = serializer.validated_data.get("business")
             if business and business.owner_id != user.id:
                 raise PermissionDenied(
-                    "Tu ne peux créer une campagne que pour une de tes fiches."
+                    "Vous ne pouvez créer une campagne que pour l'une de vos fiches."
                 )
             serializer.save(is_active=False, is_paid=False)
         else:
@@ -121,7 +121,7 @@ class AdvertiserAdCampaignViewSet(viewsets.ModelViewSet):
         business = serializer.validated_data.get("business")
         if business and business.owner_id != user.id:
             raise PermissionDenied(
-                "Tu ne peux rattacher une campagne qu'à une de tes fiches."
+                "Vous ne pouvez rattacher une campagne qu'à l'une de vos fiches."
             )
         # Toute modification par l'annonceur (visuel, lien, texte, dates)
         # repasse la campagne en validation : l'équipe la réactive après

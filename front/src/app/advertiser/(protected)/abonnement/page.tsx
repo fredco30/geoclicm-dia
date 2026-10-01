@@ -55,12 +55,12 @@ export default async function AbonnementPage({ searchParams }: Props) {
         <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-8 text-center">
           <AlertCircle className="mx-auto mb-3 h-8 w-8 text-amber-700" />
           <h1 className="font-serif text-xl font-semibold text-amber-900">
-            Crée ta fiche commerce avant de souscrire
+            Créez votre fiche commerce avant de choisir une formule
           </h1>
           <p className="mt-2 text-sm text-amber-800">
             Un abonnement Basic ou Premium est rattaché à une fiche
-            commerce. Crée ta fiche en quelques minutes pour pouvoir choisir
-            ta formule.
+            commerce. Créez votre fiche en quelques minutes pour pouvoir
+            choisir votre formule.
           </p>
           <Link href="/advertiser/fiches/new" className="mt-4 inline-block">
             <Button>Créer ma fiche</Button>
@@ -80,7 +80,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
           <div>
             <p className="font-medium text-green-900">Paiement reçu — merci !</p>
             <p className="text-sm text-green-800">
-              Ton abonnement est activé. Le statut peut prendre quelques
+              Votre abonnement est activé. Le statut peut prendre quelques
               secondes à se mettre à jour ci-dessous.
             </p>
           </div>
@@ -138,10 +138,10 @@ export default async function AbonnementPage({ searchParams }: Props) {
       {isFree ? (
         <div className="mt-8">
           <h2 className="font-serif text-xl font-semibold text-slate-900">
-            Passer à un plan payant
+            Passer à une formule supérieure
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Active la mise en avant et les encarts publicitaires pour ta fiche.
+            Activez la mise en avant et les encarts publicitaires pour votre fiche.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">

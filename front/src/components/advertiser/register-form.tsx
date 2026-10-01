@@ -58,7 +58,7 @@ export function AdvertiserRegisterForm() {
       router.push("/advertiser");
       router.refresh();
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError("Erreur réseau, veuillez réessayer.");
       setBusy(false);
     }
   };

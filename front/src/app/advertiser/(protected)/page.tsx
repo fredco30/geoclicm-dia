@@ -12,9 +12,8 @@ export default async function AdvertiserDashboardPage() {
         Bienvenue, {user!.first_name || user!.full_name} 👋
       </h1>
       <p className="mt-2 max-w-prose text-slate-600">
-        Ton espace annonceur est prêt. Pour l&apos;instant, la création de
-        fiche et de campagne se fait avec l&apos;aide de l&apos;équipe
-        éditoriale — contacte-nous pour démarrer.
+        Votre espace annonceur est prêt : créez votre fiche commerce, puis
+        vos campagnes. L&apos;équipe éditoriale les relit avant publication.
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -29,8 +28,8 @@ export default async function AdvertiserDashboardPage() {
             </h2>
           </div>
           <p className="text-sm text-slate-600">
-            Crée une fiche détaillée (description, horaires, photos) pour
-            apparaître dans l&apos;annuaire et sur la carte du territoire.
+            Créez une fiche détaillée (description, horaires, logo et photo)
+            pour apparaître dans l&apos;annuaire et sur la carte du territoire.
           </p>
           <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes fiches →
@@ -47,8 +46,8 @@ export default async function AdvertiserDashboardPage() {
             </h2>
           </div>
           <p className="text-sm text-slate-600">
-            Diffuse des encarts publicitaires sur les pages clés du média :
-            home, articles, annuaire.
+            Diffusez des encarts publicitaires sur les pages clés du média :
+            accueil, articles, annuaire.
           </p>
           <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes campagnes →
@@ -56,7 +55,7 @@ export default async function AdvertiserDashboardPage() {
         </Link>
       </div>
 
-      <div className="mt-8 rounded-xl bg-[#fbf9f5] p-5 ring-1 ring-terracotta/30">
+      <div className="mt-8 rounded-xl bg-salt p-5 ring-1 ring-terracotta/30">
         <h2 className="font-serif text-lg font-semibold text-slate-900">
           Besoin d&apos;aide ?
         </h2>

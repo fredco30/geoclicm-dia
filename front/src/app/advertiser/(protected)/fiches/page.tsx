@@ -44,11 +44,11 @@ export default async function MyBusinessesPage() {
       {businesses.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
           <p className="text-sm text-slate-600">
-            Tu n&apos;as pas encore de fiche commerce.
+            Vous n&apos;avez pas encore de fiche commerce.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Crée ta première fiche pour apparaître dans l&apos;annuaire et sur
-            la carte du territoire.
+            Créez votre première fiche pour apparaître dans l&apos;annuaire et
+            sur la carte du territoire.
           </p>
           <Link href="/advertiser/fiches/new" className="mt-4 inline-block">
             <Button size="md">

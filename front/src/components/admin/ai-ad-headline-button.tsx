@@ -62,11 +62,11 @@ export function AIAdHeadlineButton({
     const placement = getPlacement();
 
     if (!businessId) {
-      setError("Choisis d'abord un commerce pour cette campagne.");
+      setError("Choisissez d'abord un commerce pour cette campagne.");
       return;
     }
     if (!placement) {
-      setError("Choisis d'abord un emplacement pour cet encart.");
+      setError("Choisissez d'abord un emplacement pour cet encart.");
       return;
     }
 
@@ -82,22 +82,22 @@ export function AIAdHeadlineButton({
       if (err instanceof AIAssistError) {
         if (err.code === "budget_exceeded") {
           setError(
-            "Quota IA atteint pour aujourd'hui. Réessaie demain.",
+            "Quota IA atteint pour aujourd'hui. Réessayez demain.",
           );
         } else if (err.code === "not_configured") {
-          setError("L'IA n'est pas configurée. Contacte l'équipe.");
+          setError("L'IA n'est pas configurée. Contactez l'équipe.");
         } else if (err.code === "empty_variants") {
           setError(
-            "L'IA n'a rien produit d'utilisable. Enrichis la fiche "
-            + "(description, spécialités) et réessaie.",
+            "L'IA n'a rien produit d'utilisable. Enrichissez la fiche "
+            + "(description, spécialités) et réessayez.",
           );
         } else if (err.code === "bad_format") {
-          setError("Réponse IA mal formée. Réessaie.");
+          setError("Réponse IA mal formée. Veuillez réessayer.");
         } else {
           setError(err.message || "Erreur lors de la génération.");
         }
       } else {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, veuillez réessayer.");
       }
     } finally {
       setIsLoading(false);

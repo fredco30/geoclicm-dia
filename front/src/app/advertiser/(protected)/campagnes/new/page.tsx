@@ -57,12 +57,12 @@ export default async function NewMyCampaignPage() {
       <div className="mx-auto max-w-2xl">
         <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 p-8 text-center">
           <h1 className="font-serif text-xl font-semibold text-amber-900">
-            Crée d&apos;abord ta fiche commerce
+            Créez d&apos;abord votre fiche commerce
           </h1>
           <p className="mt-2 text-sm text-amber-800">
             Une campagne publicitaire est rattachée à une fiche commerce
-            (logo, nom, lien). Tu n&apos;as pas encore de fiche, crées-en
-            une avant de lancer ta première campagne.
+            (logo, nom, lien). Vous n&apos;avez pas encore de fiche : créez-en
+            une avant de lancer votre première campagne.
           </p>
           <Link href="/advertiser/fiches/new" className="mt-4 inline-block">
             <Button size="md">Créer ma fiche</Button>
