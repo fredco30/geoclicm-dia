@@ -164,6 +164,17 @@ class Business(models.Model):
     # --- SEO ---
     meta_description = models.CharField(max_length=160, blank=True)
 
+    # --- Relecture des modifications annonceur ---
+    # Quand le propriétaire modifie une fiche DÉJÀ publiée, ses changements
+    # sont mis en attente ici (format d'entrée du serializer annonceur) :
+    # la version publiée reste en ligne jusqu'à validation par l'équipe.
+    pending_changes = models.JSONField(null=True, blank=True)
+    pending_logo = models.ImageField(upload_to="businesses/pending/", blank=True, null=True)
+    pending_cover_image = models.ImageField(
+        upload_to="businesses/pending/", blank=True, null=True
+    )
+    pending_submitted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
     # --- Stats ---
     view_count = models.PositiveIntegerField(default=0)
 

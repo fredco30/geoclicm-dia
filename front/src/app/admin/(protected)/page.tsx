@@ -22,6 +22,7 @@ const PENDING_BOXES = [
   { key: "places", label: "Découvrir", href: "/admin/decouvrir/imports" },
   { key: "businesses", label: "Commerçants", href: "/admin/directory/imports" },
   { key: "listings", label: "Annonces", href: "/admin/annonces/imports" },
+  { key: "business_changes", label: "Fiches modifiées", href: "/admin/directory/businesses?pending_changes=1" },
 ] as const;
 
 export default async function AdminDashboard() {
@@ -38,7 +39,7 @@ export default async function AdminDashboard() {
             À valider{" "}
             <span className="font-normal text-slate-500">({pendingTotal})</span>
           </h2>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {PENDING_BOXES.map((box) => (
               <Link
                 key={box.key}

@@ -54,7 +54,10 @@ class TeamOrOwnerFieldsMixin:
     et dates d'abonnement. Le public garde « plan » (badge Partenaire).
     """
 
-    PRIVATE_FIELDS = ("owner", "owner_username", "plan_starts_at", "plan_ends_at")
+    PRIVATE_FIELDS = (
+        "owner", "owner_username", "plan_starts_at", "plan_ends_at",
+        "pending_review", "has_pending_changes",
+    )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -79,9 +82,12 @@ class BusinessListSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
+    has_pending_changes = serializers.SerializerMethodField()
+
     class Meta:
         model = Business
         fields = (
+            "has_pending_changes",
             "id", "name", "slug", "city",
             "category", "category_name",
             "specialties",
@@ -93,6 +99,9 @@ class BusinessListSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer
             "is_published", "is_featured", "is_local_producer", "is_claimed",
             "created_at", "updated_at",
         )
+
+    def get_has_pending_changes(self, obj: Business) -> bool:
+        return bool(obj.pending_changes)
 
     def get_latitude(self, obj: Business) -> float | None:
         return obj.location.y if obj.location else None
@@ -115,9 +124,12 @@ class BusinessDetailSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializ
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
+    pending_review = serializers.SerializerMethodField()
+
     class Meta:
         model = Business
         fields = (
+            "pending_review",
             "id", "name", "slug", "legal_name", "siret",
             "category", "secondary_categories",
             "short_description", "description", "specialties",
@@ -138,6 +150,24 @@ class BusinessDetailSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializ
 
     def get_longitude(self, obj: Business) -> float | None:
         return obj.location.x if obj.location else None
+
+    def get_pending_review(self, obj: Business):
+        """Modifications de l'annonceur en attente de relecture (ou None)."""
+        if not obj.pending_changes:
+            return None
+        request = self.context.get("request")
+
+        def url(field):
+            if not field:
+                return None
+            return request.build_absolute_uri(field.url) if request else field.url
+
+        return {
+            "changes": obj.pending_changes,
+            "submitted_at": obj.pending_submitted_at,
+            "logo_url": url(obj.pending_logo),
+            "cover_image_url": url(obj.pending_cover_image),
+        }
 
 
 # ============================================================================

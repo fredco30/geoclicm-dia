@@ -49,7 +49,7 @@ def pending_counts(request):
     Même périmètre que la vue par défaut de chaque boîte : statuts
     « à vérifier » et « incomplet ».
     """
-    from apps.directory.models import BusinessImportCandidate
+    from apps.directory.models import Business, BusinessImportCandidate
     from apps.discovery.models import PlaceImportCandidate
     from apps.events.models import EventImportCandidate
     from apps.listings.models import ListingImportCandidate
@@ -65,5 +65,7 @@ def pending_counts(request):
             "places": count(PlaceImportCandidate),
             "businesses": count(BusinessImportCandidate),
             "listings": count(ListingImportCandidate),
+            # Modifications de fiches publiées proposées par les annonceurs.
+            "business_changes": Business.objects.filter(pending_changes__isnull=False).count(),
         }
     )

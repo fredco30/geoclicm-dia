@@ -188,7 +188,10 @@ class PendingCountsAndPaginationTests(TestCase):
         client.force_authenticate(make_user("ed", role=User.Role.EDITOR))
         res = client.get("/api/admin/pending-counts/")
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(set(res.json()), {"events", "places", "businesses", "listings"})
+        self.assertEqual(
+            set(res.json()),
+            {"events", "places", "businesses", "listings", "business_changes"},
+        )
 
     def test_page_size_param_honoured_and_capped(self):
         commune = Commune.objects.create(

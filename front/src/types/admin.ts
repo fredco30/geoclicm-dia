@@ -218,6 +218,8 @@ export type CommuneMini = {
 
 export type AdminBusinessListItem = {
   id: number;
+  /** Modifications annonceur en attente de relecture (équipe/propriétaire). */
+  has_pending_changes?: boolean;
   name: string;
   slug: string;
   city: string;
@@ -245,6 +247,8 @@ export type AdminBusinessDetail = Omit<AdminBusinessListItem, "category"> & {
   // Le serializer detail renvoie l'objet complet (BusinessCategorySerializer),
   // pas seulement l'id comme dans le list serializer.
   category: AdminBusinessCategory;
+  /** Modifications proposées par l'annonceur sur une fiche publiée. */
+  pending_review?: BusinessPendingReview | null;
   legal_name: string;
   siret: string;
   secondary_categories: AdminBusinessCategory[];
@@ -496,4 +500,18 @@ export type PendingCounts = {
   places: number;
   businesses: number;
   listings: number;
+  /** Fiches publiées dont l'annonceur a proposé des modifications. */
+  business_changes: number;
+};
+
+/**
+ * Modifications d'une fiche publiée en attente de relecture. `changes` est
+ * au format d'écriture de l'API (ids pour les relations, `true` / `null`
+ * pour une image nouvelle / supprimée).
+ */
+export type BusinessPendingReview = {
+  changes: Record<string, unknown>;
+  submitted_at: string | null;
+  logo_url: string | null;
+  cover_image_url: string | null;
 };

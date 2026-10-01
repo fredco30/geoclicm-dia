@@ -94,7 +94,13 @@ export default async function MyBusinessesPage() {
                       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
                         <Eye className="h-3 w-3" /> En ligne
                       </span>
-                    ) : (
+                    ) : null}
+                    {b.is_published && b.has_pending_changes ? (
+                      <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                        Modifications en relecture
+                      </span>
+                    ) : null}
+                    {b.is_published ? null : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
                         <EyeOff className="h-3 w-3" /> En attente de validation
                       </span>

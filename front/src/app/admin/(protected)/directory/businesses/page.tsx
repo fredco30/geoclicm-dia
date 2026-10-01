@@ -12,24 +12,33 @@ const PLAN_LABELS: Record<string, { label: string; className: string }> = {
   premium: { label: "Premium", className: "bg-amber-100 text-amber-900" },
 };
 
-async function fetchBusinesses(): Promise<AdminBusinessListItem[]> {
-  return (await fetchAllPages<AdminBusinessListItem>("/api/businesses/?ordering=name")) ?? [];
+async function fetchBusinesses(onlyPending: boolean): Promise<AdminBusinessListItem[]> {
+  const filter = onlyPending ? "&pending_changes=1" : "";
+  return (await fetchAllPages<AdminBusinessListItem>(`/api/businesses/?ordering=name${filter}`)) ?? [];
 }
 
-export default async function BusinessesPage() {
+type Props = { searchParams: Promise<{ pending_changes?: string }> };
+
+export default async function BusinessesPage({ searchParams }: Props) {
   const me = await getCurrentUser();
   if (!me?.can_publish) redirect("/admin");
 
-  const businesses = await fetchBusinesses();
+  const onlyPending = (await searchParams).pending_changes === "1";
+  const businesses = await fetchBusinesses(onlyPending);
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-900">
-          Commerçants{" "}
+          {onlyPending ? "Fiches modifiées à relire" : "Commerçants"}{" "}
           <span className="ml-1 text-sm font-normal text-slate-500">
             ({businesses.length})
           </span>
+          {onlyPending ? (
+            <Link href="/admin/directory/businesses" className="ml-3 text-sm font-normal text-[#1a4d6e] underline">
+              Voir toutes les fiches
+            </Link>
+          ) : null}
         </h1>
         <div className="flex gap-2">
           <Link href="/admin/directory/imports">
@@ -88,6 +97,11 @@ export default async function BusinessesPage() {
                         <div>
                           <div className="font-medium text-slate-900">
                             {b.name}
+                            {b.has_pending_changes ? (
+                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-amber-300">
+                                À relire
+                              </span>
+                            ) : null}
                             {b.is_featured ? (
                               <Star className="ml-1 inline h-3.5 w-3.5 text-amber-500" />
                             ) : null}

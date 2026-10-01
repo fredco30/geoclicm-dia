@@ -100,32 +100,38 @@ export function BusinessForm({
     : "/admin/directory/businesses";
   const backLinkHref = backHref ?? listHref;
 
+  // Fiche publiée avec des modifications en attente : l'annonceur reprend
+  // là où il en était (sinon il réécraserait sa proposition).
+  const pending = (isAdvertiser ? business?.pending_review?.changes : undefined) ?? {};
+  const pv = <T,>(key: string, fallback: T): T =>
+    key in pending ? (pending[key] as T) : fallback;
+
   const [form, setForm] = useState({
-    name: business?.name ?? "",
-    legal_name: business?.legal_name ?? "",
-    siret: business?.siret ?? "",
-    category: (business?.category?.id ?? categories[0]?.id ?? null) as number | null,
-    secondary_categories: business?.secondary_categories.map((c) => c.id) ?? [],
-    short_description: business?.short_description ?? "",
-    description: business?.description ?? "",
-    specialties_text: (business?.specialties ?? []).join(", "),
-    address: business?.address ?? "",
-    address_complement: business?.address_complement ?? "",
-    postal_code: business?.postal_code ?? "",
-    city: business?.city ?? "",
-    latitude: business?.latitude ?? null,
-    longitude: business?.longitude ?? null,
-    commune: (business?.commune ?? communes[0]?.id ?? null) as number | null,
-    service_areas: business?.service_areas.map((c) => c.id) ?? [],
-    phone: business?.phone ?? "",
-    mobile: business?.mobile ?? "",
-    email: business?.email ?? "",
-    website: business?.website ?? "",
-    facebook_url: business?.facebook_url ?? "",
-    instagram_url: business?.instagram_url ?? "",
-    tiktok_url: business?.tiktok_url ?? "",
-    opening_hours: (business?.opening_hours ?? DEFAULT_OPENING_HOURS) as OpeningHoursValue,
-    seasonal_closures: (business?.seasonal_closures ?? []) as ClosureValue[],
+    name: pv("name", business?.name ?? ""),
+    legal_name: pv("legal_name", business?.legal_name ?? ""),
+    siret: pv("siret", business?.siret ?? ""),
+    category: pv("category", (business?.category?.id ?? categories[0]?.id ?? null) as number | null),
+    secondary_categories: pv("secondary_categories", business?.secondary_categories.map((c) => c.id) ?? []),
+    short_description: pv("short_description", business?.short_description ?? ""),
+    description: pv("description", business?.description ?? ""),
+    specialties_text: pv<string[]>("specialties", business?.specialties ?? []).join(", "),
+    address: pv("address", business?.address ?? ""),
+    address_complement: pv("address_complement", business?.address_complement ?? ""),
+    postal_code: pv("postal_code", business?.postal_code ?? ""),
+    city: pv("city", business?.city ?? ""),
+    latitude: pv("latitude", business?.latitude ?? null),
+    longitude: pv("longitude", business?.longitude ?? null),
+    commune: pv("commune", (business?.commune ?? communes[0]?.id ?? null) as number | null),
+    service_areas: pv("service_areas", business?.service_areas.map((c) => c.id) ?? []),
+    phone: pv("phone", business?.phone ?? ""),
+    mobile: pv("mobile", business?.mobile ?? ""),
+    email: pv("email", business?.email ?? ""),
+    website: pv("website", business?.website ?? ""),
+    facebook_url: pv("facebook_url", business?.facebook_url ?? ""),
+    instagram_url: pv("instagram_url", business?.instagram_url ?? ""),
+    tiktok_url: pv("tiktok_url", business?.tiktok_url ?? ""),
+    opening_hours: pv("opening_hours", (business?.opening_hours ?? DEFAULT_OPENING_HOURS) as OpeningHoursValue),
+    seasonal_closures: pv("seasonal_closures", (business?.seasonal_closures ?? []) as ClosureValue[]),
     plan: business?.plan ?? ("free" as BusinessPlan),
     plan_starts_at: isoToLocal(business?.plan_starts_at ?? null),
     plan_ends_at: isoToLocal(business?.plan_ends_at ?? null),
@@ -133,7 +139,7 @@ export function BusinessForm({
     is_published: business?.is_published ?? false,
     is_featured: business?.is_featured ?? false,
     is_local_producer: business?.is_local_producer ?? false,
-    meta_description: business?.meta_description ?? "",
+    meta_description: pv("meta_description", business?.meta_description ?? ""),
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -313,6 +319,24 @@ export function BusinessForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isAdvertiser && business?.pending_review ? (
+        <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+          Vos modifications du{" "}
+          {business.pending_review.submitted_at
+            ? new Date(business.pending_review.submitted_at).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })
+            : "—"}{" "}
+          sont en attente de relecture par l&apos;équipe geoclicMédia. La version
+          actuellement en ligne reste affichée jusqu&apos;à leur validation.
+          {business.pending_review.logo_url || business.pending_review.cover_image_url
+            ? " Les nouvelles images seront visibles après validation."
+            : ""}
+        </p>
+      ) : isAdvertiser && business?.is_published ? (
+        <p className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600 ring-1 ring-slate-200">
+          Cette fiche est en ligne : vos modifications seront relues par
+          l&apos;équipe avant publication.
+        </p>
+      ) : null}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link

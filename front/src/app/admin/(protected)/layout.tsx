@@ -39,6 +39,12 @@ export default async function AdminProtectedLayout({
         { href: "/admin/decouvrir/imports", label: "Découvrir", icon: "inbox", badge: pending?.places },
         { href: "/admin/directory/imports", label: "Commerçants", icon: "inbox", badge: pending?.businesses },
         { href: "/admin/annonces/imports", label: "Annonces", icon: "inbox", badge: pending?.listings },
+        {
+          href: "/admin/directory/businesses?pending_changes=1",
+          label: "Fiches modifiées",
+          icon: "store",
+          badge: pending?.business_changes,
+        },
       ],
     },
     {
