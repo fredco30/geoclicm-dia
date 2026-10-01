@@ -1061,7 +1061,23 @@ des `/commerces/<slug>`.
 `LOGIN_FAILURE_WINDOW_SECONDS=900`. Copie hors serveur des sauvegardes :
 `BACKUP_REMOTE=...` dans `/etc/default/geoclicmedia-backup`.
 
-### Non traité (décision de Fred requise)
+### Décisions de Fred du 1er octobre 2026 — appliquées
+
+| Commit | Décision → mise en œuvre |
+|---|---|
+| `47271e6` | **Relecture obligatoire** : une fiche publiée modifiée par son annonceur garde sa version en ligne ; la proposition attend dans « À valider → Fiches modifiées » (comparaison en ligne / proposé, Publier / Refuser). |
+| `21b0e6a`, `4ec8be9` | **Pas de Stripe pendant le pilote** : `BILLING_ENABLED` (faux par défaut) bloque checkout et portail ; `/tarifs` et Abonnement proposent « Demander la formule » (email à l'équipe). |
+| `21b0e6a` | **Identité personnalisable** : page « Identité du site » (nom, accroche, logo, 2 couleurs) ; toutes les couleurs de marque passent par des variables CSS. |
+| `02595a1` | **Vouvoiement** dans l'espace annonceur et ses messages. |
+
+Migrations : `core.0004_site_settings`, `directory.0007_business_pending_changes`.
+Déploiement : même commande que ci-dessus (migrate + build + restart).
+Ne **pas** mettre `BILLING_ENABLED=True` avant les clés Stripe LIVE et les
+Price IDs.
+
+Toujours ouvert : mise à niveau d'Ubuntu 25.04 (opération serveur).
+
+### Non traité (décision de Fred requise) — historique, tranché le 1er octobre
 
 - Modération des modifications d'une fiche déjà publiée par un annonceur
   (aujourd'hui en ligne immédiatement).

@@ -124,6 +124,30 @@ Pour **voir** comment l'article apparaît au public, clique l'icône 👁️ dan
 
 ---
 
+## 🔎 Relire les modifications des commerçants
+
+Quand un commerçant modifie sa fiche **déjà en ligne**, la version publiée
+ne change pas tout de suite : la modification attend votre relecture.
+
+1. Menu **À valider → Fiches modifiées** (le nombre en pastille indique
+   combien attendent).
+2. Ouvrir la fiche : un encadré orange compare **En ligne** et **Proposé**.
+3. **Publier les modifications** ou **Refuser** (la version en ligne reste).
+
+Une fiche pas encore publiée se modifie directement, sans relecture.
+
+---
+
+## 🎨 Identité du site (administrateurs)
+
+Menu **Réglages → Identité du site** : nom, accroche, logo et deux
+couleurs (principale et accent). L'aperçu montre le rendu avant
+d'enregistrer ; le site public est mis à jour aussitôt. Un message
+prévient si une couleur est trop claire pour du texte blanc.
+« Rétablir les couleurs d'origine » remet le bleu lagune et la terre cuite.
+
+---
+
 ## 🚫 Mention sponsor
 
 Si l'article est **sponsorisé** par un commerçant (Sprint 4 — pas encore actif) :
