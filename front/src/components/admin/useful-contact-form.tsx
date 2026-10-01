@@ -169,7 +169,7 @@ export function UsefulContactForm({ contact, defaultKind, communes }: Props) {
         </h1>
         <Link
           href={`/admin/utility?kind=${form.kind}`}
-          className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+          className="text-sm text-slate-600 hover:text-camargue"
         >
           ← Retour à la liste
         </Link>
@@ -285,7 +285,7 @@ export function UsefulContactForm({ contact, defaultKind, communes }: Props) {
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             rows={3}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
             placeholder="Précisions : horaires, conditions, consignes…"
           />
         </div>

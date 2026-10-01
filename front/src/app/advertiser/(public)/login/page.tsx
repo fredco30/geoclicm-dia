@@ -34,7 +34,7 @@ export default async function AdvertiserLoginPage() {
           Espace annonceur
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Connecte-toi pour gérer ta fiche commerce et tes campagnes.
+          Connectez-vous pour gérer votre fiche commerce et vos campagnes.
         </p>
       </div>
 

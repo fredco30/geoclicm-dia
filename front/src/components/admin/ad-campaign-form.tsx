@@ -198,7 +198,7 @@ export function AdCampaignForm({
         router.push(`${editHrefPrefix}/${saved.id}/edit`);
         router.refresh();
       } catch {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, veuillez réessayer.");
       }
     });
   };
@@ -234,7 +234,7 @@ export function AdCampaignForm({
         <div className="flex items-center gap-2">
           <Link
             href={listHref}
-            className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+            className="text-sm text-slate-600 hover:text-camargue"
           >
             ← Campagnes
           </Link>
@@ -450,7 +450,7 @@ export function AdCampaignForm({
                     Array.from(e.target.selectedOptions, (o) => Number(o.value)),
                   )
                 }
-                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
               >
                 {communes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -472,7 +472,7 @@ export function AdCampaignForm({
                     Array.from(e.target.selectedOptions, (o) => Number(o.value)),
                   )
                 }
-                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+                className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -560,9 +560,9 @@ export function AdCampaignForm({
               Validation
             </legend>
             <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
-              ℹ️ Ta campagne est créée en attente de validation par
-              l&apos;équipe geoclicMédia. Une fois validée et le paiement
-              reçu, elle commencera à diffuser sur les pages ciblées.
+              {isEdit
+                ? "ℹ️ Toute modification repasse la campagne en attente de validation : sa diffusion est suspendue jusqu'à la relecture par l'équipe geoclicMédia."
+                : "ℹ️ Votre campagne est créée en attente de validation par l'équipe geoclicMédia. Une fois validée, elle sera diffusée sur les pages ciblées."}
             </p>
           </fieldset>
         )}

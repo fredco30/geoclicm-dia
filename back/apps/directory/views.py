@@ -18,6 +18,12 @@ from apps.editorial.permissions import IsEditorOrAdmin
 
 from .filters import BusinessFilter
 from .models import Business, BusinessCategory, BusinessImportCandidate
+from .pending import (
+    apply_pending_changes,
+    discard_pending_changes,
+    needs_review,
+    submit_pending_changes,
+)
 from .permissions import IsAdvertiserOrTeam, IsBusinessOwnerOrTeam
 from .serializers import (
     BusinessAdvertiserWriteSerializer,
@@ -79,6 +85,30 @@ class BusinessViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return BusinessListSerializer
         return BusinessDetailSerializer
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        if self.request.query_params.get("pending_changes") == "1":
+            queryset = queryset.filter(pending_changes__isnull=False)
+        return queryset
+
+    @action(detail=True, methods=["post"], url_path="apply-pending")
+    def apply_pending(self, request, slug=None):
+        """Valide les modifications proposées par l'annonceur."""
+        business = self.get_object()
+        if not business.pending_changes:
+            return Response(
+                {"detail": "Aucune modification en attente."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        business = apply_pending_changes(business, request)
+        return Response(BusinessDetailSerializer(business, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], url_path="discard-pending")
+    def discard_pending(self, request, slug=None):
+        """Refuse les modifications proposées (la version publiée reste)."""
+        business = discard_pending_changes(self.get_object())
+        return Response(BusinessDetailSerializer(business, context={"request": request}).data)
 
 
 class BusinessImportCandidateAdminViewSet(viewsets.ModelViewSet):
@@ -220,6 +250,25 @@ class AdvertiserBusinessViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return BusinessListSerializer
         return BusinessDetailSerializer
+
+    def update(self, request, *args, **kwargs):
+        """Fiche publiée modifiée par son annonceur : mise en relecture.
+
+        La version en ligne ne change pas ; les modifications attendent la
+        validation de l'équipe (202 + ``pending_review`` dans la réponse).
+        """
+        instance = self.get_object()
+        if not needs_review(instance, request.user):
+            return super().update(request, *args, **kwargs)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=kwargs.get("partial", False)
+        )
+        serializer.is_valid(raise_exception=True)
+        submit_pending_changes(instance, serializer.validated_data)
+        return Response(
+            BusinessDetailSerializer(instance, context={"request": request}).data,
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     def perform_create(self, serializer):
         # Force owner = user courant (sauf si admin crée pour qqn d'autre,

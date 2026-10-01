@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { brandColor } from "@/lib/brand-colors";
 import { useRouter } from "next/navigation";
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -77,7 +78,7 @@ export function BusinessesMap({
             ${escapeHtml(b.commune_name)}${b.city && b.city !== b.commune_name ? " — " + escapeHtml(b.city) : ""}
           </div>
           <a href="/commerces/${b.slug}" data-business-link
-             style="display:inline-block;margin-top:8px;font-size:12px;font-weight:500;color:#a8533a;text-decoration:underline">
+             style="display:inline-block;margin-top:8px;font-size:12px;font-weight:500;color:var(--brand-accent);text-decoration:underline">
             Voir la fiche →
           </a>
         </div>
@@ -85,7 +86,7 @@ export function BusinessesMap({
       const popup = new maplibregl.Popup({ offset: 25, closeButton: true }).setHTML(popupHtml);
 
       const marker = new maplibregl.Marker({
-        color: isPremium ? "#a8533a" : "#1a4d6e",
+        color: isPremium ? brandColor("accent") : brandColor("primary"),
       })
         .setLngLat(lngLat)
         .setPopup(popup)

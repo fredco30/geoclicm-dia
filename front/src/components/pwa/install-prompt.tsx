@@ -233,7 +233,7 @@ function Banner({
       <button
         type="button"
         onClick={onIosTutorial}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#1a4d6e] shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-camargue shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={actionLabel}
       >
         <span aria-hidden>📲</span> Voir comment installer
@@ -247,7 +247,7 @@ function Banner({
       <button
         type="button"
         onClick={onCopyUrl}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#1a4d6e] shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-camargue shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={actionLabel}
       >
         {copied ? "✔ Adresse copiée" : "Copier l'adresse"}
@@ -260,7 +260,7 @@ function Banner({
       <button
         type="button"
         onClick={onAndroidInstall}
-        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#1a4d6e] shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-camargue shadow-sm transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={actionLabel}
       >
         <span aria-hidden>📲</span> Installer l&apos;application
@@ -274,7 +274,7 @@ function Banner({
       aria-label="Installation de l'application"
       className="pointer-events-none fixed inset-x-0 bottom-[calc(48px+env(safe-area-inset-bottom,0px))] z-40 px-3 md:bottom-4 md:px-4"
     >
-      <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-3 rounded-2xl bg-[#1a4d6e] px-4 py-3 text-white shadow-2xl ring-1 ring-black/10">
+      <div className="pointer-events-auto mx-auto flex max-w-2xl items-center gap-3 rounded-2xl bg-camargue px-4 py-3 text-white shadow-2xl ring-1 ring-black/10">
         <p className="flex-1 text-sm font-medium leading-snug sm:text-base">
           {message}
         </p>

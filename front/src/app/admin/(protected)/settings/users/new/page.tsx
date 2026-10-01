@@ -7,5 +7,5 @@ export default async function NewUserPage() {
   if (!me?.is_superuser && me?.role !== "admin") {
     redirect("/admin");
   }
-  return <UserForm currentUserId={me.id} />;
+  return <UserForm currentUserId={me.id} currentUserIsSuperuser={me.is_superuser} />;
 }

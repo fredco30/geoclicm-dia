@@ -51,7 +51,7 @@ export function HelpDrawer() {
       >
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4">
           <div className="min-w-0">
-            <span className="inline-block rounded-full bg-[#1a4d6e]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#1a4d6e]">
+            <span className="inline-block rounded-full bg-camargue/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-camargue">
               {workflow.audience} · Tutoriel
             </span>
             <h2

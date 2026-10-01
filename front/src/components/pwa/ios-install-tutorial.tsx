@@ -10,7 +10,8 @@ import {
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-const ACCENT = "#1a4d6e"; // bleu camargue
+// Couleur principale du site (réglage « Identité du site »), via la variable CSS.
+const ACCENT = "var(--brand-primary)";
 const HIGHLIGHT = "#fde68a"; // jaune amber-200 — surlignage doux
 const HIGHLIGHT_STRONG = "#facc15"; // amber-400 — surlignage fort
 const ARROW = "#dc2626"; // red-600 — flèche d'orientation
@@ -211,9 +212,9 @@ export function IosInstallTutorial({
               aria-selected={i === index}
               aria-label={`Étape ${i + 1} sur ${slides.length}`}
               onClick={() => setIndex(i)}
-              className={`h-2.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a4d6e]/30 ${
+              className={`h-2.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-camargue/30 ${
                 i === index
-                  ? "w-6 bg-[#1a4d6e]"
+                  ? "w-6 bg-camargue"
                   : "w-2.5 bg-slate-300 hover:bg-slate-400"
               }`}
             />
@@ -237,7 +238,7 @@ export function IosInstallTutorial({
             <button
               type="button"
               onClick={handleClose}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#1a4d6e] px-6 text-base font-semibold text-white shadow-sm transition hover:bg-[#133a55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a4d6e]/30"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-camargue px-6 text-base font-semibold text-white shadow-sm transition hover:bg-camargue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-camargue/30"
             >
               Compris !
             </button>
@@ -245,7 +246,7 @@ export function IosInstallTutorial({
             <button
               type="button"
               onClick={() => setIndex((i) => Math.min(slides.length - 1, i + 1))}
-              className="inline-flex h-11 items-center justify-center gap-1 rounded-full bg-[#1a4d6e] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#133a55] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a4d6e]/30"
+              className="inline-flex h-11 items-center justify-center gap-1 rounded-full bg-camargue px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-camargue-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-camargue/30"
               aria-label="Étape suivante"
             >
               Suivant

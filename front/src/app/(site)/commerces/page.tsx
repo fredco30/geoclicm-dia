@@ -79,7 +79,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
             L&apos;annuaire s&apos;étoffe au fil de la saison —{" "}
             <Link
               href="/contact"
-              className="text-[#1a4d6e] underline hover:text-[#a8533a]"
+              className="text-camargue underline hover:text-terracotta"
             >
               vous êtes commerçant ? Contactez-nous
             </Link>

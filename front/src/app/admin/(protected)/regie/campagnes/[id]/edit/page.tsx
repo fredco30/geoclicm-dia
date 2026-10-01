@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
+import { fetchAllPages, getCookieHeader, getCurrentUser } from "@/lib/auth-server";
 import { AdCampaignForm } from "@/components/admin/ad-campaign-form";
-import type { Commune, Paginated } from "@/types/api";
+import type { Commune } from "@/types/api";
 import type {
   AdminAdCampaignDetail,
   AdminBusinessCategory,
@@ -23,17 +23,7 @@ async function fetchCampaign(id: string): Promise<AdminAdCampaignDetail | null> 
 }
 
 async function fetchBusinesses(): Promise<AdminBusinessListItem[]> {
-  const cookieHeader = await getCookieHeader();
-  const res = await fetch(
-    `${API_URL}/api/businesses/?ordering=name&page_size=200`,
-    {
-      headers: { Cookie: cookieHeader, Accept: "application/json" },
-      cache: "no-store",
-    },
-  );
-  if (!res.ok) return [];
-  const data = (await res.json()) as Paginated<AdminBusinessListItem>;
-  return data.results;
+  return (await fetchAllPages<AdminBusinessListItem>("/api/businesses/?ordering=name")) ?? [];
 }
 
 async function fetchCommunes(): Promise<Commune[]> {

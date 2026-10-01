@@ -44,7 +44,7 @@ export function AssistantCitations({ citations, label }: Props) {
                   href={c.source_url}
                   target={isInternal ? undefined : "_blank"}
                   rel={isInternal ? undefined : "noopener noreferrer"}
-                  className="inline-flex items-start gap-1 text-slate-600 hover:text-[#1a4d6e] hover:underline"
+                  className="inline-flex items-start gap-1 text-slate-600 hover:text-camargue hover:underline"
                 >
                   <span className="line-clamp-2">{c.title}</span>
                   {!isInternal ? (

@@ -20,9 +20,9 @@ export function HeaderSearchButton() {
     <button
       type="button"
       onClick={open}
-      aria-label="Rechercher / poser une question à l'assistant"
+      aria-label="Rechercher avec l'assistant"
       className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
-      title="Rechercher / poser une question à l'assistant"
+      title="Rechercher avec l'assistant (commerces, agenda, infos pratiques…)"
     >
       <Search className="h-5 w-5" />
     </button>

@@ -148,7 +148,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -201,6 +201,12 @@ STRIPE_TEST_SECRET_KEY = env("STRIPE_TEST_SECRET_KEY", default="")
 STRIPE_LIVE_PUBLIC_KEY = env("STRIPE_LIVE_PUBLIC_KEY", default="")
 STRIPE_LIVE_SECRET_KEY = env("STRIPE_LIVE_SECRET_KEY", default="")
 STRIPE_LIVE_MODE = env.bool("STRIPE_LIVE_MODE", default=False)
+
+# Paiement en ligne des formules annonceurs. Désactivé tant que la vente
+# n'est pas ouverte (phase pilote gratuite) : aucun parcours ne mène à
+# Stripe, les formules sont activées par l'équipe. À passer à True
+# uniquement avec les clés LIVE et les Price IDs configurés.
+BILLING_ENABLED = env.bool("BILLING_ENABLED", default=False)
 
 # Webhook secret — différent en TEST et LIVE (un endpoint webhook chacun)
 DJSTRIPE_WEBHOOK_SECRET = env("DJSTRIPE_WEBHOOK_SECRET", default="")
@@ -267,6 +273,12 @@ SHARED_CRAWL_FRESHNESS_SECONDS = env.int(
 # Anti-abus : nb max de questions par IP par heure (sliding window).
 # Hashage SHA-256 de l'IP en cache Redis (RGPD).
 ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default=20)
+# Plafond global (toutes IP) de questions par jour ; 0 = désactivé.
+ASSISTANT_GLOBAL_DAILY_LIMIT = env.int("ASSISTANT_GLOBAL_DAILY_LIMIT", default=2000)
+
+# Anti force brute sur /api/auth/login/ : échecs max par IP sur la fenêtre.
+LOGIN_MAX_FAILURES = env.int("LOGIN_MAX_FAILURES", default=10)
+LOGIN_FAILURE_WINDOW_SECONDS = env.int("LOGIN_FAILURE_WINDOW_SECONDS", default=15 * 60)
 
 # --- IA Assist (génération admin & annonceurs, app `ai_assist`) ---
 # Distinct de l'assistant public ci-dessus : ces réglages contrôlent les

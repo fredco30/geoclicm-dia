@@ -45,10 +45,10 @@ export default async function MyCampaignsPage() {
       {campaigns.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
           <p className="text-sm text-slate-600">
-            Tu n&apos;as pas encore de campagne publicitaire.
+            Vous n&apos;avez pas encore de campagne publicitaire.
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Diffuse des encarts ciblés sur la home, les articles ou
+            Diffusez des encarts ciblés sur l&apos;accueil, les articles ou
             l&apos;annuaire pour gagner en visibilité.
           </p>
           <Link href="/advertiser/campagnes/new" className="mt-4 inline-block">

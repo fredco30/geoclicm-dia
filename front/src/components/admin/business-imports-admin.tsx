@@ -198,7 +198,7 @@ export function BusinessImportsAdmin({
         <Link href="/admin/directory/businesses" className="text-sm text-slate-600">
          ← Commerçants
         </Link>
-        <h1 className="text-xl font-bold">Candidats Commerçants</h1>
+        <h1 className="text-xl font-bold">À valider — Commerçants</h1>
         <p className="text-sm text-slate-500">
           Commerces et services détectés automatiquement par l&apos;assistant dans le
           corpus crawlé. Chaque fiche doit être vérifiée avant publication : rien
@@ -214,7 +214,7 @@ export function BusinessImportsAdmin({
               href={`/admin/directory/imports?status=${value}`}
               className={`rounded-full border px-3 py-1 text-xs ${
                 filterStatus === value
-                  ? "bg-[#1a4d6e] text-white"
+                  ? "bg-camargue text-white"
                   : "bg-white text-slate-700"
               }`}
             >
@@ -237,7 +237,7 @@ export function BusinessImportsAdmin({
                 onClick={() => setGroup(value)}
                 className={`rounded-full border px-3 py-1 text-xs ${
                   group === value
-                    ? "bg-[#a8533a] text-white"
+                    ? "bg-terracotta text-white"
                     : "bg-white text-slate-700"
                 }`}
               >
@@ -289,7 +289,7 @@ export function BusinessImportsAdmin({
                 >
                   <input
                     type="checkbox"
-                    className="h-5 w-5 accent-[#1a4d6e]"
+                    className="h-5 w-5 accent-camargue"
                     checked={selected.has(row.id)}
                     onChange={() => toggle(row.id)}
                     aria-label={`Sélectionner ${row.name}`}
@@ -312,7 +312,7 @@ export function BusinessImportsAdmin({
               )}
               <div className="p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-medium uppercase text-[#a8533a]">
+                  <p className="text-xs font-medium uppercase text-terracotta">
                     {row.crawl_source_label} ·{" "}
                     {row.extraction_method === "ai"
                       ? "Extraction IA à vérifier"
@@ -322,7 +322,7 @@ export function BusinessImportsAdmin({
                     href={row.source_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex shrink-0 items-center gap-1 text-xs text-[#1a4d6e] underline"
+                    className="inline-flex shrink-0 items-center gap-1 text-xs text-camargue underline"
                   >
                     Source officielle <ExternalLink className="h-3 w-3" />
                   </a>
@@ -343,7 +343,7 @@ export function BusinessImportsAdmin({
                   </p>
                 ) : null}
                 {row.extraction_evidence.length ? (
-                  <blockquote className="mt-3 border-l-2 border-[#1a4d6e] pl-3 text-xs italic text-slate-600">
+                  <blockquote className="mt-3 border-l-2 border-camargue pl-3 text-xs italic text-slate-600">
                     Preuve détectée : « {row.extraction_evidence[0]} »
                   </blockquote>
                 ) : null}

@@ -74,7 +74,7 @@ export function AssistantDrawer() {
         }
       >
         {/* Header */}
-        <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-br from-[#1a4d6e] to-[#13384f] px-5 py-4 text-white md:rounded-tl-2xl">
+        <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-gradient-to-br from-camargue to-camargue-dark px-5 py-4 text-white md:rounded-tl-2xl">
           <div className="min-w-0 flex-1">
             <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
               <Sparkles className="h-3 w-3" aria-hidden />
@@ -132,7 +132,7 @@ export function AssistantDrawer() {
 
           {isPending ? (
             <div className="flex items-center gap-2 px-2 text-xs italic text-slate-500">
-              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-[#1a4d6e]" />
+              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-camargue" />
               {t.thinkingLabel}
             </div>
           ) : null}

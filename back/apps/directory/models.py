@@ -164,6 +164,17 @@ class Business(models.Model):
     # --- SEO ---
     meta_description = models.CharField(max_length=160, blank=True)
 
+    # --- Relecture des modifications annonceur ---
+    # Quand le propriétaire modifie une fiche DÉJÀ publiée, ses changements
+    # sont mis en attente ici (format d'entrée du serializer annonceur) :
+    # la version publiée reste en ligne jusqu'à validation par l'équipe.
+    pending_changes = models.JSONField(null=True, blank=True)
+    pending_logo = models.ImageField(upload_to="businesses/pending/", blank=True, null=True)
+    pending_cover_image = models.ImageField(
+        upload_to="businesses/pending/", blank=True, null=True
+    )
+    pending_submitted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+
     # --- Stats ---
     view_count = models.PositiveIntegerField(default=0)
 
@@ -190,22 +201,22 @@ class Business(models.Model):
 
 
 class BusinessImportCandidate(models.Model):
-    """CommerÃ§ant structurÃ© en attente de validation, miroir de DÃ©couvrir.
+    """Commerçant structuré en attente de validation, miroir de Découvrir.
 
-    Produit par la passe IA multi-catÃ©gories (docs/26 Â§19) sur le corpus
-    crawlÃ© partagÃ©. Aucune publication automatique : un humain valide chaque
-    candidat dans la boÃ®te Â« Ã€ valider Â» CommerÃ§ants avant qu'il ne devienne
-    un Business publiÃ©.
+    Produit par la passe IA multi-catégories (docs/26 §19) sur le corpus
+    crawlé partagé. Aucune publication automatique : un humain valide chaque
+    candidat dans la boîte « À valider » Commerçants avant qu'il ne devienne
+    un Business publié.
     """
 
     class ExtractionMethod(models.TextChoices):
-        AI = "ai", "Extraction IA Ã  valider"
+        AI = "ai", "Extraction IA à valider"
         JSON_LD = "json_ld", "JSON-LD officiel"
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Ã€ vÃ©rifier"
-        IMPORTED = "imported", "ImportÃ©"
-        REJECTED = "rejected", "RejetÃ©"
+        PENDING = "pending", "À vérifier"
+        IMPORTED = "imported", "Importé"
+        REJECTED = "rejected", "Rejeté"
         DUPLICATE = "duplicate", "Doublon"
         INVALID = "invalid", "Incomplet"
 
@@ -292,8 +303,8 @@ class BusinessImportCandidate(models.Model):
                 name="biz_cand_src_status_idx",
             ),
         ]
-        verbose_name = "Candidat CommerÃ§ant"
-        verbose_name_plural = "Candidats CommerÃ§ants"
+        verbose_name = "Candidat Commerçant"
+        verbose_name_plural = "Candidats Commerçants"
 
     def __str__(self) -> str:
         return f"{self.name} [{self.crawl_source.label}]"

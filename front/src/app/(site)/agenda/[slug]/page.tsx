@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd, compact } from "@/components/seo/json-ld";
 import { notFound } from "next/navigation";
 import { CalendarDays, Download, ExternalLink, Mail, MapPin, Phone } from "lucide-react";
 
@@ -32,10 +33,39 @@ export default async function EventPage({ params }: Props) {
   try { event = await api.events.detail(slug); } catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
   const upcoming = event.occurrences.filter((item) => new Date(item.ends_at) >= new Date()).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  // Événement terminé : la fiche reste consultable, avec la dernière date.
+  const isPast = upcoming.length === 0;
+  const lastOccurrences = isPast
+    ? [...event.occurrences].sort((a, b) => b.starts_at.localeCompare(a.starts_at)).slice(0, 1)
+    : [];
 
   return (
     <article className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
-      <Link href="/agenda" className="text-sm text-slate-600 hover:text-[#1a4d6e]">← Agenda</Link>
+      {(isPast ? lastOccurrences : upcoming).slice(0, 10).map((occurrence) => (
+        <JsonLd
+          key={occurrence.id}
+          data={compact({
+            "@context": "https://schema.org",
+            "@type": "Event",
+            name: event.title,
+            description: event.short_description,
+            startDate: occurrence.starts_at,
+            endDate: occurrence.ends_at,
+            eventStatus: occurrence.status === "cancelled" ? "https://schema.org/EventCancelled" : "https://schema.org/EventScheduled",
+            eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+            image: event.cover_image?.large ? [event.cover_image.large] : undefined,
+            location: compact({
+              "@type": "Place",
+              name: event.venue_name,
+              address: compact({ "@type": "PostalAddress", streetAddress: event.address, addressLocality: event.commune_name, addressCountry: "FR" }),
+              geo: event.latitude != null && event.longitude != null ? { "@type": "GeoCoordinates", latitude: event.latitude, longitude: event.longitude } : undefined,
+            }),
+            organizer: event.organizer ? { "@type": "Organization", name: event.organizer, url: event.official_url || undefined } : undefined,
+            offers: event.booking_url ? compact({ "@type": "Offer", url: event.booking_url, description: event.price || undefined }) : undefined,
+          })}
+        />
+      ))}
+      <Link href="/agenda" className="text-sm text-slate-600 hover:text-camargue">← Agenda</Link>
       <header className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1fr),320px]">
         <div>
           <div className="mb-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full px-2 py-1 font-medium text-white" style={{ backgroundColor: event.category.color }}>{event.category.name}</span>{event.kind === "market" ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-900">Marché</span> : null}</div>
@@ -43,9 +73,10 @@ export default async function EventPage({ params }: Props) {
           <p className="mt-4 text-lg leading-relaxed text-slate-700">{event.short_description}</p>
         </div>
         <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900">Prochaines dates</h2>
-          <div className="mt-3 space-y-3">{upcoming.map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
-          <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-[#1a4d6e] underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>
+          <h2 className="font-semibold text-slate-900">{isPast ? "Événement terminé" : "Prochaines dates"}</h2>
+          {isPast ? <p className="mt-2 text-sm text-slate-600">Cet événement a eu lieu. <Link href="/agenda" className="text-camargue underline">Voir l’agenda à venir</Link></p> : null}
+          <div className="mt-3 space-y-3">{(isPast ? lastOccurrences : upcoming).map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
+          {isPast ? null : <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-camargue underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>}
         </aside>
       </header>
 
@@ -63,9 +94,9 @@ export default async function EventPage({ params }: Props) {
           {event.organizer ? <p><strong>Organisateur :</strong> {event.organizer}</p> : null}
           {event.contact_phone ? <a href={`tel:${event.contact_phone}`} className="flex items-center gap-2 underline"><Phone className="h-4 w-4" /> {event.contact_phone}</a> : null}
           {event.contact_email ? <a href={`mailto:${event.contact_email}`} className="flex items-center gap-2 underline"><Mail className="h-4 w-4" /> {event.contact_email}</a> : null}
-          {event.booking_url ? <a href={event.booking_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-[#a8533a] px-3 py-2 font-medium text-white"><ExternalLink className="h-4 w-4" /> Réserver</a> : null}
-          {event.official_url ? <a href={event.official_url} target="_blank" rel="noopener noreferrer" className="block text-[#1a4d6e] underline">Site officiel</a> : null}
-          {event.business_slug ? <Link href={`/commerces/${event.business_slug}`} className="block text-[#1a4d6e] underline">Voir {event.business_name} dans l’annuaire</Link> : null}
+          {event.booking_url ? <a href={event.booking_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-md bg-terracotta px-3 py-2 font-medium text-white"><ExternalLink className="h-4 w-4" /> Réserver</a> : null}
+          {event.official_url ? <a href={event.official_url} target="_blank" rel="noopener noreferrer" className="block text-camargue underline">Site officiel</a> : null}
+          {event.business_slug ? <Link href={`/commerces/${event.business_slug}`} className="block text-camargue underline">Voir {event.business_name} dans l’annuaire</Link> : null}
         </aside>
       </div>
     </article>

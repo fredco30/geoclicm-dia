@@ -7,37 +7,17 @@ import { Mail, MapPin, Menu, Smartphone, X, Home as HomeIcon } from "lucide-reac
 
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { useMounted } from "@/lib/use-mounted";
-
-type MenuLink = {
-  href: string;
-  label: string;
-};
-
-/**
- * Liste des 7 communes du territoire — raccourci pratique vers les pages
- * commune. Conservé dans le drawer mobile car les pages commune sont
- * fréquemment consultées et un visiteur sur mobile a peu d'écran pour
- * naviguer via les tuiles.
- */
-const TERRITOIRE: MenuLink[] = [
-  { href: "/communes/le-grau-du-roi", label: "Le Grau-du-Roi" },
-  { href: "/communes/aigues-mortes", label: "Aigues-Mortes" },
-  { href: "/communes/la-grande-motte", label: "La Grande-Motte" },
-  { href: "/communes/saint-laurent-d-aigouze", label: "Saint-Laurent-d'Aigouze" },
-  { href: "/communes/marsillargues", label: "Marsillargues" },
-  { href: "/communes/lunel", label: "Lunel" },
-  { href: "/communes/vauvert", label: "Vauvert" },
-];
+import { BrandMark } from "./brand-mark";
+import { COMMUNES_NAV, MAIN_NAV, SECONDARY_NAV } from "@/lib/site-nav";
 
 /**
  * Drawer mobile simplifié — pattern « city ».
  *
- * Les rubriques éditoriales (Mémoire, Patrimoine, Reportages…) sont
- * désormais accessibles via les tuiles de la home et des pages commune,
- * pas via ce drawer. Ne reste ici qu'un raccourci vers les communes du
- * territoire et les liens légaux.
+ * Rubriques principales et secondaires, communes du territoire, assistant,
+ * installation de l'application et liens légaux. Affiché sous le
+ * breakpoint lg (au-delà, l'en-tête porte les rubriques principales).
  */
-export function MobileNav() {
+export function MobileNav({ siteName, logoUrl }: { siteName: string; logoUrl: string | null }) {
   const [open, setOpen] = useState(false);
   const mounted = useMounted();
   const { open: openAssistant } = useAssistant();
@@ -71,7 +51,7 @@ export function MobileNav() {
     <>
       <div
         onClick={close}
-        className={`fixed inset-0 z-[100] bg-black/50 transition-opacity md:hidden ${
+        className={`fixed inset-0 z-[100] bg-black/50 transition-opacity lg:hidden ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         aria-hidden
@@ -79,7 +59,7 @@ export function MobileNav() {
 
       <aside
         id="mobile-nav-panel"
-        className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 right-0 z-[110] w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl transition-transform duration-200 lg:hidden ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!open}
@@ -88,13 +68,9 @@ export function MobileNav() {
           <Link
             href="/"
             onClick={close}
-            className="flex items-center gap-2 font-semibold text-[#1a4d6e]"
+            className="flex items-center gap-2 font-semibold text-camargue"
           >
-            <span
-              className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]"
-              aria-hidden
-            />
-            geoclicMédia
+            <BrandMark name={siteName} logoUrl={logoUrl} />
           </Link>
           <button
             type="button"
@@ -111,11 +87,31 @@ export function MobileNav() {
           <Link
             href="/"
             onClick={close}
-            className="flex items-center gap-2 rounded-md bg-[#1a4d6e] px-3 py-2 text-sm font-medium text-white hover:bg-[#13384f]"
+            className="flex items-center gap-2 rounded-md bg-camargue px-3 py-2 text-sm font-medium text-white hover:bg-camargue-dark"
           >
             <HomeIcon className="h-4 w-4" />
             Retour à l&apos;accueil
           </Link>
+
+          {/* Rubriques */}
+          <nav aria-label="Rubriques">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Rubriques
+            </h2>
+            <ul className="grid grid-cols-2 gap-0.5">
+              {[...MAIN_NAV, ...SECONDARY_NAV].map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    onClick={close}
+                    className="block rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-camargue"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
           {/* Communes du territoire — raccourci pratique */}
           <nav aria-label="Le territoire">
@@ -123,12 +119,12 @@ export function MobileNav() {
               Le territoire
             </h2>
             <ul className="space-y-0.5">
-              {TERRITOIRE.map((l) => (
+              {COMMUNES_NAV.map((l) => (
                 <li key={l.href}>
                   <Link
                     href={l.href}
                     onClick={close}
-                    className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-[#1a4d6e]"
+                    className="flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-camargue"
                   >
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
                     {l.label}
@@ -139,9 +135,9 @@ export function MobileNav() {
           </nav>
 
           {/* Astuce assistant IA */}
-          <div className="rounded-md border border-[#1a4d6e]/20 bg-[#1a4d6e]/5 p-3 text-xs text-slate-600">
+          <div className="rounded-md border border-camargue/20 bg-camargue/5 p-3 text-xs text-slate-600">
             <p>
-              <strong className="text-[#1a4d6e]">💡 Astuce</strong> — pour
+              <strong className="text-camargue">💡 Astuce</strong> — pour
               trouver un commerce, une activité ou une info pratique, utilisez
               l&apos;assistant IA.
             </p>
@@ -151,7 +147,7 @@ export function MobileNav() {
                 close();
                 openAssistant();
               }}
-              className="mt-2 text-[#1a4d6e] underline hover:no-underline"
+              className="mt-2 text-camargue underline hover:no-underline"
             >
               Ouvrir l&apos;assistant
             </button>
@@ -168,7 +164,7 @@ export function MobileNav() {
               close();
               window.dispatchEvent(new CustomEvent("gm:open-install"));
             }}
-            className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#1a4d6e]"
+            className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-camargue"
             aria-label="Installer l'application sur votre téléphone ou ordinateur"
           >
             <Smartphone className="h-4 w-4" aria-hidden />
@@ -180,7 +176,7 @@ export function MobileNav() {
             <Link
               href="/contact"
               onClick={close}
-              className="mb-2 inline-flex items-center gap-1 hover:text-[#1a4d6e]"
+              className="mb-2 inline-flex items-center gap-1 hover:text-camargue"
             >
               <Mail className="h-3 w-3" /> Contact
             </Link>
@@ -216,7 +212,7 @@ export function MobileNav() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 md:hidden"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 lg:hidden"
         aria-label="Ouvrir le menu"
         aria-expanded={open}
         aria-controls="mobile-nav-panel"

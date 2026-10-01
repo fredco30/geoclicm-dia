@@ -162,7 +162,7 @@ export default async function CrawlSourcesPage() {
                         href={s.seed_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-0.5 truncate text-slate-500 hover:text-[#1a4d6e]"
+                        className="inline-flex items-center gap-0.5 truncate text-slate-500 hover:text-camargue"
                         title={s.seed_url}
                       >
                         {s.seed_url}

@@ -49,7 +49,7 @@ type Props = {
 /**
  * Bouton flottant ✨ Aide IA pour générer un brouillon de fiche
  * commerçant. Ouvre une modal légère :
- *  1. Champ « Décris ton commerce en quelques mots-clés »
+ *  1. Champ « Décrivez votre commerce en quelques mots-clés »
  *  2. Bouton « Générer »
  *  3. Preview des champs proposés (description courte, longue,
  *     spécialités, FAQ)
@@ -98,7 +98,7 @@ export function AIBusinessAssistButton({
     // Le backend valide aussi, mais on attrape côté front pour message clair
     if (!businessId && (!name || !categoryId)) {
       setError(
-        "Renseigne au moins le nom et la catégorie principale avant "
+        "Renseignez au moins le nom et la catégorie principale avant "
         + "de demander une génération.",
       );
       return;
@@ -122,19 +122,19 @@ export function AIBusinessAssistButton({
         if (err.code === "budget_exceeded") {
           setError(
             "Le quota d'aide IA est atteint pour aujourd'hui. "
-            + "Réessaie demain ou contacte l'équipe.",
+            + "Réessayez demain ou contactez l'équipe.",
           );
         } else if (err.code === "not_configured") {
           setError(
-            "L'IA n'est pas configurée côté serveur. Contacte l'équipe.",
+            "L'IA n'est pas configurée côté serveur. Contactez l'équipe.",
           );
         } else if (err.code === "bad_format") {
-          setError("L'IA a renvoyé une réponse mal formée. Réessaie.");
+          setError("L'IA a renvoyé une réponse mal formée. Veuillez réessayer.");
         } else {
           setError(err.message || "Erreur lors de la génération.");
         }
       } else {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, veuillez réessayer.");
       }
     } finally {
       setIsGenerating(false);
@@ -174,7 +174,7 @@ export function AIBusinessAssistButton({
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#1a4d6e] to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
+        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-camargue to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
         Aide IA
@@ -197,7 +197,7 @@ export function AIBusinessAssistButton({
             </button>
 
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+              <Sparkles className="h-4 w-4 text-camargue" aria-hidden />
               <h2
                 id="ai-assist-title"
                 className="text-base font-semibold text-slate-900"
@@ -207,15 +207,15 @@ export function AIBusinessAssistButton({
             </div>
             <p className="mb-4 text-xs text-slate-500">
               {businessId
-                ? "L'IA partira des informations existantes pour te proposer une amélioration."
-                : "L'IA va générer un brouillon de fiche à partir du nom, de la catégorie et de quelques mots-clés. Tu pourras tout éditer ensuite."}
+                ? "L'IA partira des informations existantes pour vous proposer une amélioration."
+                : "L'IA va générer un brouillon de fiche à partir du nom, de la catégorie et de quelques mots-clés. Vous pourrez tout modifier ensuite."}
             </p>
 
             {!draft ? (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="ai-keywords">
-                    Décris ton commerce en quelques mots-clés
+                    Décrivez votre commerce en quelques mots-clés
                   </Label>
                   <Input
                     id="ai-keywords"
@@ -225,9 +225,9 @@ export function AIBusinessAssistButton({
                     autoFocus
                   />
                   <p className="text-[11px] text-slate-500">
-                    Sépare les mots-clés par des virgules. 3 à 10
-                    suggestions suffisent. Plus tu en donnes, plus la
-                    fiche sera fidèle à ton commerce.
+                    Séparez les mots-clés par des virgules. 3 à 10
+                    suggestions suffisent. Plus vous en donnez, plus la
+                    fiche sera fidèle à votre commerce.
                   </p>
                 </div>
 
@@ -314,7 +314,7 @@ function DraftPreview({ draft }: { draft: AIBusinessDescribeResponse }) {
             {draft.specialties.map((s, i) => (
               <span
                 key={`${i}-${s}`}
-                className="rounded-full bg-[#1a4d6e]/10 px-2 py-0.5 text-xs text-[#1a4d6e]"
+                className="rounded-full bg-camargue/10 px-2 py-0.5 text-xs text-camargue"
               >
                 {s}
               </span>
@@ -326,7 +326,7 @@ function DraftPreview({ draft }: { draft: AIBusinessDescribeResponse }) {
       {draft.faq.length > 0 ? (
         <Section
           title="FAQ suggérée"
-          subtitle="Suggestions à copier dans ta fiche ou tes réseaux. Pas appliqué automatiquement pour l'instant."
+          subtitle="Suggestions à copier dans votre fiche ou vos réseaux. Pas appliqué automatiquement pour l'instant."
         >
           <ul className="space-y-2">
             {draft.faq.map((item: AIBusinessFaqItem, i: number) => (

@@ -82,7 +82,7 @@ def _check_budget(user_id: int) -> None:
     if global_cost >= global_cap:
         raise BudgetExceeded(
             f"Cap journalier global atteint ({global_cost}€ / {global_cap}€). "
-            "Le service IA est temporairement saturé, réessaie dans quelques heures."
+            "Le service IA est temporairement saturé, réessayez dans quelques heures."
         )
 
 

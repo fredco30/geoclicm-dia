@@ -31,7 +31,7 @@ export function AssistantInput({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      <div className="flex items-end gap-2 rounded-2xl border border-slate-300 bg-white p-2 focus-within:border-[#1a4d6e]">
+      <div className="flex items-end gap-2 rounded-2xl border border-slate-300 bg-white p-2 focus-within:border-camargue">
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -54,7 +54,7 @@ export function AssistantInput({
           disabled={disabled || isPending || !value.trim()}
           aria-label={sendLabel}
           title={sendLabel}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1a4d6e] text-white transition hover:bg-[#13384f] disabled:opacity-40"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-camargue text-white transition hover:bg-camargue-dark disabled:opacity-40"
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

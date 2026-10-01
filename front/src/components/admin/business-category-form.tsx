@@ -157,7 +157,7 @@ export function BusinessCategoryForm({ category, parents }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/directory/categories"
-            className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+            className="text-sm text-slate-600 hover:text-camargue"
           >
             ← Catégories
           </Link>
@@ -238,7 +238,7 @@ export function BusinessCategoryForm({ category, parents }: Props) {
                 href="https://lucide.dev/icons/"
                 target="_blank"
                 rel="noopener"
-                className="underline hover:text-[#1a4d6e]"
+                className="underline hover:text-camargue"
               >
                 lucide.dev/icons
               </a>{" "}
@@ -276,7 +276,7 @@ export function BusinessCategoryForm({ category, parents }: Props) {
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
               rows={3}
-              className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-[#1a4d6e] focus:outline-none focus:ring-1 focus:ring-[#1a4d6e]"
+              className="block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-camargue focus:outline-none focus:ring-1 focus:ring-camargue"
               placeholder="Texte affiché sur la page de la catégorie (optionnel)"
             />
           </div>

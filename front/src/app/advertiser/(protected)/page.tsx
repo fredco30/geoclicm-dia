@@ -12,62 +12,61 @@ export default async function AdvertiserDashboardPage() {
         Bienvenue, {user!.first_name || user!.full_name} 👋
       </h1>
       <p className="mt-2 max-w-prose text-slate-600">
-        Ton espace annonceur est prêt. Pour l&apos;instant, la création de
-        fiche et de campagne se fait avec l&apos;aide de l&apos;équipe
-        éditoriale — contacte-nous pour démarrer.
+        Votre espace annonceur est prêt : créez votre fiche commerce, puis
+        vos campagnes. L&apos;équipe éditoriale les relit avant publication.
       </p>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Link
           href="/advertiser/fiches"
-          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-terracotta hover:shadow-md"
         >
-          <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
+          <div className="mb-2 flex items-center gap-2 text-terracotta">
             <Store className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-terracotta">
               Ma fiche commerce
             </h2>
           </div>
           <p className="text-sm text-slate-600">
-            Crée une fiche détaillée (description, horaires, photos) pour
-            apparaître dans l&apos;annuaire et sur la carte du territoire.
+            Créez une fiche détaillée (description, horaires, logo et photo)
+            pour apparaître dans l&apos;annuaire et sur la carte du territoire.
           </p>
-          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+          <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes fiches →
           </p>
         </Link>
         <Link
           href="/advertiser/campagnes"
-          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-[#a8533a] hover:shadow-md"
+          className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-terracotta hover:shadow-md"
         >
-          <div className="mb-2 flex items-center gap-2 text-[#a8533a]">
+          <div className="mb-2 flex items-center gap-2 text-terracotta">
             <Megaphone className="h-5 w-5" />
-            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-[#a8533a]">
+            <h2 className="font-serif text-lg font-semibold text-slate-900 group-hover:text-terracotta">
               Mes campagnes pub
             </h2>
           </div>
           <p className="text-sm text-slate-600">
-            Diffuse des encarts publicitaires sur les pages clés du média :
-            home, articles, annuaire.
+            Diffusez des encarts publicitaires sur les pages clés du média :
+            accueil, articles, annuaire.
           </p>
-          <p className="mt-3 text-xs font-medium text-[#a8533a]">
+          <p className="mt-3 text-xs font-medium text-terracotta">
             Gérer mes campagnes →
           </p>
         </Link>
       </div>
 
-      <div className="mt-8 rounded-xl bg-[#fbf9f5] p-5 ring-1 ring-[#a8533a]/30">
+      <div className="mt-8 rounded-xl bg-salt p-5 ring-1 ring-terracotta/30">
         <h2 className="font-serif text-lg font-semibold text-slate-900">
           Besoin d&apos;aide ?
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Pendant la phase pilote été 2026, l&apos;inscription et la
+          Pendant la phase pilote 2026, l&apos;inscription et la
           diffusion des campagnes sont gratuites. L&apos;équipe geoclicMédia
           valide chaque fiche et campagne sous 24h ouvrées.
         </p>
         <Link
           href="/contact"
-          className="mt-3 inline-block rounded-md bg-[#a8533a] px-4 py-2 text-sm font-medium text-white hover:bg-[#8e4530]"
+          className="mt-3 inline-block rounded-md bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-dark"
         >
           Nous contacter
         </Link>

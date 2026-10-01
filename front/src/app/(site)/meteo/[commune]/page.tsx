@@ -59,14 +59,14 @@ export default async function MeteoCommunePage({ params }: Props) {
   return (
     <div className="mx-auto max-w-screen-xl px-4 py-6 sm:py-10">
       <header className="mb-6">
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/" className="text-sm text-slate-600 hover:text-camargue">
           ← Accueil
         </Link>
         <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
               <CloudSun
-                className="mr-2 inline-block h-8 w-8 align-text-bottom text-[#1a4d6e] sm:h-10 sm:w-10"
+                className="mr-2 inline-block h-8 w-8 align-text-bottom text-camargue sm:h-10 sm:w-10"
                 aria-hidden
               />
               Météo · {commune.name}

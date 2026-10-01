@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
 import { BusinessForm } from "@/components/admin/business-form";
+import { BusinessPendingReview } from "@/components/admin/business-pending-review";
 import type { Commune } from "@/types/api";
 import type {
   AdminBusinessCategory,
@@ -79,10 +80,16 @@ export default async function EditBusinessPage({ params }: Props) {
   if (!business) notFound();
 
   return (
-    <BusinessForm
-      business={business}
-      categories={sortCategoriesForSelect(categories)}
-      communes={communes}
-    />
+    <>
+      <BusinessPendingReview business={business} categories={categories} communes={communes} />
+      {/* key : remonte le formulaire après validation des modifications, sinon
+          il garderait l'ancienne version et l'écraserait au prochain save. */}
+      <BusinessForm
+        key={business.updated_at}
+        business={business}
+        categories={sortCategoriesForSelect(categories)}
+        communes={communes}
+      />
+    </>
   );
 }

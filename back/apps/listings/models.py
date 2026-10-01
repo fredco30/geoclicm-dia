@@ -1,12 +1,12 @@
-"""ModÃ¨les listings : petites annonces datÃ©es (emploi, locations annuelles...).
+"""Modèles listings : petites annonces datées (emploi, locations annuelles...).
 
-Une annonce est un contenu Ã©phÃ©mÃ¨re (date d'expiration), distinct de
-l'Agenda (Ã©vÃ©nements), de DÃ©couvrir (lieux pÃ©rennes) et de l'annuaire
-CommerÃ§ants (fiches Ã©tablies). Deux modes d'alimentation :
-- automatique via la passe IA multi-catÃ©gories (crawl), candidat Ã  valider ;
+Une annonce est un contenu éphémère (date d'expiration), distinct de
+l'Agenda (événements), de Découvrir (lieux pérennes) et de l'annuaire
+Commerçants (fiches établies). Deux modes d'alimentation :
+- automatique via la passe IA multi-catégories (crawl), candidat à valider ;
 - manuel via l'admin (ex : offres/demandes locatives annuelles).
 
-RÃ¨gle inchangÃ©e : validation humaine avant toute publication automatique.
+Règle inchangée : validation humaine avant toute publication automatique.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from apps.core.models import Commune, User
 
 
 class ListingCategory(models.Model):
-    """CatÃ©gorie d'annonce (Offres d'emploi, Locations annuelles...)."""
+    """Catégorie d'annonce (Offres d'emploi, Locations annuelles...)."""
 
     name = models.CharField(max_length=80, unique=True)
     slug = models.SlugField(max_length=100, unique=True)
@@ -26,15 +26,15 @@ class ListingCategory(models.Model):
     icon = models.CharField(
         max_length=50,
         blank=True,
-        help_text="Nom d'icÃ´ne Lucide (ex: 'Briefcase', 'House').",
+        help_text="Nom d'icône Lucide (ex: 'Briefcase', 'House').",
     )
     sort_order = models.PositiveIntegerField(default=0, db_index=True)
     is_active = models.BooleanField(default=True, db_index=True)
 
     class Meta:
         ordering = ("sort_order", "name")
-        verbose_name = "CatÃ©gorie d'annonce"
-        verbose_name_plural = "CatÃ©gories d'annonces"
+        verbose_name = "Catégorie d'annonce"
+        verbose_name_plural = "Catégories d'annonces"
 
     def __str__(self) -> str:
         return self.name
@@ -46,13 +46,13 @@ class ListingCategory(models.Model):
 
 
 class Listing(models.Model):
-    """Annonce publiÃ©e (emploi, location annuelle...), avec expiration."""
+    """Annonce publiée (emploi, location annuelle...), avec expiration."""
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Brouillon"
-        PUBLISHED = "published", "PubliÃ©e"
-        EXPIRED = "expired", "ExpirÃ©e"
-        ARCHIVED = "archived", "ArchivÃ©e"
+        PUBLISHED = "published", "Publiée"
+        EXPIRED = "expired", "Expirée"
+        ARCHIVED = "archived", "Archivée"
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=220, unique=True)
@@ -70,21 +70,21 @@ class Listing(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="listings",
-        help_text="Commune concernÃ©e ; NULL = annonce intercommunale.",
+        help_text="Commune concernée ; NULL = annonce intercommunale.",
     )
     locality = models.CharField(
         max_length=120,
         blank=True,
-        help_text="LocalitÃ© brute si la commune n'est pas rÃ©solue "
-                  "(ex: Â« Terre de Camargue Â»).",
+        help_text="Localité brute si la commune n'est pas résolue "
+                  "(ex: « Terre de Camargue »).",
     )
     address = models.CharField(max_length=255, blank=True)
 
-    # --- DÃ©tails d'annonce (champs libres, tout est optionnel) ---
+    # --- Détails d'annonce (champs libres, tout est optionnel) ---
     employer_or_agency = models.CharField(
         max_length=150,
         blank=True,
-        help_text="Employeur, agence ou contact affichÃ©.",
+        help_text="Employeur, agence ou contact affiché.",
     )
     contract_type = models.CharField(
         max_length=80,
@@ -94,7 +94,7 @@ class Listing(models.Model):
     price = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Salaire, loyer ou prix affichÃ© (texte libre).",
+        help_text="Salaire, loyer ou prix affiché (texte libre).",
     )
 
     # --- Contact ---
@@ -118,7 +118,7 @@ class Listing(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        help_text="Date de fin de validitÃ© ; l'annonce bascule en expirÃ©e.",
+        help_text="Date de fin de validité ; l'annonce bascule en expirée.",
     )
 
     created_by = models.ForeignKey(
@@ -152,22 +152,22 @@ class Listing(models.Model):
 
 
 class ListingImportCandidate(models.Model):
-    """Annonce structurÃ©e en attente de validation (miroir DÃ©couvrir/CommerÃ§ants).
+    """Annonce structurée en attente de validation (miroir Découvrir/Commerçants).
 
-    Produit par la passe IA multi-catÃ©gories sur le corpus crawlÃ©. Aucune
+    Produit par la passe IA multi-catégories sur le corpus crawlé. Aucune
     publication automatique : un humain valide chaque candidat.
     """
 
     class ExtractionMethod(models.TextChoices):
-        AI = "ai", "Extraction IA Ã  valider"
+        AI = "ai", "Extraction IA à valider"
         JSON_LD = "json_ld", "JSON-LD officiel"
 
     class Status(models.TextChoices):
-        PENDING = "pending", "Ã€ vÃ©rifier"
-        IMPORTED = "imported", "ImportÃ©e"
-        REJECTED = "rejected", "RejetÃ©e"
+        PENDING = "pending", "À vérifier"
+        IMPORTED = "imported", "Importée"
+        REJECTED = "rejected", "Rejetée"
         DUPLICATE = "duplicate", "Doublon"
-        INVALID = "invalid", "IncomplÃ¨te"
+        INVALID = "invalid", "Incomplète"
 
     crawl_source = models.ForeignKey(
         "assistant.CrawlSource",

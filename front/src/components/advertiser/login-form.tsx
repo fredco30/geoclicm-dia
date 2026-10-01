@@ -35,7 +35,7 @@ export function AdvertiserLoginForm() {
       router.push(next);
       router.refresh();
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError("Erreur réseau, veuillez réessayer.");
       setBusy(false);
     }
   };
@@ -83,7 +83,7 @@ export function AdvertiserLoginForm() {
         Pas encore de compte ?{" "}
         <Link
           href="/advertiser/register"
-          className="font-medium text-[#a8533a] hover:underline"
+          className="font-medium text-terracotta hover:underline"
         >
           Inscription gratuite
         </Link>

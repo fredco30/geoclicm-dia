@@ -25,7 +25,7 @@ export function CollapsibleMap({ children, count, defaultOpen = true }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[#1a4d6e] hover:text-[#1a4d6e]"
+        className="mb-3 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-camargue hover:text-camargue"
       >
         <Map className="h-4 w-4" />
         {open ? "Masquer la carte" : `Voir la carte (${count})`}

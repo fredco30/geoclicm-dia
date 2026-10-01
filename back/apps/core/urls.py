@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from . import auth_views, views
+from .site_settings_views import SiteSettingsView
 from .user_views import UserAdminViewSet
 
 app_name = "core"
@@ -20,5 +21,7 @@ urlpatterns = [
         auth_views.AdvertiserRegisterView.as_view(),
         name="auth-register-advertiser",
     ),
+    path("admin/pending-counts/", views.pending_counts, name="admin-pending-counts"),
+    path("site-settings/", SiteSettingsView.as_view(), name="site-settings"),
     path("", include(router.urls)),
 ]

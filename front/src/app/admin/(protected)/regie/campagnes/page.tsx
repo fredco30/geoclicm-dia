@@ -1,26 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus, Edit, Eye, EyeOff } from "lucide-react";
-import { getCookieHeader, getCurrentUser } from "@/lib/auth-server";
+import { fetchAllPages, getCurrentUser } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import type { Paginated } from "@/types/api";
 import type { AdminAdCampaignListItem } from "@/types/admin";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
-
 async function fetchCampaigns(): Promise<AdminAdCampaignListItem[]> {
-  const cookieHeader = await getCookieHeader();
-  const res = await fetch(
-    `${API_URL}/api/ad-campaigns/?ordering=-starts_at&page_size=200`,
-    {
-      headers: { Cookie: cookieHeader, Accept: "application/json" },
-      cache: "no-store",
-    },
-  );
-  if (!res.ok) return [];
-  const data = (await res.json()) as Paginated<AdminAdCampaignListItem>;
-  return data.results;
+  return (await fetchAllPages<AdminAdCampaignListItem>("/api/ad-campaigns/?ordering=-starts_at")) ?? [];
 }
 
 export default async function AdsCampaignsPage() {

@@ -58,7 +58,7 @@ export default async function TileChildrenPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-screen-xl space-y-6 px-4 py-4 sm:py-8">
       <header>
-        <Link href="/" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/" className="text-sm text-slate-600 hover:text-camargue">
           ← Accueil
         </Link>
         <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

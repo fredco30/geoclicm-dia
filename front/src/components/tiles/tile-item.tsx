@@ -41,7 +41,7 @@ export function TileItem({ tile, pathPrefix = "", className = "" }: Props) {
   const aspectClass = tile.span_2x ? "aspect-[2/1]" : "aspect-square";
 
   const baseClasses =
-    `group relative flex ${aspectClass} flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200/70 p-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1a4d6e]`;
+    `group relative flex ${aspectClass} flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-slate-200/70 p-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-camargue`;
 
   const colorClasses = `${preset.bg} ${preset.text}`;
 

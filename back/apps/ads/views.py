@@ -18,6 +18,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -103,13 +104,30 @@ class AdvertiserAdCampaignViewSet(viewsets.ModelViewSet):
             # on vérifie qu'il appartient bien à l'utilisateur
             business = serializer.validated_data.get("business")
             if business and business.owner_id != user.id:
-                from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied(
-                    "Tu ne peux créer une campagne que pour une de tes fiches."
+                    "Vous ne pouvez créer une campagne que pour l'une de vos fiches."
                 )
             serializer.save(is_active=False, is_paid=False)
         else:
             serializer.save()
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if user.role != User.Role.ADVERTISER or user.is_superuser:
+            serializer.save()
+            return
+        # Même contrôle qu'à la création : la fiche cible doit appartenir à
+        # l'annonceur (sinon il pourrait rattacher la campagne à un concurrent).
+        business = serializer.validated_data.get("business")
+        if business and business.owner_id != user.id:
+            raise PermissionDenied(
+                "Vous ne pouvez rattacher une campagne qu'à l'une de vos fiches."
+            )
+        # Toute modification par l'annonceur (visuel, lien, texte, dates)
+        # repasse la campagne en validation : l'équipe la réactive après
+        # contrôle. Évite de diffuser un contenu non relu ou de prolonger
+        # une campagne payée sans accord.
+        serializer.save(is_active=False)
 
 
 class AdServeView(APIView):

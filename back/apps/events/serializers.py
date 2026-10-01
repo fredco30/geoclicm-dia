@@ -96,12 +96,17 @@ class EventListSerializer(serializers.ModelSerializer):
         return obj.location.x if obj.location else None
 
     def get_next_occurrence(self, obj: Event):
-        now = timezone.now()
+        # Liste filtrée par dates (?from=&to=) : première occurrence de la
+        # plage plutôt que la prochaine absolue.
+        start, end = self.context.get("occurrence_range") or (None, None)
+        lower = max(timezone.now(), start) if start else timezone.now()
         occurrence = next(
             (
                 item
-                for item in obj.occurrences.all()
-                if item.status == EventOccurrence.Status.SCHEDULED and item.ends_at >= now
+                for item in sorted(obj.occurrences.all(), key=lambda o: o.starts_at)
+                if item.status == EventOccurrence.Status.SCHEDULED
+                and item.ends_at >= lower
+                and (end is None or item.starts_at <= end)
             ),
             None,
         )

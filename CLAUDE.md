@@ -182,16 +182,14 @@ seul, Next seul, Celery, etc.).
   --dry-run` après ajout d'app, et ne jamais commiter une app dans
   INSTALLED_APPS sans sa migration `0001_initial`.
 
-### Cache Next non invalidé après modification admin
+### Cache Next après modification admin
 
-- L'API publique `/api/tiles/` (et autres endpoints similaires) est
-  servie par Next.js avec `revalidate: 300` côté data cache. Quand un
-  admin modifie une tuile (ou tout objet exposé via cette stratégie),
-  le cache n'est PAS invalidé automatiquement — la home continue
-  d'afficher l'ancienne version pendant jusqu'à 5 min. Workaround
-  immédiat : `sudo systemctl restart geoclicmedia-next` après save admin.
-  Fix propre futur : Server Action ou endpoint Next qui appelle
-  `revalidateTag("tiles")` après le PATCH/POST côté client.
+- Les pages publiques sont servies avec `revalidate` (1 à 60 min). Depuis
+  le 30/09/2026, toute écriture réussie via `apiFetch` (back-office,
+  espace annonceur) appelle la Server Action `revalidateAfterWrite`
+  (`front/src/lib/revalidate-actions.ts`) qui invalide les tags Next
+  concernés. Un nouveau type de contenu = ajouter ses tags dans `RULES`,
+  sinon retour du bug « la home affiche l'ancienne version ».
 
 ### Tailwind 4 + arbitrary classes dynamiques
 

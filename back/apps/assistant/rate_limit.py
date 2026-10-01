@@ -29,14 +29,41 @@ def _hash_ip(ip: str) -> str:
 
 
 def get_client_ip(request) -> str:
-    """Extrait l'IP client depuis X-Forwarded-For ou request.client.
+    """IP client vue par Nginx.
 
-    Avec Nginx en reverse proxy, l'IP réelle est dans X-Forwarded-For.
+    Nginx remplace X-Real-IP par ``$remote_addr`` : le client ne peut pas le
+    falsifier. À l'inverse, le PREMIER élément de X-Forwarded-For est fourni
+    par le client (Nginx ajoute l'IP réelle à la fin) : s'y fier permettait
+    de contourner le quota en changeant l'en-tête à chaque requête. En
+    repli, on prend donc le DERNIER élément, ajouté par le proxy.
     """
+    real_ip = request.META.get("HTTP_X_REAL_IP", "").strip()
+    if real_ip:
+        return real_ip
     xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
     if xff:
-        return xff.split(",")[0].strip()
+        return xff.split(",")[-1].strip()
     return request.META.get("REMOTE_ADDR", "unknown") or "unknown"
+
+
+def check_global_daily_limit() -> bool:
+    """Plafond global de questions par jour, toutes IP confondues.
+
+    Filet de sécurité pour la facture Mistral si le quota par IP est
+    contourné (réseau de machines, proxy mal configuré). Compteur atomique
+    Redis, remis à zéro chaque jour.
+    """
+    limit = int(getattr(settings, "ASSISTANT_GLOBAL_DAILY_LIMIT", 2000))
+    if limit <= 0:
+        return True
+    key = f"{CACHE_PREFIX}global:{time.strftime('%Y-%m-%d')}"
+    cache.add(key, 0, 2 * 24 * 3600)
+    try:
+        count = cache.incr(key)
+    except ValueError:  # clé expirée entre add et incr
+        cache.set(key, 1, 2 * 24 * 3600)
+        count = 1
+    return count <= limit
 
 
 def check_rate_limit(ip: str) -> tuple[bool, int]:

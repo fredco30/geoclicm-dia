@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -119,3 +120,47 @@ class Media(models.Model):
 
     def __str__(self) -> str:
         return self.title or self.file.name
+
+
+HEX_COLOR = RegexValidator(
+    r"^#[0-9a-fA-F]{6}$", "Couleur attendue au format #RRGGBB (ex : #1a4d6e)."
+)
+
+
+class SiteSettings(models.Model):
+    """Identité visuelle du site, modifiable depuis le back-office (une seule ligne)."""
+
+    DEFAULT_PRIMARY = "#1a4d6e"
+    DEFAULT_ACCENT = "#a8533a"
+
+    site_name = models.CharField("Nom du site", max_length=60, default="geoclicMédia")
+    tagline = models.CharField(
+        "Accroche", max_length=120, default="le littoral camarguais", blank=True
+    )
+    logo = models.ImageField(
+        "Logo", upload_to="site/", blank=True, null=True,
+        help_text="Format carré ou horizontal, fond transparent conseillé (PNG ou SVG converti).",
+    )
+    primary_color = models.CharField(
+        "Couleur principale", max_length=7, default=DEFAULT_PRIMARY, validators=[HEX_COLOR]
+    )
+    accent_color = models.CharField(
+        "Couleur d'accent", max_length=7, default=DEFAULT_ACCENT, validators=[HEX_COLOR]
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Réglages du site"
+        verbose_name_plural = "Réglages du site"
+
+    def __str__(self) -> str:
+        return self.site_name
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # ligne unique
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls) -> SiteSettings:
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

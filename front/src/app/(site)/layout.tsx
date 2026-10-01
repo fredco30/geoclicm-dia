@@ -15,7 +15,7 @@ export default function SiteLayout({
         {/* Skip link (accessibilité clavier) */}
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#1a4d6e] focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-camargue focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
         >
           Aller au contenu
         </a>

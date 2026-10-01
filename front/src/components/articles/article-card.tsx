@@ -17,10 +17,10 @@ export function ArticleCard({ article }: { article: ArticleListItem }) {
               loading="lazy"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2c6a93] to-[#1a4d6e]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-camargue-light to-camargue" />
           )}
           {article.sponsor ? (
-            <span className="absolute right-2 top-2 rounded-full bg-[#a8533a] px-2 py-0.5 text-xs font-medium text-white shadow-sm">
+            <span className="absolute right-2 top-2 rounded-full bg-terracotta px-2 py-0.5 text-xs font-medium text-white shadow-sm">
               Sponsorisé
             </span>
           ) : null}
@@ -36,7 +36,7 @@ export function ArticleCard({ article }: { article: ArticleListItem }) {
         <h3 className="font-serif text-lg font-semibold leading-snug tracking-tight text-slate-900 sm:text-xl">
           <Link
             href={`/articles/${article.slug}`}
-            className="after:absolute after:inset-0 hover:text-[#1a4d6e]"
+            className="after:absolute after:inset-0 hover:text-camargue"
           >
             {article.title}
           </Link>

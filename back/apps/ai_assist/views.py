@@ -397,7 +397,7 @@ class AdHeadlineView(APIView):
             return Response(
                 {
                     "detail": "L'IA n'a produit aucune variante exploitable. "
-                              "Réessaie ou enrichis ta fiche.",
+                              "Réessayez ou enrichissez votre fiche.",
                     "code": "empty_variants",
                 },
                 status=status.HTTP_502_BAD_GATEWAY,

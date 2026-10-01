@@ -13,16 +13,16 @@ CATEGORIES = [
         "name": "Offres d'emploi",
         "slug": "offres-d-emploi",
         "icon": "Briefcase",
-        "description": "Offres d'emploi du territoire (collectÃ©es via les sites "
-                       "officiels crawlÃ©s, validÃ©es avant publication).",
+        "description": "Offres d'emploi du territoire (collectées via les sites "
+                       "officiels crawlés, validées avant publication).",
     },
     {
         "name": "Locations annuelles",
         "slug": "locations-annuelles",
         "icon": "House",
-        "description": "Offres et demandes de locations Ã  l'annÃ©e (La "
+        "description": "Offres et demandes de locations à l'année (La "
                        "Grande-Motte, Le Grau-du-Roi, Aigues-Mortes). Saisie "
-                       "manuelle par l'Ã©quipe.",
+                       "manuelle par l'équipe.",
     },
 ]
 
@@ -50,7 +50,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"+ {data['name']}"))
             else:
                 updated += 1
-                self.stdout.write(f"~ {data['name']} (dÃ©jÃ  existante, mise Ã  jour)")
+                self.stdout.write(f"~ {data['name']} (déjà existante, mise à jour)")
         self.stdout.write(
-            self.style.SUCCESS(f"\nTerminÃ© : {created} crÃ©Ã©es, {updated} mises Ã  jour.")
+            self.style.SUCCESS(f"\nTerminé : {created} créées, {updated} mises à jour.")
         )

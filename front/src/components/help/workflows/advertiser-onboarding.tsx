@@ -104,7 +104,7 @@ export const ADVERTISER_ONBOARDING: Workflow = {
             compte. Écrivez à{" "}
             <a
               href="mailto:contact@geoclic.fr"
-              className="text-[#1a4d6e] underline"
+              className="text-camargue underline"
             >
               contact@geoclic.fr
             </a>{" "}
@@ -291,7 +291,7 @@ export const ADVERTISER_ONBOARDING: Workflow = {
                 de l&apos;article. Contactez{" "}
                 <a
                   href="mailto:contact@geoclic.fr"
-                  className="text-[#1a4d6e] underline"
+                  className="text-camargue underline"
                 >
                   contact@geoclic.fr
                 </a>
@@ -309,7 +309,7 @@ export const ADVERTISER_ONBOARDING: Workflow = {
             Question, idée, problème ? L&apos;équipe répond à{" "}
             <a
               href="mailto:contact@geoclic.fr"
-              className="text-[#1a4d6e] underline"
+              className="text-camargue underline"
             >
               contact@geoclic.fr
             </a>{" "}

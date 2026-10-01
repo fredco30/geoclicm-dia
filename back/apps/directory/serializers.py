@@ -46,7 +46,32 @@ class BusinessCategorySerializer(serializers.ModelSerializer):
 # Business — listing (back-office)
 # ============================================================================
 
-class BusinessListSerializer(serializers.ModelSerializer):
+class TeamOrOwnerFieldsMixin:
+    """Masque au public les champs internes d'une fiche.
+
+    Visibles seulement par l'équipe (editor/admin) et le propriétaire :
+    identité du compte propriétaire (son identifiant est souvent son email)
+    et dates d'abonnement. Le public garde « plan » (badge Partenaire).
+    """
+
+    PRIVATE_FIELDS = (
+        "owner", "owner_username", "plan_starts_at", "plan_ends_at",
+        "pending_review", "has_pending_changes",
+    )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        is_team = bool(user and user.is_authenticated and getattr(user, "can_publish", False))
+        is_owner = bool(user and user.is_authenticated and instance.owner_id == user.id)
+        if not (is_team or is_owner):
+            for field in self.PRIVATE_FIELDS:
+                data.pop(field, None)
+        return data
+
+
+class BusinessListSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer):
     category_name = serializers.CharField(source="category.name", read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)
     owner_username = serializers.CharField(source="owner.username", read_only=True, default=None)
@@ -57,9 +82,12 @@ class BusinessListSerializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
+    has_pending_changes = serializers.SerializerMethodField()
+
     class Meta:
         model = Business
         fields = (
+            "has_pending_changes",
             "id", "name", "slug", "city",
             "category", "category_name",
             "specialties",
@@ -72,6 +100,9 @@ class BusinessListSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         )
 
+    def get_has_pending_changes(self, obj: Business) -> bool:
+        return bool(obj.pending_changes)
+
     def get_latitude(self, obj: Business) -> float | None:
         return obj.location.y if obj.location else None
 
@@ -83,7 +114,7 @@ class BusinessListSerializer(serializers.ModelSerializer):
 # Business — detail (read public + back-office)
 # ============================================================================
 
-class BusinessDetailSerializer(serializers.ModelSerializer):
+class BusinessDetailSerializer(TeamOrOwnerFieldsMixin, serializers.ModelSerializer):
     category = BusinessCategorySerializer(read_only=True)
     secondary_categories = BusinessCategorySerializer(many=True, read_only=True)
     commune_name = serializers.CharField(source="commune.name", read_only=True)
@@ -93,9 +124,12 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
+    pending_review = serializers.SerializerMethodField()
+
     class Meta:
         model = Business
         fields = (
+            "pending_review",
             "id", "name", "slug", "legal_name", "siret",
             "category", "secondary_categories",
             "short_description", "description", "specialties",
@@ -116,6 +150,24 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
 
     def get_longitude(self, obj: Business) -> float | None:
         return obj.location.x if obj.location else None
+
+    def get_pending_review(self, obj: Business):
+        """Modifications de l'annonceur en attente de relecture (ou None)."""
+        if not obj.pending_changes:
+            return None
+        request = self.context.get("request")
+
+        def url(field):
+            if not field:
+                return None
+            return request.build_absolute_uri(field.url) if request else field.url
+
+        return {
+            "changes": obj.pending_changes,
+            "submitted_at": obj.pending_submitted_at,
+            "logo_url": url(obj.pending_logo),
+            "cover_image_url": url(obj.pending_cover_image),
+        }
 
 
 # ============================================================================

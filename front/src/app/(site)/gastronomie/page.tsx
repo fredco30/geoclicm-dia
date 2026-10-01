@@ -77,7 +77,7 @@ export default async function GastronomiePage({ searchParams }: Props) {
             Essayez une autre envie, ou{" "}
             <Link
               href="/gastronomie"
-              className="text-[#1a4d6e] underline hover:text-[#a8533a]"
+              className="text-camargue underline hover:text-terracotta"
             >
               réinitialisez les filtres
             </Link>

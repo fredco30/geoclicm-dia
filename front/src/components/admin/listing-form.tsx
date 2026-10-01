@@ -143,7 +143,7 @@ export function ListingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex items-center justify-between">
-        <Link href="/admin/annonces" className="text-sm text-slate-600 hover:text-[#1a4d6e]">
+        <Link href="/admin/annonces" className="text-sm text-slate-600 hover:text-camargue">
           ← Annonces
         </Link>
         <div className="flex gap-2">

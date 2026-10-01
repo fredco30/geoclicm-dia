@@ -134,3 +134,23 @@ def reindex_all_task() -> dict[str, dict[str, int]]:
         "external_sources": crawl_all_active_sources(force=True),
         "business_websites": crawl_business_websites(),
     }
+
+
+# Durée de conservation annoncée dans la politique de confidentialité.
+CONVERSATION_RETENTION_DAYS = 365
+
+
+@shared_task(name="assistant.purge_old_conversations", ignore_result=True)
+def purge_old_conversations() -> int:
+    """Supprime les conversations inactives depuis plus de 12 mois (RGPD)."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .models import AssistantConversation
+
+    cutoff = timezone.now() - timedelta(days=CONVERSATION_RETENTION_DAYS)
+    deleted, _ = AssistantConversation.objects.filter(last_message_at__lt=cutoff).delete()
+    if deleted:
+        logger.info("Assistant : %s objet(s) supprimé(s) (conversations > 12 mois)", deleted)
+    return deleted

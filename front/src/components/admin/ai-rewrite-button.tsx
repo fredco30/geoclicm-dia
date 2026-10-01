@@ -121,7 +121,7 @@ export function AIRewriteButton({
             ? `Saisis au moins ${minLength} caractères avant de réécrire.`
             : "Réécrire avec l'IA"
         }
-        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-[#1a4d6e]/10 hover:text-[#1a4d6e] disabled:opacity-40 disabled:hover:bg-slate-100 disabled:hover:text-slate-700"
+        className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-camargue/10 hover:text-camargue disabled:opacity-40 disabled:hover:bg-slate-100 disabled:hover:text-slate-700"
       >
         <Wand2 className="h-3 w-3" aria-hidden />
         Réécrire
@@ -143,7 +143,7 @@ export function AIRewriteButton({
             </button>
 
             <div className="flex items-center gap-2 mb-3">
-              <Wand2 className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+              <Wand2 className="h-4 w-4 text-camargue" aria-hidden />
               <h3 className="text-base font-semibold text-slate-900">
                 Réécrire avec l&apos;IA
               </h3>
@@ -175,7 +175,7 @@ export function AIRewriteButton({
                           className={
                             "rounded-full border px-3 py-1 text-xs transition "
                             + (isActive
-                              ? "border-[#1a4d6e] bg-[#1a4d6e] text-white"
+                              ? "border-camargue bg-camargue text-white"
                               : "border-slate-300 bg-white text-slate-700 hover:border-slate-400")
                           }
                         >
@@ -208,7 +208,7 @@ export function AIRewriteButton({
                     type="button"
                     onClick={handleRewrite}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#1a4d6e] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#13384f] disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-camargue px-3 py-1.5 text-sm font-medium text-white hover:bg-camargue-dark disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -293,7 +293,7 @@ function SuggestionItem({
       className={
         "rounded-md border p-3 text-sm "
         + (isPrimary
-          ? "border-[#1a4d6e]/30 bg-[#1a4d6e]/5"
+          ? "border-camargue/30 bg-camargue/5"
           : "border-slate-200 bg-white")
       }
     >
@@ -301,7 +301,7 @@ function SuggestionItem({
       <button
         type="button"
         onClick={onApply}
-        className="inline-flex items-center gap-1 rounded-md bg-[#1a4d6e] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#13384f]"
+        className="inline-flex items-center gap-1 rounded-md bg-camargue px-2.5 py-1 text-xs font-medium text-white hover:bg-camargue-dark"
       >
         <CheckCircle2 className="h-3 w-3" />
         Utiliser cette version

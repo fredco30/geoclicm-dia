@@ -14,6 +14,8 @@ import type { AdminUser } from "@/types/admin";
 type Props = {
   user?: AdminUser; // undefined → mode création
   currentUserId: number; // pour empêcher self-delete
+  /** Seul un superuser peut modifier l'accès Django Admin. */
+  currentUserIsSuperuser: boolean;
 };
 
 const ROLES: { value: string; label: string; help: string }[] = [
@@ -29,7 +31,7 @@ function readCsrfToken(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function UserForm({ user, currentUserId }: Props) {
+export function UserForm({ user, currentUserId, currentUserIsSuperuser }: Props) {
   const router = useRouter();
   const isEdit = !!user;
 
@@ -122,7 +124,7 @@ export function UserForm({ user, currentUserId }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/settings/users"
-            className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+            className="text-sm text-slate-600 hover:text-camargue"
           >
             ← Comptes
           </Link>
@@ -249,9 +251,13 @@ export function UserForm({ user, currentUserId }: Props) {
               type="checkbox"
               checked={form.is_staff}
               onChange={(e) => update("is_staff", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
+              disabled={!currentUserIsSuperuser}
+              className="h-4 w-4 rounded border-slate-300 disabled:opacity-50"
             />
             Accès Django Admin (utile pour debug technique)
+            {!currentUserIsSuperuser ? (
+              <span className="text-xs text-slate-400">— réservé aux superusers</span>
+            ) : null}
           </label>
 
           {user?.is_superuser ? (

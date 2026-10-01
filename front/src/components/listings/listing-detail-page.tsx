@@ -23,7 +23,7 @@ export function makeListingDetailPage(config: { basePath: string; backLabel: str
           ← {backLabel}
         </Link>
         <header className="mt-5">
-          <span className="rounded-full bg-[#1a4d6e] px-2 py-1 text-xs font-medium text-white">
+          <span className="rounded-full bg-camargue px-2 py-1 text-xs font-medium text-white">
             {listing.category.name}
           </span>
           <h1 className="mt-3 font-serif text-3xl font-semibold sm:text-5xl">{listing.title}</h1>
@@ -62,7 +62,7 @@ export function makeListingDetailPage(config: { basePath: string; backLabel: str
             {listing.contact_phone ? (
               <p className="flex gap-2">
                 <Phone className="h-4 w-4 shrink-0" />
-                <a href={`tel:${listing.contact_phone}`} className="text-[#1a4d6e] underline">
+                <a href={`tel:${listing.contact_phone}`} className="text-camargue underline">
                   {listing.contact_phone}
                 </a>
               </p>
@@ -70,7 +70,7 @@ export function makeListingDetailPage(config: { basePath: string; backLabel: str
             {listing.contact_email ? (
               <p className="flex gap-2">
                 <Mail className="h-4 w-4 shrink-0" />
-                <a href={`mailto:${listing.contact_email}`} className="text-[#1a4d6e] underline">
+                <a href={`mailto:${listing.contact_email}`} className="text-camargue underline">
                   {listing.contact_email}
                 </a>
               </p>
@@ -80,7 +80,7 @@ export function makeListingDetailPage(config: { basePath: string; backLabel: str
                 href={listing.application_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[#1a4d6e] underline"
+                className="inline-flex items-center gap-1 text-camargue underline"
               >
                 Voir l&apos;annonce <ExternalLink className="h-3.5 w-3.5" />
               </a>

@@ -88,7 +88,7 @@ export function Kbd({ children }: { children: ReactNode }) {
 /** Pour citer une route (`/admin/articles/new`). */
 export function Path({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded bg-[#1a4d6e]/5 px-1.5 py-0.5 font-mono text-[0.8125em] text-[#1a4d6e]">
+    <code className="rounded bg-camargue/5 px-1.5 py-0.5 font-mono text-[0.8125em] text-camargue">
       {children}
     </code>
   );
@@ -111,7 +111,7 @@ export function FieldList({
           <dt className="font-semibold text-slate-800">
             {it.label}
             {it.required ? (
-              <span className="ml-1 text-[#a8533a]" aria-label="obligatoire">
+              <span className="ml-1 text-terracotta" aria-label="obligatoire">
                 *
               </span>
             ) : null}
@@ -126,7 +126,7 @@ export function FieldList({
 /** Étape interne courte (sub-step à l'intérieur d'un Step). */
 export function SubSteps({ items }: { items: ReactNode[] }) {
   return (
-    <ol className="my-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-700 marker:text-[#1a4d6e] marker:font-semibold">
+    <ol className="my-2 list-decimal space-y-1.5 pl-5 text-sm text-slate-700 marker:text-camargue marker:font-semibold">
       {items.map((it, i) => (
         <li key={i}>{it}</li>
       ))}
@@ -160,7 +160,7 @@ export function StepBlock({
       className={
         "rounded-xl border p-4 transition " +
         (active
-          ? "border-[#1a4d6e] bg-[#1a4d6e]/5 shadow-sm"
+          ? "border-camargue bg-camargue/5 shadow-sm"
           : "border-slate-200 bg-white")
       }
     >
@@ -169,14 +169,14 @@ export function StepBlock({
           className={
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold " +
             (active
-              ? "bg-[#1a4d6e] text-white"
+              ? "bg-camargue text-white"
               : "bg-slate-100 text-slate-600")
           }
         >
           {number}
         </span>
         <h3 className="flex items-center gap-2 font-serif text-base font-semibold text-slate-900">
-          {Icon ? <Icon className="h-4 w-4 text-[#1a4d6e]" aria-hidden /> : null}
+          {Icon ? <Icon className="h-4 w-4 text-camargue" aria-hidden /> : null}
           {title}
         </h3>
       </header>

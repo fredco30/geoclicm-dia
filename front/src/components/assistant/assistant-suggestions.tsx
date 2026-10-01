@@ -19,7 +19,7 @@ export function AssistantSuggestions({ label, suggestions, onPick }: Props) {
             key={s}
             type="button"
             onClick={() => onPick(s)}
-            className="rounded-full border border-[#1a4d6e]/20 bg-white px-3 py-1.5 text-xs text-slate-700 transition hover:border-[#1a4d6e]/50 hover:bg-[#1a4d6e]/5 hover:text-[#1a4d6e]"
+            className="rounded-full border border-camargue/20 bg-white px-3 py-1.5 text-xs text-slate-700 transition hover:border-camargue/50 hover:bg-camargue/5 hover:text-camargue"
           >
             {s}
           </button>

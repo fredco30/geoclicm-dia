@@ -187,7 +187,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
           <div className="flex items-center gap-2">
             <Link
               href="/admin"
-              className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+              className="text-sm text-slate-600 hover:text-camargue"
             >
               ← Retour
             </Link>

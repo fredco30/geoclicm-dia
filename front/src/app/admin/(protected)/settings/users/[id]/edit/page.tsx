@@ -26,5 +26,5 @@ export default async function EditUserPage({ params }: Props) {
   const user = await fetchUser(id);
   if (!user) notFound();
 
-  return <UserForm user={user} currentUserId={me.id} />;
+  return <UserForm user={user} currentUserId={me.id} currentUserIsSuperuser={me.is_superuser} />;
 }

@@ -24,7 +24,7 @@ export function BusinessNavActions({ latitude, longitude, name }: Props) {
         href={`https://www.google.com/maps/dir/?api=1&destination=${encQuery}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-md bg-[#1a4d6e] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#163d57]"
+        className="inline-flex items-center gap-1.5 rounded-md bg-camargue px-3 py-2 text-xs font-medium text-white transition hover:bg-camargue-dark"
       >
         <Navigation className="h-3.5 w-3.5" />
         Itinéraire (Maps)

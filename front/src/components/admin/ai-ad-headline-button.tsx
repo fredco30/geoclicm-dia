@@ -62,11 +62,11 @@ export function AIAdHeadlineButton({
     const placement = getPlacement();
 
     if (!businessId) {
-      setError("Choisis d'abord un commerce pour cette campagne.");
+      setError("Choisissez d'abord un commerce pour cette campagne.");
       return;
     }
     if (!placement) {
-      setError("Choisis d'abord un emplacement pour cet encart.");
+      setError("Choisissez d'abord un emplacement pour cet encart.");
       return;
     }
 
@@ -82,22 +82,22 @@ export function AIAdHeadlineButton({
       if (err instanceof AIAssistError) {
         if (err.code === "budget_exceeded") {
           setError(
-            "Quota IA atteint pour aujourd'hui. Réessaie demain.",
+            "Quota IA atteint pour aujourd'hui. Réessayez demain.",
           );
         } else if (err.code === "not_configured") {
-          setError("L'IA n'est pas configurée. Contacte l'équipe.");
+          setError("L'IA n'est pas configurée. Contactez l'équipe.");
         } else if (err.code === "empty_variants") {
           setError(
-            "L'IA n'a rien produit d'utilisable. Enrichis la fiche "
-            + "(description, spécialités) et réessaie.",
+            "L'IA n'a rien produit d'utilisable. Enrichissez la fiche "
+            + "(description, spécialités) et réessayez.",
           );
         } else if (err.code === "bad_format") {
-          setError("Réponse IA mal formée. Réessaie.");
+          setError("Réponse IA mal formée. Veuillez réessayer.");
         } else {
           setError(err.message || "Erreur lors de la génération.");
         }
       } else {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, veuillez réessayer.");
       }
     } finally {
       setIsLoading(false);
@@ -114,7 +114,7 @@ export function AIAdHeadlineButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#1a4d6e] to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
+        className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-camargue to-[#3a7daa] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:shadow-md"
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
         Suggérer 5 variantes
@@ -136,7 +136,7 @@ export function AIAdHeadlineButton({
             </button>
 
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-4 w-4 text-[#1a4d6e]" aria-hidden />
+              <Sparkles className="h-4 w-4 text-camargue" aria-hidden />
               <h3 className="text-base font-semibold text-slate-900">
                 Variantes d&apos;encart par l&apos;IA
               </h3>
@@ -164,7 +164,7 @@ export function AIAdHeadlineButton({
                           className={
                             "rounded-full border px-3 py-1 text-xs transition "
                             + (isActive
-                              ? "border-[#1a4d6e] bg-[#1a4d6e] text-white"
+                              ? "border-camargue bg-camargue text-white"
                               : "border-slate-300 bg-white text-slate-700 hover:border-slate-400")
                           }
                         >
@@ -194,7 +194,7 @@ export function AIAdHeadlineButton({
                     type="button"
                     onClick={handleGenerate}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-[#1a4d6e] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#13384f] disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-camargue px-3 py-1.5 text-sm font-medium text-white hover:bg-camargue-dark disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -219,14 +219,14 @@ export function AIAdHeadlineButton({
                       <p className="text-sm font-medium text-slate-900">
                         {v.headline}
                       </p>
-                      <p className="mt-1 inline-block rounded bg-[#1a4d6e]/10 px-2 py-0.5 text-xs font-medium text-[#1a4d6e]">
+                      <p className="mt-1 inline-block rounded bg-camargue/10 px-2 py-0.5 text-xs font-medium text-camargue">
                         Bouton : {v.cta}
                       </p>
                       <div className="mt-2">
                         <button
                           type="button"
                           onClick={() => handleApply(v)}
-                          className="inline-flex items-center gap-1 rounded-md bg-[#1a4d6e] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#13384f]"
+                          className="inline-flex items-center gap-1 rounded-md bg-camargue px-2.5 py-1 text-xs font-medium text-white hover:bg-camargue-dark"
                         >
                           <CheckCircle2 className="h-3 w-3" />
                           Utiliser cette variante

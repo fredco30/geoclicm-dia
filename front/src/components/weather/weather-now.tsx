@@ -11,7 +11,7 @@ export function WeatherNow({ current }: Props) {
   const { label } = describeWeatherCode(current.weather_code, current.is_day);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-[#1a4d6e] to-[#13384f] p-6 text-white shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-camargue to-camargue-dark p-6 text-white shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <WeatherIcon

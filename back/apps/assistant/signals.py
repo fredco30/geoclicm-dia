@@ -59,6 +59,7 @@ PERIODIC_TASKS = [
     ("Assistant — DataTourisme hebdo", "assistant.reindex_datatourisme", 7, "days"),
     ("Assistant — Crawl sources externes hebdo", "assistant.crawl_external_sources", 7, "days"),
     ("Assistant — Crawl sites commerçants mensuel", "assistant.crawl_business_websites", 30, "days"),
+    ("Assistant — Purge conversations > 12 mois", "assistant.purge_old_conversations", 1, "days"),
 ]
 
 

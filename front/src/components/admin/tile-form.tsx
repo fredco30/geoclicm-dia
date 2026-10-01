@@ -130,7 +130,7 @@ export function TileForm({ tile, rootTiles, communes }: Props) {
         </h1>
         <Link
           href="/admin/tiles"
-          className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+          className="text-sm text-slate-600 hover:text-camargue"
         >
           ← Retour à la liste
         </Link>

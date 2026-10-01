@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { CalendarDays, Compass, FileText, Plus, Home, Settings, Tags, Store, Megaphone, LayoutGrid, Sparkles, Phone, Newspaper } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth-server";
+import { fetchPendingCounts, getCurrentUser } from "@/lib/auth-server";
+import { getSiteSettings } from "@/lib/site-settings";
 import { getRoleLabel } from "@/lib/roles";
-import { LogoutButton } from "@/components/admin/logout-button";
+import { BackofficeShell, type NavSection } from "@/components/admin/backoffice-shell";
 import { HelpProvider } from "@/components/help/help-context";
 import { HelpButton } from "@/components/help/help-button";
 import { HelpDrawer } from "@/components/help/help-drawer";
@@ -25,107 +24,74 @@ export default async function AdminProtectedLayout({
 
   // Seul un superuser (ou role admin) accède aux paramètres comptes
   const canManageUsers = user.is_superuser || user.role === "admin";
+  const [pending, site] = await Promise.all([fetchPendingCounts(), getSiteSettings()]);
+
+  const sections: NavSection[] = [
+    {
+      items: [
+        { href: "/admin", label: "Articles", icon: "articles" },
+        { href: "/admin/articles/new", label: "Nouvel article", icon: "plus" },
+      ],
+    },
+    {
+      title: "À valider",
+      items: [
+        { href: "/admin/agenda/imports", label: "Agenda", icon: "inbox", badge: pending?.events },
+        { href: "/admin/decouvrir/imports", label: "Découvrir", icon: "inbox", badge: pending?.places },
+        { href: "/admin/directory/imports", label: "Commerçants", icon: "inbox", badge: pending?.businesses },
+        { href: "/admin/annonces/imports", label: "Annonces", icon: "inbox", badge: pending?.listings },
+        {
+          href: "/admin/directory/businesses?pending_changes=1",
+          label: "Fiches modifiées",
+          icon: "store",
+          badge: pending?.business_changes,
+        },
+      ],
+    },
+    {
+      title: "Contenus",
+      items: [
+        { href: "/admin/agenda", label: "Agenda & marchés", icon: "agenda" },
+        { href: "/admin/decouvrir", label: "Découvrir", icon: "discover" },
+        { href: "/admin/directory/businesses", label: "Commerçants", icon: "store" },
+        { href: "/admin/annonces", label: "Annonces", icon: "listings" },
+        { href: "/admin/utility", label: "Pratique", icon: "phone" },
+      ],
+    },
+    {
+      title: "Réglages",
+      items: [
+        { href: "/admin/articles/categories", label: "Catégories articles", icon: "tags" },
+        { href: "/admin/directory/categories", label: "Catégories commerçants", icon: "tags" },
+        { href: "/admin/regie/campagnes", label: "Régie publicitaire", icon: "ads" },
+        { href: "/admin/tiles", label: "Tuiles d'accueil", icon: "tiles" },
+        { href: "/admin/assistant/sources", label: "Sources IA", icon: "ai" },
+        ...(canManageUsers
+          ? [
+              { href: "/admin/settings/users", label: "Comptes & droits", icon: "settings" as const },
+              { href: "/admin/settings/site", label: "Identité du site", icon: "palette" as const },
+            ]
+          : []),
+        { href: "/", label: "Voir le site", icon: "home", external: true },
+      ],
+    },
+  ];
 
   return (
     <HelpProvider>
-    <div className="flex">
-      {/* Sidebar — full height, fixe à gauche, sans bord externe (admin remplit toute la viewport) */}
-      <aside className="sticky top-0 hidden h-screen w-52 shrink-0 border-r border-slate-200 bg-white p-3 sm:flex sm:flex-col">
-        <Link
-          href="/admin"
-          className="mb-5 flex items-center gap-2 px-2 text-[#1a4d6e]"
-        >
-          <span className="inline-block h-7 w-7 rounded-full bg-[#1a4d6e]" />
-          <span className="font-semibold">geoclicMédia</span>
-        </Link>
-        <nav className="flex flex-col gap-0.5 text-sm">
-          <NavLink href="/admin" icon={<FileText className="h-4 w-4" />}>
-            Articles
-          </NavLink>
-          <NavLink href="/admin/articles/new" icon={<Plus className="h-4 w-4" />}>
-            Nouvel article
-          </NavLink>
-          <NavLink href="/admin/articles/categories" icon={<Tags className="h-4 w-4" />}>
-            Catégories articles
-          </NavLink>
-          <NavLink href="/admin/agenda" icon={<CalendarDays className="h-4 w-4" />}>
-            Agenda &amp; marchés
-          </NavLink>
-          <NavLink href="/admin/decouvrir" icon={<Compass className="h-4 w-4" />}>
-            Découvrir
-          </NavLink>
-          <NavLink href="/admin/directory/businesses" icon={<Store className="h-4 w-4" />}>
-            Commerçants
-          </NavLink>
-          <NavLink href="/admin/directory/categories" icon={<Tags className="h-4 w-4" />}>
-            Catégories commerçants
-          </NavLink>
-          <NavLink href="/admin/annonces" icon={<Newspaper className="h-4 w-4" />}>
-            Annonces
-          </NavLink>
-          <NavLink href="/admin/regie/campagnes" icon={<Megaphone className="h-4 w-4" />}>
-            Régie publicitaire
-          </NavLink>
-          <NavLink href="/admin/tiles" icon={<LayoutGrid className="h-4 w-4" />}>
-            Tuiles d&apos;accueil
-          </NavLink>
-          <NavLink href="/admin/utility" icon={<Phone className="h-4 w-4" />}>
-            Pratique
-          </NavLink>
-          <NavLink href="/admin/assistant/sources" icon={<Sparkles className="h-4 w-4" />}>
-            Sources IA
-          </NavLink>
-          {canManageUsers ? (
-            <NavLink
-              href="/admin/settings/users"
-              icon={<Settings className="h-4 w-4" />}
-            >
-              Comptes &amp; droits
-            </NavLink>
-          ) : null}
-          <NavLink href="/" icon={<Home className="h-4 w-4" />} external>
-            Voir le site
-          </NavLink>
-        </nav>
-        <div className="mt-auto pt-4">
-          <div className="mb-2 px-2 text-xs">
-            <div className="font-semibold text-slate-700">{user.full_name}</div>
-            <div className="text-slate-400">{getRoleLabel(user)}</div>
-          </div>
-          <LogoutButton />
-        </div>
-      </aside>
-
-      {/* Main : pleine largeur (jusqu'à l'écran), padding compact */}
-      <main className="min-h-screen flex-1 bg-slate-50 px-4 py-4 sm:px-6 sm:py-6">
+      <BackofficeShell
+        sections={sections}
+        brandHref="/admin"
+        brandLabel={site.site_name}
+        brandLogoUrl={site.logo_url}
+        userName={user.full_name}
+        userMeta={getRoleLabel(user)}
+        logoutRedirect="/admin/login"
+      >
         {children}
-      </main>
+      </BackofficeShell>
       <HelpButton />
       <HelpDrawer />
-    </div>
     </HelpProvider>
-  );
-}
-
-function NavLink({
-  href,
-  icon,
-  external,
-  children,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  external?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      target={external ? "_blank" : undefined}
-      className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-slate-700 hover:bg-slate-100"
-    >
-      {icon}
-      {children}
-    </Link>
   );
 }

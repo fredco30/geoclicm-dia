@@ -42,7 +42,7 @@ export default async function ListingsAdminPage() {
         <div className="flex gap-2">
           <Link href="/admin/annonces/imports">
             <Button variant="secondary" size="sm">
-              Candidats
+              À valider
             </Button>
           </Link>
           <Link href="/admin/annonces/new">
@@ -74,7 +74,7 @@ export default async function ListingsAdminPage() {
                 <tr key={listing.id} className="hover:bg-slate-50">
                   <td className="px-3 py-2 font-medium">{listing.title}</td>
                   <td className="px-3 py-2">
-                    <span className="rounded-full bg-[#1a4d6e] px-2 py-0.5 text-xs text-white">
+                    <span className="rounded-full bg-camargue px-2 py-0.5 text-xs text-white">
                       {listing.category.name}
                     </span>
                   </td>

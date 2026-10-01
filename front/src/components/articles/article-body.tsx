@@ -36,7 +36,7 @@ export function ArticleBody({ content }: Props) {
           a: ({ href, children }) => (
             <a
               href={href}
-              className="text-[#1a4d6e] underline underline-offset-2 hover:no-underline"
+              className="text-camargue underline underline-offset-2 hover:no-underline"
               target={href?.startsWith("http") ? "_blank" : undefined}
               rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
             >
@@ -46,7 +46,7 @@ export function ArticleBody({ content }: Props) {
           ul: ({ children }) => <ul className="my-4 list-disc pl-6 space-y-1">{children}</ul>,
           ol: ({ children }) => <ol className="my-4 list-decimal pl-6 space-y-1">{children}</ol>,
           blockquote: ({ children }) => (
-            <blockquote className="my-6 border-l-4 border-[#1a4d6e] bg-slate-50 px-5 py-2 italic text-slate-700">
+            <blockquote className="my-6 border-l-4 border-camargue bg-slate-50 px-5 py-2 italic text-slate-700">
               {children}
             </blockquote>
           ),

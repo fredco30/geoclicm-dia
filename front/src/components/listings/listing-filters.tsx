@@ -48,7 +48,7 @@ export function ListingFilters({ basePath, communes, values }: Props) {
           </select>
         </label>
         <div className="flex items-end gap-2">
-          <button type="submit" className="h-10 flex-1 rounded-md bg-[#1a4d6e] px-3 text-sm font-medium text-white">
+          <button type="submit" className="h-10 flex-1 rounded-md bg-camargue px-3 text-sm font-medium text-white">
             Filtrer
           </button>
           <button type="button" onClick={onReset} className="inline-flex h-10 items-center px-2 text-xs text-slate-500 underline">

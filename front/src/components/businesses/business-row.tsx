@@ -16,7 +16,7 @@ export function BusinessRow({ business }: Props) {
   return (
     <Link
       href={`/commerces/${business.slug}`}
-      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-[#a8533a] hover:shadow-sm"
+      className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition hover:border-terracotta hover:shadow-sm"
     >
       <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
         {business.logo?.thumbnail || business.logo?.medium ? (
@@ -34,7 +34,7 @@ export function BusinessRow({ business }: Props) {
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-[#1a4d6e] sm:whitespace-normal">
+        <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-camargue sm:whitespace-normal">
           {business.name}
         </span>
         <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-600">
@@ -45,7 +45,7 @@ export function BusinessRow({ business }: Props) {
         </span>
       </span>
       {isPremium ? (
-        <span className="shrink-0 rounded-full bg-[#a8533a] px-2 py-0.5 text-[11px] font-medium text-white">
+        <span className="shrink-0 rounded-full bg-terracotta px-2 py-0.5 text-[11px] font-medium text-white">
           ★ Partenaire
         </span>
       ) : null}

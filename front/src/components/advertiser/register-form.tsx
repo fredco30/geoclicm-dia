@@ -58,7 +58,7 @@ export function AdvertiserRegisterForm() {
       router.push("/advertiser");
       router.refresh();
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError("Erreur réseau, veuillez réessayer.");
       setBusy(false);
     }
   };
@@ -157,7 +157,7 @@ export function AdvertiserRegisterForm() {
         Déjà inscrit ?{" "}
         <Link
           href="/advertiser/login"
-          className="font-medium text-[#a8533a] hover:underline"
+          className="font-medium text-terracotta hover:underline"
         >
           Connexion
         </Link>

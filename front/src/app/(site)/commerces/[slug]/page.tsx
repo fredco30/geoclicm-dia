@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/json-ld";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
@@ -155,15 +156,12 @@ export default async function BusinessDetailPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-screen-lg px-4 py-6 sm:py-10">
       {/* JSON-LD schema.org pour SEO local Google (Knowledge Panel, résultats riches) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       <header className="mb-8">
         <Link
           href="/commerces"
-          className="text-sm text-slate-600 hover:text-[#1a4d6e]"
+          className="text-sm text-slate-600 hover:text-camargue"
         >
           ← Annuaire des commerces
         </Link>
@@ -189,7 +187,7 @@ export default async function BusinessDetailPage({ params }: Props) {
           ) : null}
         </div>
         {isPremium ? (
-          <span className="mt-3 inline-block rounded-full bg-[#a8533a] px-3 py-1 text-xs font-medium text-white">
+          <span className="mt-3 inline-block rounded-full bg-terracotta px-3 py-1 text-xs font-medium text-white">
             ★ Partenaire geoclicMédia
           </span>
         ) : null}
@@ -349,7 +347,7 @@ export default async function BusinessDetailPage({ params }: Props) {
                     href={business.facebook_url}
                     target="_blank"
                     rel="noopener"
-                    className="text-slate-600 hover:text-[#1a4d6e] hover:underline"
+                    className="text-slate-600 hover:text-camargue hover:underline"
                   >
                     Facebook
                   </a>
@@ -359,7 +357,7 @@ export default async function BusinessDetailPage({ params }: Props) {
                     href={business.instagram_url}
                     target="_blank"
                     rel="noopener"
-                    className="text-slate-600 hover:text-[#1a4d6e] hover:underline"
+                    className="text-slate-600 hover:text-camargue hover:underline"
                   >
                     Instagram
                   </a>
@@ -369,7 +367,7 @@ export default async function BusinessDetailPage({ params }: Props) {
                     href={business.tiktok_url}
                     target="_blank"
                     rel="noopener"
-                    className="text-slate-600 hover:text-[#1a4d6e] hover:underline"
+                    className="text-slate-600 hover:text-camargue hover:underline"
                   >
                     TikTok
                   </a>
@@ -426,7 +424,7 @@ function ContactRow({
               href={href}
               target={href.startsWith("http") ? "_blank" : undefined}
               rel={href.startsWith("http") ? "noopener" : undefined}
-              className="hover:text-[#1a4d6e] hover:underline"
+              className="hover:text-camargue hover:underline"
             >
               {value}
             </a>

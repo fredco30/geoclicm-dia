@@ -7,6 +7,8 @@ import { ApiError } from "@/lib/api";
 import { ArticleBody } from "@/components/articles/article-body";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { ShareButtons } from "@/components/articles/share-buttons";
+import { ArticleViewTracker } from "@/components/articles/article-view-tracker";
+import { JsonLd, compact } from "@/components/seo/json-ld";
 import { AdSlot } from "@/components/ads/ad-slot";
 import { formatDate } from "@/lib/utils";
 import type { ArticleDetail } from "@/types/api";
@@ -65,9 +67,25 @@ export default async function ArticlePage({ params }: Props) {
 
   return (
     <article className="mx-auto max-w-[68ch] px-4 py-6 sm:py-12">
+      <ArticleViewTracker slug={article.slug} />
+      <JsonLd
+        data={compact({
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          headline: article.title,
+          description: article.chapeau,
+          image: article.cover_image?.large ? [article.cover_image.large] : undefined,
+          datePublished: article.published_at ?? undefined,
+          dateModified: article.updated_at,
+          author: { "@type": "Person", name: article.author.full_name },
+          publisher: { "@type": "Organization", name: "geoclicMédia", url: siteUrl || undefined },
+          mainEntityOfPage: articleUrl,
+          articleSection: article.category.name,
+        })}
+      />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-slate-600" aria-label="Fil d'Ariane">
-        <Link href="/" className="inline-flex items-center gap-1 hover:text-[#1a4d6e]">
+        <Link href="/" className="inline-flex items-center gap-1 hover:text-camargue">
           <ArrowLeft className="h-4 w-4" /> Accueil
         </Link>
       </nav>
@@ -79,7 +97,7 @@ export default async function ArticlePage({ params }: Props) {
           {article.commune ? (
             <Link
               href={`/communes/${article.commune.slug}`}
-              className="inline-flex items-center gap-1 text-slate-600 hover:text-[#1a4d6e]"
+              className="inline-flex items-center gap-1 text-slate-600 hover:text-camargue"
             >
               <MapPin className="h-3.5 w-3.5" /> {article.commune.name}
             </Link>
@@ -109,16 +127,16 @@ export default async function ArticlePage({ params }: Props) {
         </div>
 
         {article.sponsor || article.sponsor_disclosure ? (
-          <div className="mt-4 flex items-center gap-3 rounded-md bg-[#a8533a]/10 px-4 py-3 ring-1 ring-[#a8533a]/30">
+          <div className="mt-4 flex items-center gap-3 rounded-md bg-terracotta/10 px-4 py-3 ring-1 ring-terracotta/30">
             {article.sponsor?.logo?.thumbnail ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={article.sponsor.logo.thumbnail}
                 alt=""
-                className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-[#a8533a]/20"
+                className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-terracotta/20"
               />
             ) : (
-              <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-[#a8533a] px-2 text-xs font-medium uppercase tracking-wider text-white">
+              <span className="inline-flex h-6 shrink-0 items-center rounded-full bg-terracotta px-2 text-xs font-medium uppercase tracking-wider text-white">
                 Sponsorisé
               </span>
             )}
@@ -129,7 +147,7 @@ export default async function ArticlePage({ params }: Props) {
                   {" — "}
                   <Link
                     href={`/commerces/${article.sponsor.slug}`}
-                    className="font-medium underline hover:text-[#a8533a]"
+                    className="font-medium underline hover:text-terracotta"
                   >
                     {article.sponsor.name}
                   </Link>
@@ -179,7 +197,7 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Encart sponsor (fin d'article, avant le partage) */}
       {article.sponsor ? (
-        <aside className="mt-12 overflow-hidden rounded-xl bg-[#fbf9f5] ring-1 ring-[#a8533a]/30">
+        <aside className="mt-12 overflow-hidden rounded-xl bg-[#fbf9f5] ring-1 ring-terracotta/30">
           <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
             {article.sponsor.logo?.medium ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -190,7 +208,7 @@ export default async function ArticlePage({ params }: Props) {
               />
             ) : null}
             <div className="flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#a8533a]">
+              <p className="text-xs font-semibold uppercase tracking-wider text-terracotta">
                 En partenariat avec
               </p>
               <h2 className="mt-1 font-serif text-xl font-semibold text-slate-900">
@@ -204,7 +222,7 @@ export default async function ArticlePage({ params }: Props) {
             </div>
             <Link
               href={`/commerces/${article.sponsor.slug}`}
-              className="shrink-0 rounded-md bg-[#a8533a] px-4 py-2 text-sm font-medium text-white hover:bg-[#8e4530]"
+              className="shrink-0 rounded-md bg-terracotta px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-dark"
             >
               Découvrir
             </Link>

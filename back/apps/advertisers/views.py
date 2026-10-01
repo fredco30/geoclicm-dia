@@ -13,6 +13,8 @@ Workflow :
 """
 from __future__ import annotations
 
+import logging
+
 import stripe
 from django.conf import settings
 from rest_framework import status
@@ -21,6 +23,40 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.directory.models import Business
+
+from .models import Subscription
+
+logger = logging.getLogger(__name__)
+
+# Abonnements considérés comme en cours : un nouveau checkout créerait une
+# double facturation.
+LIVE_SUBSCRIPTION_STATUSES = (
+    Subscription.Status.ACTIVE,
+    Subscription.Status.TRIALING,
+    Subscription.Status.PAST_DUE,
+)
+
+
+BILLING_DISABLED_DETAIL = (
+    "Le paiement en ligne n'est pas encore ouvert. Pendant la phase pilote, "
+    "les formules sont activées gratuitement par l'équipe geoclicMédia : "
+    "écrivez-nous à annonceurs@geoclic.fr."
+)
+
+
+def _billing_disabled_response() -> Response:
+    return Response(
+        {"detail": BILLING_DISABLED_DETAIL, "code": "billing_disabled"},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _stripe_error_response(exc: Exception) -> Response:
+    logger.exception("Erreur Stripe : %s", exc)
+    return Response(
+        {"detail": "Le service de paiement est momentanément indisponible. Réessayez plus tard."},
+        status=status.HTTP_502_BAD_GATEWAY,
+    )
 
 
 PLAN_TO_PRICE_ID = {
@@ -49,6 +85,9 @@ def checkout_create(request):
     Auth requise. Le business doit appartenir à request.user (ou le user
     doit être editor/admin).
     """
+    if not settings.BILLING_ENABLED:
+        return _billing_disabled_response()
+
     plan = request.data.get("plan")
     business_id = request.data.get("business_id")
 
@@ -86,8 +125,26 @@ def checkout_create(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    if Subscription.objects.filter(
+        business=business, status__in=LIVE_SUBSCRIPTION_STATUSES
+    ).exists():
+        return Response(
+            {
+                "detail": "Cette fiche a déjà un abonnement en cours. Utilisez "
+                          "« Gérer mon abonnement » pour changer de formule.",
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
+
     stripe.api_key = secret_key
 
+    try:
+        return _create_checkout_session(business, user, plan, price_id)
+    except stripe.StripeError as exc:
+        return _stripe_error_response(exc)
+
+
+def _create_checkout_session(business, user, plan: str, price_id: str) -> Response:
     # Réutilise le Customer existant si déjà créé pour ce business
     customer_id = business.stripe_customer_id or None
     if not customer_id:
@@ -107,7 +164,7 @@ def checkout_create(request):
         customer=customer_id,
         mode="subscription",
         line_items=[{"price": price_id, "quantity": 1}],
-        success_url=f"{site_url}/advertiser/abonnement?checkout=success",
+        success_url=f"{site_url}/advertiser/abonnement?checkout=success&business={business.pk}",
         cancel_url=f"{site_url}/tarifs?checkout=cancel",
         metadata={
             "business_id": str(business.pk),
@@ -135,6 +192,9 @@ def portal_create(request):
     - Annuler son abonnement
     - Changer de plan (si Stripe Portal configuré pour permettre)
     """
+    if not settings.BILLING_ENABLED:
+        return _billing_disabled_response()
+
     business_id = request.data.get("business_id")
 
     secret_key = _get_stripe_secret_key()
@@ -158,16 +218,19 @@ def portal_create(request):
     if not business.stripe_customer_id:
         return Response(
             {
-                "detail": "Aucun abonnement actif. Choisis d'abord un plan via /tarifs.",
+                "detail": "Aucun abonnement actif. Choisissez d'abord une formule via /tarifs.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     stripe.api_key = secret_key
     site_url = settings.SITE_URL.rstrip("/")
-    session = stripe.billing_portal.Session.create(
-        customer=business.stripe_customer_id,
-        return_url=f"{site_url}/advertiser/abonnement",
-    )
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=business.stripe_customer_id,
+            return_url=f"{site_url}/advertiser/abonnement?business={business.pk}",
+        )
+    except stripe.StripeError as exc:
+        return _stripe_error_response(exc)
 
     return Response({"portal_url": session.url})
