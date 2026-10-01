@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteSettings } from "@/lib/site-settings";
 import { Check, X } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 
@@ -64,7 +65,10 @@ const PLANS = [
 ];
 
 export default async function TarifsPage() {
-  const user = await getCurrentUser();
+  const [user, site] = await Promise.all([getCurrentUser(), getSiteSettings()]);
+  // Phase pilote : pas de paiement en ligne, les formules sont activées
+  // par l'équipe sur demande (aucun bouton ne mène à Stripe).
+  const billingOpen = site.billing_enabled;
   // Si pas connecté, le CTA payant redirige vers /advertiser/register?next=...
   const isLogged = user !== null;
 
@@ -148,8 +152,13 @@ export default async function TarifsPage() {
                       : "bg-slate-100 text-slate-900 hover:bg-slate-200")
                 }
               >
-                {plan.cta}
+                {!billingOpen && plan.key !== "free" ? `Demander ${plan.name}` : plan.cta}
               </Link>
+              {!billingOpen && plan.key !== "free" ? (
+                <p className="mt-2 text-center text-xs text-slate-500">
+                  Offerte pendant la phase pilote, activée par notre équipe.
+                </p>
+              ) : null}
             </div>
           );
         })}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { getCookieHeader } from "@/lib/auth-server";
+import { getSiteSettings } from "@/lib/site-settings";
 import {
   CheckoutButton,
   PortalButton,
@@ -40,7 +41,9 @@ const PLAN_LABEL: Record<string, string> = {
 
 export default async function AbonnementPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const businesses = await fetchMyBusinesses();
+  const [businesses, site] = await Promise.all([fetchMyBusinesses(), getSiteSettings()]);
+  // Phase pilote : aucun paiement en ligne, demande à l'équipe par email.
+  const billingOpen = site.billing_enabled;
   // Un abonnement est rattaché à UNE fiche : ?business=<id> choisit la
   // fiche, la première par défaut.
   const business =
@@ -122,11 +125,11 @@ export default async function AbonnementPage({ searchParams }: Props) {
             </p>
             {!isFree && business.plan_ends_at ? (
               <p className="mt-1 text-sm text-slate-600">
-                Renouvellement le {formatDate(business.plan_ends_at)}
+                {billingOpen ? "Renouvellement le" : "Active jusqu’au"} {formatDate(business.plan_ends_at)}
               </p>
             ) : null}
           </div>
-          {!isFree ? (
+          {!isFree && billingOpen ? (
             <PortalButton businessId={business.id} />
           ) : null}
         </div>
@@ -148,6 +151,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
               tagline="Encart publicitaire local + support prioritaire"
               business={business}
               plan="basic"
+              billingOpen={billingOpen}
               suggested={sp.plan === "basic"}
             />
             <PlanCard
@@ -156,6 +160,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
               tagline="Mise en avant annuaire + multi-encarts + badge Partenaire + article partenaire"
               business={business}
               plan="premium"
+              billingOpen={billingOpen}
               suggested={sp.plan === "premium"}
               highlight
             />
@@ -169,9 +174,9 @@ export default async function AbonnementPage({ searchParams }: Props) {
         </div>
       ) : (
         <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-700 ring-1 ring-slate-200">
-          Tu peux mettre à jour ton moyen de paiement, télécharger tes
-          factures ou annuler ton abonnement via le portail Stripe (bouton
-          ci-dessus).
+          {billingOpen
+            ? "Vous pouvez mettre à jour votre moyen de paiement, télécharger vos factures ou résilier votre abonnement via le portail de paiement (bouton ci-dessus)."
+            : "Votre formule a été activée par l’équipe pendant la phase pilote. Pour la modifier, écrivez-nous à annonceurs@geoclic.fr."}
         </p>
       )}
     </div>
@@ -184,6 +189,7 @@ function PlanCard({
   tagline,
   business,
   plan,
+  billingOpen,
   suggested = false,
   highlight = false,
 }: {
@@ -192,6 +198,7 @@ function PlanCard({
   tagline: string;
   business: AdminBusinessDetail;
   plan: "basic" | "premium";
+  billingOpen: boolean;
   suggested?: boolean;
   highlight?: boolean;
 }) {
@@ -211,14 +218,30 @@ function PlanCard({
         {price}
       </p>
       <p className="mt-2 text-sm text-slate-600">{tagline}</p>
-      <CheckoutButton
-        plan={plan}
-        businessId={business.id}
-        className="mt-4"
-        variant={highlight ? "primary" : "secondary"}
-      >
-        Choisir {name}
-      </CheckoutButton>
+      {billingOpen ? (
+        <CheckoutButton
+          plan={plan}
+          businessId={business.id}
+          className="mt-4"
+          variant={highlight ? "primary" : "secondary"}
+        >
+          Choisir {name}
+        </CheckoutButton>
+      ) : (
+        <>
+          <a
+            href={`mailto:annonceurs@geoclic.fr?subject=${encodeURIComponent(`Formule ${name} — ${business.name}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite activer la formule ${name} pour ma fiche « ${business.name} ».\n\nMerci !`)}`}
+            className={`mt-4 inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition ${
+              highlight ? "bg-camargue text-white hover:bg-camargue-dark" : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            Demander la formule {name}
+          </a>
+          <p className="mt-2 text-center text-xs text-slate-500">
+            Offerte pendant la phase pilote, activée par l’équipe geoclicMédia.
+          </p>
+        </>
+      )}
     </div>
   );
 }
