@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarDays, MapPin } from "lucide-react";
 
+import { occurrenceSummary } from "@/lib/event-dates";
 import type { AdServeResponse } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
@@ -10,18 +11,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 type Props = {
   communeSlug?: string;
 };
-
-function formatFeaturedDate(value?: string): string {
-  if (!value || Number.isNaN(new Date(value).getTime())) return "Date à confirmer";
-  return new Intl.DateTimeFormat("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Paris",
-  }).format(new Date(value));
-}
 
 /**
  * Bandeau "Agenda — À la une" (emplacement premium monétisé).
@@ -110,7 +99,7 @@ export function AgendaFeatured({ communeSlug }: Props) {
                 {event.title}
               </span>
               <span className="mt-1 block text-xs font-medium text-terracotta sm:text-sm">
-                {formatFeaturedDate(event.next_occurrence?.starts_at)}
+                {occurrenceSummary(event.next_occurrence)}
               </span>
               <span className="mt-1 flex items-center gap-1 text-xs text-slate-600 sm:text-sm">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />

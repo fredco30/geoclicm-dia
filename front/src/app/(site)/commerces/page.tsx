@@ -11,7 +11,7 @@ import { Pagination } from "@/components/ui/pagination";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "Commerces du territoire — geoclicMédia",
+  title: "Commerces du territoire",
   description:
     "Annuaire des commerçants du littoral camarguais : restaurants, hébergements, artisans, services. Découvrez les acteurs locaux du Grau-du-Roi à Lunel.",
 };
@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type Props = {
   searchParams: Promise<{
     page?: string;
+    q?: string;
     category?: string;
     commune?: string;
   }>;
@@ -31,6 +32,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
   const [businesses, categories, communes] = await Promise.all([
     api.businesses.list({
       page,
+      search: sp.q,
       category: sp.category,
       commune: sp.commune,
       // La gastronomie a sa propre section autonome (/gastronomie) : on
@@ -57,7 +59,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
       <BusinessFilters
         categories={categories}
         communes={communes}
-        values={{ category: sp.category, commune: sp.commune }}
+        values={{ q: sp.q, category: sp.category, commune: sp.commune }}
       />
 
       {/* Commerçant à la une (emplacement premium monétisé) */}
@@ -98,8 +100,9 @@ export default async function BusinessesPage({ searchParams }: Props) {
             totalCount={businesses.count}
             pageSize={20}
             baseUrl={
-              sp.category || sp.commune
+              sp.q || sp.category || sp.commune
                 ? `/commerces?${new URLSearchParams({
+                    ...(sp.q ? { q: sp.q } : {}),
                     ...(sp.category ? { category: sp.category } : {}),
                     ...(sp.commune ? { commune: sp.commune } : {}),
                   }).toString()}`

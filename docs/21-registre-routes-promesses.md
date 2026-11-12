@@ -118,3 +118,11 @@ Les décisions de conservation restent inchangées pour `/newsletter`, la
 programmation éditoriale, Meta, DataTourisme, les statistiques annonceur, les
 factures PDF et les compatibilités publicitaires. Aucun retrait ne doit être
 fait sans audit des données et des logs.
+
+## Mise à jour — 12 novembre 2026 (lot 1 de l'audit UI/UX)
+
+| Élément | État | Décision |
+|---|---|---|
+| `/tags/[slug]` | Les articles y renvoyaient depuis toujours, la page n'existait pas (404 vérifié en production) | **LIVRÉE** : liste paginée des articles du mot-clé, via le filtre API `?tag=` |
+| `/commerces?q=` et `/gastronomie?q=` | Recherche par nom absente côté public alors que l'API l'exposait (`?search=`) | **LIVRÉE** |
+| Dates d'Agenda | Les périodes longues (expositions, marchés à l'année) n'affichaient que leur premier jour, donc une date passée | **CORRIGÉ** à l'affichage (`front/src/lib/event-dates.ts`) : groupe « En ce moment », « Jusqu'au … », heure masquée quand elle vaut minuit par défaut |

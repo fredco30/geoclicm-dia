@@ -5,7 +5,7 @@ import { Check, X } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth-server";
 
 export const metadata: Metadata = {
-  title: "Tarifs commerçants — geoclicMédia",
+  title: "Tarifs commerçants",
   description:
     "Trois formules pour rejoindre l'annuaire des commerçants du littoral camarguais : Gratuit, Basic 79€/an, Premium 149€/an. Phase pilote 2026 entièrement gratuite.",
 };

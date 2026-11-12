@@ -218,6 +218,8 @@ export const api = {
 
   tags: () =>
     apiGet<Tag[]>("/api/tags/", { revalidate: 3600, tags: ["tags"] }),
+  tag: (slug: string) =>
+    apiGet<Tag>(`/api/tags/${encodeURIComponent(slug)}/`, { revalidate: 3600, tags: ["tags"] }),
 
   // Commerçants
   businesses: {
