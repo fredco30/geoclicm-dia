@@ -13,6 +13,9 @@ Secrets et fichiers utilisateur préexistants exclus des commits.
 
 - [x] Base GitHub synchronisée ; sauvegarde des changements locaux vérifiée.
 - [x] Réintégration sur branche codex/recuperation-acces.
-- [ ] Validation locale et CI.
-- [ ] PR et intégration main.
-- [ ] Alignement production et état déployé vérifié.
+- [x] Validation locale (26 tests) et CI complète (179 tests + build Next).
+- [x] PR #101 publiée ; fusion et fast-forward final suivis par cette PR.
+- [x] Patch hors Git remplacé par release 3f733c3, smoke Chrome/CSRF/règle 8+symbole/jeton unique réussi.
+
+La clôture Git du lot est la fusion de #101 puis le fast-forward des main local/VPS.
+Le statut de fusion vérifiable est porté par GitHub ; aucun correctif IA inclus.
