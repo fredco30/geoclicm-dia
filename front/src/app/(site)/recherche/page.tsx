@@ -29,7 +29,7 @@ export default async function SearchPage({ searchParams }: Props) {
           ← Accueil
         </Link>
         <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          Rechercher
+          Rechercher un article
         </h1>
 
         <form
@@ -59,11 +59,11 @@ export default async function SearchPage({ searchParams }: Props) {
 
       {!query ? (
         <p className="text-slate-500">
-          Tape un mot-clé ci-dessus pour explorer les articles.
+          Saisissez un mot-clé ci-dessus pour explorer les articles.
         </p>
       ) : data === null ? (
         <p className="text-amber-700">
-          La recherche a échoué. Réessaie dans un instant.
+          La recherche a échoué. Réessayez dans un instant.
         </p>
       ) : data.results.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">

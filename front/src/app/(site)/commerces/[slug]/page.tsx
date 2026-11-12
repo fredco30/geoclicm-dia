@@ -6,6 +6,8 @@ import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { BusinessMiniMap } from "@/components/businesses/business-mini-map";
 import { BusinessNavActions } from "@/components/businesses/business-nav-actions";
+import { OpenStatus } from "@/components/businesses/open-status";
+import { formatClosureDate } from "@/lib/opening-status";
 import type { BusinessDetail } from "@/types/api";
 
 export const revalidate = 600;
@@ -142,6 +144,7 @@ export default async function BusinessDetailPage({ params }: Props) {
   }
 
   const isPremium = business.plan === "premium";
+  const callNumber = business.phone || business.mobile;
   const fullAddress = [
     business.address,
     business.address_complement,
@@ -163,7 +166,7 @@ export default async function BusinessDetailPage({ params }: Props) {
           href="/commerces"
           className="text-sm text-slate-600 hover:text-camargue"
         >
-          ← Annuaire des commerces
+          ← Commerces
         </Link>
         <div className="mt-3 flex items-start justify-between gap-4">
           <div>
@@ -190,6 +193,32 @@ export default async function BusinessDetailPage({ params }: Props) {
           <span className="mt-3 inline-block rounded-full bg-terracotta px-3 py-1 text-xs font-medium text-white">
             ★ Partenaire geoclicMédia
           </span>
+        ) : null}
+        <div>
+          <OpenStatus hours={business.opening_hours} closures={business.seasonal_closures} />
+        </div>
+        {/* Actions principales, en tête : sur mobile, le bloc Contact est tout en bas. */}
+        {callNumber || business.website ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {callNumber ? (
+              <a
+                href={`tel:${callNumber.replace(/[^+\d]/g, "")}`}
+                className="inline-flex items-center gap-2 rounded-md bg-camargue px-4 py-2.5 text-sm font-medium text-white hover:bg-camargue-dark"
+              >
+                <Phone className="h-4 w-4" aria-hidden /> Appeler
+              </a>
+            ) : null}
+            {business.website ? (
+              <a
+                href={business.website}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+              >
+                <Globe className="h-4 w-4" aria-hidden /> Site web
+              </a>
+            ) : null}
+          </div>
         ) : null}
       </header>
 
@@ -267,7 +296,7 @@ export default async function BusinessDetailPage({ params }: Props) {
                   <ul className="mt-1 space-y-0.5 text-amber-800">
                     {business.seasonal_closures.map((c, i) => (
                       <li key={i}>
-                        Du {c.from} au {c.to}
+                        Du {formatClosureDate(c.from)} au {formatClosureDate(c.to)}
                         {c.reason ? ` — ${c.reason}` : ""}
                       </li>
                     ))}
@@ -398,6 +427,18 @@ export default async function BusinessDetailPage({ params }: Props) {
           ) : null}
         </aside>
       </div>
+
+      <p className="mt-10 border-t border-slate-200 pt-5 text-sm text-slate-500">
+        Une information inexacte ?{" "}
+        <Link href="/contact" className="text-camargue underline hover:text-terracotta">
+          Signalez-la
+        </Link>
+        . Vous gérez ce commerce ?{" "}
+        <Link href="/advertiser/login" className="text-camargue underline hover:text-terracotta">
+          Mettez votre fiche à jour
+        </Link>
+        .
+      </p>
     </div>
   );
 }

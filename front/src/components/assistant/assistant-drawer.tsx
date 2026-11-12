@@ -65,6 +65,7 @@ export function AssistantDrawer() {
         aria-modal="true"
         aria-labelledby="assistant-drawer-title"
         aria-hidden={!isOpen}
+        inert={!isOpen}
         className={
           "fixed inset-x-0 bottom-0 z-[110] flex max-h-[92vh] flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-200 " +
           "md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-full md:max-w-lg md:rounded-none md:rounded-l-2xl " +

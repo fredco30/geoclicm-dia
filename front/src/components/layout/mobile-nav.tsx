@@ -63,6 +63,7 @@ export function MobileNav({ siteName, logoUrl }: { siteName: string; logoUrl: st
           open ? "translate-x-0" : "translate-x-full"
         }`}
         aria-hidden={!open}
+        inert={!open}
       >
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <Link

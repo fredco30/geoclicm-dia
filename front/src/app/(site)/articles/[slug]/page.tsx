@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, User } from "lucide-react";
+import { ChevronRight, MapPin, User } from "lucide-react";
 import { api } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { ArticleBody } from "@/components/articles/article-body";
+import { ArticleCard } from "@/components/articles/article-card";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { ShareButtons } from "@/components/articles/share-buttons";
 import { ArticleViewTracker } from "@/components/articles/article-view-tracker";
@@ -62,6 +63,15 @@ export default async function ArticlePage({ params }: Props) {
     throw err;
   }
 
+  // À lire aussi : même rubrique d'abord, complétée par les plus récents.
+  const [sameCategory, latest] = await Promise.all([
+    api.articles.list({ category: article.category.slug }).catch(() => null),
+    api.articles.list({ ordering: "-published_at" }).catch(() => null),
+  ]);
+  const related = [...(sameCategory?.results ?? []), ...(latest?.results ?? [])]
+    .filter((item, index, all) => item.slug !== article.slug && all.findIndex((other) => other.id === item.id) === index)
+    .slice(0, 3);
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const articleUrl = `${siteUrl}/articles/${article.slug}`;
 
@@ -84,9 +94,13 @@ export default async function ArticlePage({ params }: Props) {
         })}
       />
       {/* Breadcrumb */}
-      <nav className="mb-6 text-sm text-slate-600" aria-label="Fil d'Ariane">
-        <Link href="/" className="inline-flex items-center gap-1 hover:text-camargue">
-          <ArrowLeft className="h-4 w-4" /> Accueil
+      <nav className="mb-6 flex flex-wrap items-center gap-1 text-sm text-slate-600" aria-label="Fil d'Ariane">
+        <Link href="/" className="hover:text-camargue">Accueil</Link>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+        <Link href="/articles" className="hover:text-camargue">Actualités</Link>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+        <Link href={`/categories/${article.category.slug}`} className="hover:text-camargue">
+          {article.category.name}
         </Link>
       </nav>
 
@@ -235,6 +249,24 @@ export default async function ArticlePage({ params }: Props) {
         <h2 className="mb-3 text-sm font-semibold text-slate-700">Partager cet article</h2>
         <ShareButtons url={articleUrl} title={article.title} />
       </div>
+
+      {related.length > 0 ? (
+        <aside className="mt-12 border-t border-slate-200 pt-8" aria-labelledby="related-title">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 id="related-title" className="font-serif text-xl font-semibold text-slate-900">
+              À lire aussi
+            </h2>
+            <Link href="/articles" className="text-sm text-camargue hover:underline">
+              Toutes les actualités →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {related.slice(0, 2).map((item) => (
+              <ArticleCard key={item.id} article={item} />
+            ))}
+          </div>
+        </aside>
+      ) : null}
     </article>
   );
 }

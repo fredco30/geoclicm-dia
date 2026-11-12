@@ -29,7 +29,7 @@ export default async function UsefulNumbersPage() {
         </h1>
         <p className="mt-3 max-w-2xl text-slate-600">
           Les contacts d&apos;urgence et services pratiques du littoral
-          camarguais. Tape le numéro depuis ton mobile pour appeler
+          camarguais. Touchez un numéro depuis votre mobile pour appeler
           directement.
         </p>
       </header>
