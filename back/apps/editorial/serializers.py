@@ -8,6 +8,7 @@ Trois niveaux d'expo :
 """
 from __future__ import annotations
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.core.models import Commune, Media, User
@@ -244,11 +245,31 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        # Si on tente de publier sans corps, on refuse
+        status = data.get("status", self.instance.status if self.instance else None)
         # En modification partielle, le corps non renvoyé est celui déjà en base.
         body = data.get("body", self.instance.body if self.instance else "")
-        if data.get("status") == Article.Status.PUBLISHED and not (body or "").strip():
+        published_at = data.get(
+            "published_at", self.instance.published_at if self.instance else None
+        )
+        now = timezone.now()
+
+        if status in (Article.Status.PUBLISHED, Article.Status.SCHEDULED) and not (
+            body or ""
+        ).strip():
             raise serializers.ValidationError(
-                {"body": "Un article publié doit avoir un corps non vide."}
+                {"body": "Un article publié ou programmé doit avoir un corps non vide."}
             )
+        if status == Article.Status.SCHEDULED:
+            if published_at is None:
+                raise serializers.ValidationError(
+                    {"published_at": "Choisissez la date et l'heure de publication."}
+                )
+            if published_at <= now:
+                raise serializers.ValidationError(
+                    {"published_at": "La date de publication programmée doit être dans le futur."}
+                )
+        if status == Article.Status.PUBLISHED and published_at and published_at > now:
+            # « Publier maintenant » sur un article programmé (ou déprogrammé) :
+            # une date future le laisserait invisible jusqu'à cette date.
+            data["published_at"] = now
         return data

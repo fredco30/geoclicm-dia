@@ -23,7 +23,11 @@ class ArticleWriteSerializerTests(SimpleTestCase):
             ArticleWriteSerializer().validate({"status": Article.Status.PUBLISHED})
 
     def test_partial_publish_uses_the_stored_body(self):
-        serializer = ArticleWriteSerializer(instance=SimpleNamespace(body="Texte en base"))
+        serializer = ArticleWriteSerializer(
+            instance=SimpleNamespace(
+                body="Texte en base", status=Article.Status.DRAFT, published_at=None
+            )
+        )
         self.assertEqual(
             serializer.validate({"status": Article.Status.PUBLISHED}),
             {"status": Article.Status.PUBLISHED},
@@ -76,3 +80,63 @@ class ArchivedVisibilityTests(SimpleTestCase):
 
     def test_lists_exclude_archived(self):
         self.assertEqual(self._statuses("list"), {Article.Status.PUBLISHED})
+
+
+class SchedulingValidationTests(SimpleTestCase):
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        self.now = timezone.now()
+        self.later = self.now + timedelta(hours=2)
+        self.earlier = self.now - timedelta(hours=2)
+
+    def test_schedule_requires_future_date_and_body(self):
+        serializer = ArticleWriteSerializer()
+        ok = {"status": Article.Status.SCHEDULED, "body": "Texte", "published_at": self.later}
+        self.assertEqual(serializer.validate(dict(ok)), ok)
+        for bad in (
+            {**ok, "published_at": self.earlier},
+            {"status": Article.Status.SCHEDULED, "body": "Texte"},
+            {**ok, "body": " "},
+        ):
+            with self.assertRaises(ValidationError):
+                serializer.validate(bad)
+
+    def test_publish_now_resets_a_future_date(self):
+        serializer = ArticleWriteSerializer(
+            instance=SimpleNamespace(
+                status=Article.Status.SCHEDULED, body="Texte", published_at=self.later
+            )
+        )
+        data = serializer.validate({"status": Article.Status.PUBLISHED})
+        self.assertLessEqual(data["published_at"], self.later)
+        self.assertLess(abs((data["published_at"] - self.now).total_seconds()), 60)
+
+    def test_past_publication_date_kept(self):
+        serializer = ArticleWriteSerializer(
+            instance=SimpleNamespace(
+                status=Article.Status.PUBLISHED, body="Texte", published_at=self.earlier
+            )
+        )
+        self.assertNotIn("published_at", serializer.validate({"status": Article.Status.PUBLISHED}))
+
+
+class PublishDueArticlesTests(SimpleTestCase):
+    def test_due_articles_are_published(self):
+        from unittest.mock import MagicMock
+
+        from apps.editorial import tasks
+
+        due = [MagicMock(slug="a", status=Article.Status.SCHEDULED), MagicMock(slug="b")]
+        manager = MagicMock()
+        manager.filter.return_value.order_by.return_value = due
+        with patch.object(tasks.Article, "objects", manager):
+            self.assertEqual(tasks.publish_due_articles(), ["a", "b"])
+        kwargs = manager.filter.call_args.kwargs
+        self.assertEqual(kwargs["status"], Article.Status.SCHEDULED)
+        self.assertIn("published_at__lte", kwargs)
+        for article in due:
+            self.assertEqual(article.status, Article.Status.PUBLISHED)
+            article.save.assert_called_once()

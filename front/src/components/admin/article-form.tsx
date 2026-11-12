@@ -44,7 +44,24 @@ type FormState = {
   meta_description: string;
   sponsor: string; // id Business en string ou ""
   sponsor_disclosure: string;
+  /** Date de publication programmée, au format du champ datetime-local. */
+  publish_at: string;
 };
+
+/** ISO → valeur d'un <input type="datetime-local"> (heure locale). */
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatScheduled(local: string): string {
+  const date = new Date(local);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeStyle: "short" }).format(date);
+}
 
 const ARTICLE_TYPES = [
   { value: "reportage", label: "Reportage" },
@@ -86,6 +103,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     meta_description: article?.meta_description ?? "",
     sponsor: article?.sponsor ? String(article.sponsor.id) : "",
     sponsor_disclosure: article?.sponsor_disclosure ?? "",
+    publish_at: article?.status === "scheduled" ? toLocalInput(article.published_at) : "",
   });
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -96,6 +114,9 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
   // « Publier », jamais par un changement de liste déroulante.
   const savedStatus = article?.status ?? "draft";
   const isDraft = savedStatus === "draft";
+  const isScheduled = savedStatus === "scheduled";
+  // Brouillon ou programmé : pas encore en ligne, piloté par des boutons.
+  const notYetOnline = isDraft || isScheduled;
 
   // Alerte du navigateur si on ferme ou recharge l'onglet avec des
   // modifications non enregistrées.
@@ -129,10 +150,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     setError(null);
 
     if (status === "scheduled") {
-      setError(
-        "La publication programmée n'est pas encore implémentée. Choisissez Brouillon ou Publié.",
-      );
-      return;
+      const when = new Date(form.publish_at);
+      if (!form.publish_at || Number.isNaN(when.getTime())) {
+        setError("Choisissez la date et l'heure de publication.");
+        return;
+      }
+      if (when.getTime() <= Date.now()) {
+        setError("La date de publication programmée doit être dans le futur.");
+        return;
+      }
     }
 
     // S'assurer d'avoir un csrftoken (le cookie est posé au login)
@@ -151,6 +177,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     if (form.commune) fd.append("commune", form.commune);
     fd.append("article_type", form.article_type);
     fd.append("status", status);
+    if (status === "scheduled") fd.append("published_at", new Date(form.publish_at).toISOString());
     fd.append("is_featured", String(form.is_featured));
     fd.append("meta_title", form.meta_title);
     fd.append("meta_description", form.meta_description);
@@ -184,7 +211,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
         router.push(`/admin/articles/${saved.slug}/edit`);
         router.refresh();
       } catch {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, réessayez.");
       }
     });
   };
@@ -220,7 +247,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
         // Entrée dans un champ : enregistre sans changer le statut (ne
         // publie jamais un brouillon par accident).
         e.preventDefault();
-        void save(isDraft ? "draft" : form.status);
+        void save(isDraft ? "draft" : isScheduled ? "scheduled" : form.status);
       }}
       className="space-y-8"
     >
@@ -259,11 +286,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 <Trash2 className="h-4 w-4" /> Supprimer
               </Button>
             ) : null}
-            {isDraft ? (
+            {notYetOnline ? (
               <>
                 <Button type="submit" variant="secondary" disabled={isPending} size="md">
                   <Save className="h-4 w-4" />
-                  {isPending ? "Enregistrement..." : "Enregistrer le brouillon"}
+                  {isPending
+                    ? "Enregistrement..."
+                    : isScheduled
+                      ? "Enregistrer"
+                      : "Enregistrer le brouillon"}
                 </Button>
                 <Button
                   type="button"
@@ -274,7 +305,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                     if (e.currentTarget.form?.reportValidity()) void save("published");
                   }}
                 >
-                  <Send className="h-4 w-4" /> Publier
+                  <Send className="h-4 w-4" /> {isScheduled ? "Publier maintenant" : "Publier"}
                 </Button>
               </>
             ) : (
@@ -351,14 +382,63 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               Publication
             </legend>
 
-            {isDraft ? (
-              <p className="text-sm text-slate-600">
-                <span className="mr-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
-                  Brouillon
-                </span>
-                Invisible sur le site tant que le bouton « Publier » n&apos;a
-                pas été utilisé.
-              </p>
+            {notYetOnline ? (
+              <div className="space-y-3">
+                {isScheduled ? (
+                  <p className="text-sm text-slate-600">
+                    <span className="mr-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                      Programmé
+                    </span>
+                    Mise en ligne automatique le{" "}
+                    <strong>{formatScheduled(form.publish_at)}</strong> (à 5
+                    minutes près).
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    <span className="mr-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      Brouillon
+                    </span>
+                    Invisible sur le site tant que le bouton « Publier » n&apos;a
+                    pas été utilisé.
+                  </p>
+                )}
+                <div className="space-y-2 rounded-md bg-slate-50 p-3">
+                  <Label htmlFor="publish_at">
+                    {isScheduled ? "Date de publication" : "Ou programmer la publication"}
+                  </Label>
+                  <Input
+                    id="publish_at"
+                    type="datetime-local"
+                    value={form.publish_at}
+                    min={toLocalInput(new Date().toISOString())}
+                    onChange={(e) => update("publish_at", e.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isPending || !form.publish_at}
+                      onClick={(e) => {
+                        if (e.currentTarget.form?.reportValidity()) void save("scheduled");
+                      }}
+                    >
+                      {isScheduled ? "Changer la date" : "Programmer"}
+                    </Button>
+                    {isScheduled ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => void save("draft")}
+                      >
+                        Annuler la programmation
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             ) : (
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>
@@ -367,24 +447,12 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 value={form.status}
                 onChange={(e) => update("status", e.target.value)}
               >
-                {article?.status === "scheduled" ? (
-                  <option value="scheduled">
-                    Programmé (hérité — publication automatique indisponible)
-                  </option>
-                ) : null}
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.label}
                   </option>
                 ))}
               </Select>
-              {form.status === "scheduled" ? (
-                <p className="text-xs text-amber-700">
-                  Ce statut ancien ne possède ni date de programmation ni
-                  tâche de publication. Choisissez Brouillon ou Publié avant
-                  d&apos;enregistrer.
-                </p>
-              ) : null}
               {form.status === "draft" ? (
                 <p className="text-xs text-amber-700">
                   L&apos;article sera retiré du site à l&apos;enregistrement.
