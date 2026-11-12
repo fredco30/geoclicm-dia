@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import type { Commune } from "@/types/api";
 import type { AdminBusinessCategory, AdminBusinessDetail } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 const LABELS: Record<string, string> = {
   name: "Nom", legal_name: "Raison sociale", siret: "SIRET", category: "Catégorie",
@@ -88,7 +89,7 @@ export function BusinessPendingReview({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(JSON.stringify(data));
+        setError(formatApiError(data));
         return;
       }
       router.refresh();

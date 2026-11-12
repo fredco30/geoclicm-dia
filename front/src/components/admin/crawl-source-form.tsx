@@ -17,6 +17,7 @@ import type {
   AdminCrawlSourcePayload,
   CrawlSourceKind,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   source?: AdminCrawlSource; // undefined → création
@@ -143,7 +144,7 @@ export function CrawlSourceForm({ source, communes }: Props) {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         const saved = (await res.json()) as { id: number };

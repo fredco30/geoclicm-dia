@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api";
 import type { Commune, EventCategory, EventImportCandidate } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 function csrf() {
   const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
@@ -123,7 +124,7 @@ export function EventImportsAdmin({
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         setMessage(
-          payload?.detail ?? JSON.stringify(payload) ?? "Action impossible",
+          formatApiError(payload, "Action impossible"),
         );
         return;
       }

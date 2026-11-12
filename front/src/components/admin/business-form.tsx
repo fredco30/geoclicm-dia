@@ -28,6 +28,7 @@ import type {
   AdminBusinessPayload,
   BusinessPlan,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   business?: AdminBusinessDetail;
@@ -255,7 +256,7 @@ export function BusinessForm({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         const saved = (await res.json()) as { slug: string };
@@ -278,7 +279,7 @@ export function BusinessForm({
           if (!imgRes.ok) {
             const data = await imgRes.json().catch(() => ({}));
             setError(
-              `Fiche sauvée, mais erreur upload image : ${JSON.stringify(data, null, 2)}`,
+              `Fiche sauvée, mais erreur upload image : ${formatApiError(data)}`,
             );
             return;
           }
@@ -312,7 +313,7 @@ export function BusinessForm({
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(`Suppression impossible : ${JSON.stringify(data, null, 2)}`);
+        setError(`Suppression impossible : ${formatApiError(data)}`);
       }
     });
   };

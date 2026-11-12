@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api";
 import type { EventCategory } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 type ManagedCategory = EventCategory & { description?: string };
 type Draft = Pick<ManagedCategory, "name" | "slug" | "icon" | "color" | "sort_order" | "is_active" | "description">;
@@ -45,7 +46,7 @@ export function EventCategoriesAdmin({ initialCategories, apiBase = "/api/admin/
         body: JSON.stringify(draft),
       });
       const payload = await response.json().catch(() => null);
-      if (!response.ok) { setError(payload ? JSON.stringify(payload, null, 2) : "Enregistrement impossible."); return; }
+      if (!response.ok) { setError(formatApiError(payload, "Enregistrement impossible.")); return; }
       const saved = payload as ManagedCategory;
       setCategories((rows) => editing ? rows.map((row) => row.id === saved.id ? saved : row).sort((a, b) => a.sort_order - b.sort_order) : [...rows, saved].sort((a, b) => a.sort_order - b.sort_order));
       setEditing(saved);

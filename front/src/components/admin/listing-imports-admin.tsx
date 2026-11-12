@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api";
 import type { Commune, ListingCategory, ListingImportCandidate } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 function csrf() {
   const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
@@ -57,7 +58,7 @@ export function ListingImportsAdmin({
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        setMessage(payload?.detail ?? JSON.stringify(payload) ?? "Action impossible");
+        setMessage(formatApiError(payload, "Action impossible"));
         return;
       }
       setRows((current) => current.filter((item) => item.id !== row.id));

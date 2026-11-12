@@ -34,6 +34,7 @@ import type {
   WeatherResponse,
 } from "@/types/api";
 
+import { flash } from "@/lib/flash";
 import { revalidateAfterWrite } from "@/lib/revalidate-actions";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
@@ -100,6 +101,14 @@ export async function apiFetch(
   const method = (init.method ?? "GET").toUpperCase();
   if (res.ok && method !== "GET" && typeof window !== "undefined") {
     revalidateAfterWrite(path.split("?")[0]).catch(() => {});
+    // Confirmation visible dans le back-office. Un POST ne confirme que les
+    // créations (201) : les actions (IA, lancement d'import, validation)
+    // renvoient 200 et affichent déjà leur propre message.
+    if (!path.startsWith("/api/auth/")) {
+      if (method === "DELETE") flash("Suppression effectuée.");
+      else if (method === "PATCH" || method === "PUT") flash("Modifications enregistrées.");
+      else if (method === "POST" && res.status === 201) flash("Enregistré.");
+    }
   }
   return res;
 }

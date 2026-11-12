@@ -16,6 +16,7 @@ import type {
   AdminUsefulContact,
   AdminUsefulContactPayload,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   contact?: AdminUsefulContact; // undefined → création
@@ -120,7 +121,7 @@ export function UsefulContactForm({ contact, defaultKind, communes }: Props) {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         // Redirection vers la liste filtrée par le kind courant

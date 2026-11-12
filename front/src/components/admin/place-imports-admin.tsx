@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api";
 import type { Commune, PlaceCategory, PlaceImportCandidate } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 function csrf() {
   const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
@@ -100,7 +101,7 @@ export function PlaceImportsAdmin({
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
         setMessage(
-          payload?.detail ?? JSON.stringify(payload) ?? "Action impossible",
+          formatApiError(payload, "Action impossible"),
         );
         return;
       }

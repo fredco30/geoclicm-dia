@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Save, Trash2, Eye } from "lucide-react";
+import { Save, Send, Trash2, Eye } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import type {
   Category,
   Commune,
 } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   article?: ArticleDetail; // undefined → mode création
@@ -91,14 +92,29 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Statut tel qu'enregistré : un brouillon se publie par le bouton
+  // « Publier », jamais par un changement de liste déroulante.
+  const savedStatus = article?.status ?? "draft";
+  const isDraft = savedStatus === "draft";
+
+  // Alerte du navigateur si on ferme ou recharge l'onglet avec des
+  // modifications non enregistrées.
+  const [savedSnapshot, setSavedSnapshot] = useState(() => JSON.stringify(form));
+  const dirty = coverFile !== null || JSON.stringify(form) !== savedSnapshot;
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const save = async (status: string) => {
     setError(null);
 
-    if (form.status === "scheduled") {
+    if (status === "scheduled") {
       setError(
         "La publication programmée n'est pas encore implémentée. Choisissez Brouillon ou Publié.",
       );
@@ -120,7 +136,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     fd.append("category", form.category);
     if (form.commune) fd.append("commune", form.commune);
     fd.append("article_type", form.article_type);
-    fd.append("status", form.status);
+    fd.append("status", status);
     fd.append("is_featured", String(form.is_featured));
     fd.append("meta_title", form.meta_title);
     fd.append("meta_description", form.meta_description);
@@ -143,10 +159,14 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         const saved = (await res.json()) as { slug: string };
+        const savedForm = { ...form, status };
+        setForm(savedForm);
+        setCoverFile(null);
+        setSavedSnapshot(JSON.stringify(savedForm));
         router.push(`/admin/articles/${saved.slug}/edit`);
         router.refresh();
       } catch {
@@ -180,10 +200,18 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form
+      onSubmit={(e) => {
+        // Entrée dans un champ : enregistre sans changer le statut (ne
+        // publie jamais un brouillon par accident).
+        e.preventDefault();
+        void save(isDraft ? "draft" : form.status);
+      }}
+      className="space-y-8"
+    >
       {/* Header sticky avec actions */}
-      <div className="sticky top-0 z-10 -mx-4 -mt-6 mb-2 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:-mt-8 sm:px-8">
-        <div className="flex items-center justify-between gap-4">
+      <div className="sticky top-14 z-10 -mx-4 -mt-4 mb-2 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:top-0 sm:-mx-6 sm:-mt-6 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <Link
               href="/admin"
@@ -195,7 +223,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               {isEdit ? "Éditer l'article" : "Nouvel article"}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isEdit && article!.status === "published" ? (
               <Link
                 href={`/articles/${article!.slug}`}
@@ -216,10 +244,34 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 <Trash2 className="h-4 w-4" /> Supprimer
               </Button>
             ) : null}
-            <Button type="submit" disabled={isPending} size="md">
-              <Save className="h-4 w-4" />
-              {isPending ? "Enregistrement..." : "Enregistrer"}
-            </Button>
+            {isDraft ? (
+              <>
+                <Button type="submit" variant="secondary" disabled={isPending} size="md">
+                  <Save className="h-4 w-4" />
+                  {isPending ? "Enregistrement..." : "Enregistrer le brouillon"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isPending}
+                  size="md"
+                  onClick={(e) => {
+                    // Mêmes contrôles de champs obligatoires qu'un envoi classique.
+                    if (e.currentTarget.form?.reportValidity()) void save("published");
+                  }}
+                >
+                  <Send className="h-4 w-4" /> Publier
+                </Button>
+              </>
+            ) : (
+              <Button type="submit" disabled={isPending} size="md">
+                <Save className="h-4 w-4" />
+                {isPending
+                  ? "Enregistrement..."
+                  : form.status === "published"
+                    ? "Mettre à jour"
+                    : "Enregistrer"}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -269,7 +321,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="body">Corps de l&apos;article (Markdown)</Label>
+            <Label htmlFor="body">Corps de l&apos;article</Label>
             <MarkdownEditor
               value={form.body}
               onChange={(v) => update("body", v)}
@@ -284,6 +336,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               Publication
             </legend>
 
+            {isDraft ? (
+              <p className="text-sm text-slate-600">
+                <span className="mr-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
+                  Brouillon
+                </span>
+                Invisible sur le site tant que le bouton « Publier » n&apos;a
+                pas été utilisé.
+              </p>
+            ) : (
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>
               <Select
@@ -309,7 +370,13 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                   d&apos;enregistrer.
                 </p>
               ) : null}
+              {savedStatus === "published" && form.status !== "published" ? (
+                <p className="text-xs text-amber-700">
+                  L&apos;article sera retiré du site à l&apos;enregistrement.
+                </p>
+              ) : null}
             </div>
+            )}
 
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input

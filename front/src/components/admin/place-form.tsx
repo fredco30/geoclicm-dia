@@ -14,6 +14,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 import type { ArticleListItem, BusinessListItem, Commune, EventListItem, PlaceCategory, PlaceDetail, PlaceStatus } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = { place?: PlaceDetail; categories: PlaceCategory[]; communes: Commune[]; articles: ArticleListItem[]; businesses: BusinessListItem[]; events: EventListItem[] };
 
@@ -59,7 +60,7 @@ export function PlaceForm({ place, categories, communes, articles, businesses, e
       if (coverFile) data.append("cover_image", coverFile);
       const response = await apiFetch(isEdit ? `/api/admin/places/${place!.slug}/` : "/api/admin/places/", { method: isEdit ? "PATCH" : "POST", body: data, headers: csrf ? { "X-CSRFToken": csrf } : {} });
       const payload = await response.json().catch(() => null);
-      if (!response.ok) { setError(payload ? JSON.stringify(payload, null, 2) : "Enregistrement impossible."); return; }
+      if (!response.ok) { setError(formatApiError(payload, "Enregistrement impossible.")); return; }
       router.push(`/admin/decouvrir/${(payload as { slug: string }).slug}/edit`); router.refresh();
     });
   };
@@ -75,7 +76,7 @@ export function PlaceForm({ place, categories, communes, articles, businesses, e
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      <div className="sticky top-0 z-10 -mx-4 -mt-6 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-14 z-10 -mx-4 -mt-4 flex flex-wrap items-center justify-between gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur sm:top-0 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div><Link href="/admin/decouvrir" className="text-sm text-slate-600">← Découvrir</Link><h1 className="text-lg font-semibold">{isEdit ? `Éditer : ${place!.title}` : "Nouveau lieu"}</h1></div>
         <div className="flex gap-2">{place?.status === "published" ? <Link href={`/decouvrir/${place.slug}`} target="_blank" className="inline-flex items-center gap-1 px-2 text-sm"><Eye className="h-4 w-4" /> Voir</Link> : null}{place?.status === "draft" ? <Button type="button" variant="danger" size="sm" onClick={deleteDraft}><Trash2 className="h-4 w-4" /> Supprimer</Button> : null}<Button size="sm" disabled={isPending}><Save className="h-4 w-4" /> {isPending ? "Enregistrement…" : "Enregistrer"}</Button></div>
       </div>

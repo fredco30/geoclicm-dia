@@ -18,6 +18,7 @@ import type {
   AdminBusinessCategory,
   AdminBusinessListItem,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   campaign?: AdminAdCampaignDetail; // undefined → mode création
@@ -171,7 +172,7 @@ export function AdCampaignForm({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         const saved = (await res.json()) as { id: number };
@@ -189,7 +190,7 @@ export function AdCampaignForm({
           if (!imgRes.ok) {
             const data = await imgRes.json().catch(() => ({}));
             setError(
-              `Campagne sauvée mais erreur upload image : ${JSON.stringify(data, null, 2)}`,
+              `Campagne sauvée mais erreur upload image : ${formatApiError(data)}`,
             );
             return;
           }
