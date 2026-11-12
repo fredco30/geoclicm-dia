@@ -1,6 +1,10 @@
 /**
  * Workflow : Publier un article.
- * Public visé : la rédactrice (Sandrine) qui rédige et publie le contenu éditorial.
+ * Public visé : la rédactrice qui rédige et publie le contenu éditorial.
+ *
+ * Ne décrire QUE ce que l'écran fait réellement (registre docs/21) : pas de
+ * publication programmée, pas de diffusion Facebook, pas de galerie tant que
+ * ces fonctions ne sont pas livrées.
  */
 import {
   CheckCircle2,
@@ -14,7 +18,6 @@ import {
 import {
   Done,
   FieldList,
-  Kbd,
   KeyTip,
   Path,
   SubSteps,
@@ -39,34 +42,35 @@ export const PUBLISH_ARTICLE: Workflow = {
         <>
           <p>
             Dès que vous êtes connectée, vous arrivez sur la liste de tous les
-            articles. C&apos;est votre tableau de bord éditorial.
+            articles. C&apos;est votre tableau de bord éditorial. En haut, les
+            compteurs <UI>À valider</UI> signalent les contenus importés qui
+            attendent une relecture.
           </p>
           <SubSteps
             items={[
               <>
-                Filtres par <strong>statut</strong> : <UI>Brouillons</UI>,{" "}
-                <UI>Publiés</UI>, <UI>Archivés</UI> — utile pour voir d&apos;un
-                coup d&apos;œil ce qui reste à finaliser.
+                La case <UI>Rechercher un article</UI> filtre la liste
+                instantanément : un mot du titre, une rubrique, une commune, ou
+                un statut (« brouillon », « publié »).
               </>,
               <>
                 Le badge{" "}
-                <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">
+                <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-xs text-slate-700">
                   Brouillon
                 </span>{" "}
                 signale qu&apos;un article n&apos;est pas encore visible côté
                 lecteurs.
               </>,
               <>
-                Cliquez sur le titre d&apos;un article pour reprendre son
-                édition, ou sur <UI>+ Nouvel article</UI> dans la barre latérale
-                pour en démarrer un.
+                Le crayon d&apos;une ligne reprend son édition ;{" "}
+                <UI>+ Nouvel article</UI> en démarre un.
               </>,
             ]}
           />
           <KeyTip>
-            Vous pouvez sauvegarder en brouillon autant de fois que vous voulez —
-            rien n&apos;est public tant que vous n&apos;avez pas explicitement
-            cliqué sur <UI>Publier</UI>.
+            Vous pouvez enregistrer le brouillon autant de fois que vous voulez —
+            rien n&apos;est public tant que vous n&apos;avez pas cliqué sur{" "}
+            <UI>Publier</UI>.
           </KeyTip>
         </>
       ),
@@ -79,8 +83,8 @@ export const PUBLISH_ARTICLE: Workflow = {
         <>
           <p>
             Sur <Path>/admin/articles/new</Path>, vous remplissez les
-            informations qui structurent l&apos;article. Tous les champs ne sont
-            pas obligatoires — concentrez-vous d&apos;abord sur l&apos;essentiel.
+            informations qui structurent l&apos;article. Seuls le titre et la
+            catégorie sont obligatoires pour enregistrer un brouillon.
           </p>
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
@@ -92,13 +96,7 @@ export const PUBLISH_ARTICLE: Workflow = {
                 label: "Titre",
                 required: true,
                 description:
-                  "Court, accrocheur, 60-80 caractères pour bien apparaître sur Google et Facebook.",
-              },
-              {
-                label: "Chapeau",
-                required: true,
-                description:
-                  "Le résumé de 2-3 phrases qui apparaît sous le titre et donne envie de lire. Évitez de répéter le titre.",
+                  "Court et accrocheur, 60-80 caractères pour bien apparaître sur Google. L'adresse web de l'article est créée à partir du titre.",
               },
               {
                 label: "Catégorie",
@@ -107,91 +105,85 @@ export const PUBLISH_ARTICLE: Workflow = {
                   "Mémoire, Patrimoine, Reportages, Portraits… Détermine où l'article apparaît dans la navigation.",
               },
               {
-                label: "Commune",
+                label: "Chapeau",
                 description:
-                  "Optionnel mais fortement recommandé : permet à l'article d'apparaître sur la page de la commune concernée.",
+                  "Le résumé de 1-2 phrases qui apparaît sous le titre et donne envie de lire (300 caractères maximum). Évitez de répéter le titre.",
               },
               {
-                label: "Type d'article",
+                label: "Commune",
                 description:
-                  "Reportage / Portrait / Brève / Tribune / Dossier — change l'apparence de la fiche en haut de l'article.",
+                  "Optionnel mais recommandé : l'article apparaît alors sur la page de la commune concernée.",
+              },
+              {
+                label: "Type",
+                description: "Reportage, Portrait, Brève, Tribune libre ou Dossier.",
               },
             ]}
           />
 
           <Tip>
-            Vous n&apos;êtes pas obligée de tout remplir maintenant. Le titre et
-            le chapeau suffisent pour cliquer sur <UI>Enregistrer en brouillon</UI>{" "}
-            et continuer plus tard.
+            Vous n&apos;êtes pas obligée de tout remplir maintenant. Un titre et
+            une catégorie suffisent pour cliquer sur{" "}
+            <UI>Enregistrer le brouillon</UI> et continuer plus tard.
           </Tip>
         </>
       ),
     },
     {
       id: "edit",
-      title: "Rédiger le corps + ajouter les images",
+      title: "Rédiger le corps + ajouter l'image",
       icon: PencilLine,
       body: (
         <>
           <p>
-            Le corps de l&apos;article s&apos;écrit en <strong>Markdown</strong>{" "}
-            — un format léger qui devient automatiquement de la mise en page :
+            Écrivez le texte dans la zone <UI>Corps de l&apos;article</UI>.
+            Pour la mise en forme, sélectionnez un passage puis utilisez les
+            boutons au-dessus de la zone :
           </p>
           <SubSteps
             items={[
               <>
-                <code>**gras**</code> → <strong>gras</strong>,{" "}
-                <code>*italique*</code> → <em>italique</em>.
+                <UI>Titre</UI> et <UI>Sous-titre</UI> pour découper
+                l&apos;article en parties.
               </>,
               <>
-                <code>## Titre</code> en début de ligne pour un sous-titre.
+                <UI>Gras</UI> et <UI>Italique</UI> pour souligner un mot.
               </>,
               <>
-                <code>&gt; citation</code> pour une mise en avant (verbatim
-                d&apos;un témoin par exemple).
+                <UI>Citation</UI> pour mettre en avant les paroles d&apos;un
+                témoin, <UI>Liste à puces</UI> ou <UI>Liste numérotée</UI> pour
+                une énumération.
               </>,
               <>
-                Liste à puces : une ligne qui commence par <code>- </code>.
+                <UI>Lien</UI> pour renvoyer vers un autre site. L&apos;onglet{" "}
+                <UI>Aperçu</UI> montre le rendu final.
               </>,
             ]}
           />
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
             <ImagePlus className="mr-1.5 inline-block h-4 w-4 align-text-bottom text-camargue" />
-            Images
+            Image de couverture
           </h4>
           <p>
-            Chaque article doit avoir une <UI>image de couverture</UI> : c&apos;est
-            elle qui apparaîtra sur la home, sur Facebook quand vous partagerez
-            le lien, et dans Google Discover.
+            Ajoutez une <UI>image de couverture</UI> dans la colonne de droite :
+            c&apos;est elle qui apparaît sur l&apos;accueil, dans les listes et
+            lors d&apos;un partage sur les réseaux sociaux.
           </p>
           <FieldList
             items={[
               {
                 label: "Image de couverture",
-                required: true,
                 description:
-                  "Format paysage (16/9 idéal). Le système redimensionne automatiquement en 3 tailles (400, 800, 1600 px).",
-              },
-              {
-                label: "Galerie",
-                description:
-                  "Photos additionnelles intégrées au corps. Cliquez sur Ajouter à la galerie puis insérez la balise donnée à l'endroit voulu dans le texte.",
-              },
-              {
-                label: "Crédit photo",
-                description:
-                  "Toujours créditer (auteur ou source). Obligatoire pour les photos d'archive.",
+                  "Format paysage (16/9 idéal), JPEG, PNG ou WebP. Le système la redimensionne automatiquement pour chaque écran.",
               },
             ]}
           />
 
           <Warning>
-            <strong>Texte alternatif (alt)</strong> : pour chaque image,
-            renseignez l&apos;<UI>alt</UI>. C&apos;est ce que lit le lecteur
-            d&apos;écran pour les personnes malvoyantes, et ce que Google indexe.
-            Une description simple suffit (« Pêcheur ramendant ses filets sur
-            le port du Grau-du-Roi à l&apos;aube »).
+            <strong>Droits</strong> : n&apos;utilisez que des photos dont vous
+            avez l&apos;autorisation, et mentionnez l&apos;auteur ou la source
+            dans le texte de l&apos;article.
           </Warning>
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
@@ -201,42 +193,35 @@ export const PUBLISH_ARTICLE: Workflow = {
           <SubSteps
             items={[
               <>
-                <UI>Enregistrer en brouillon</UI> sauvegarde sans publier — vous
-                pouvez fermer l&apos;onglet, revenir plus tard, vos
-                modifications sont conservées.
+                <UI>Enregistrer le brouillon</UI> sauvegarde sans publier — vous
+                pouvez fermer l&apos;onglet et revenir plus tard. Le message{" "}
+                <em>« Enregistré »</em> confirme la sauvegarde.
               </>,
               <>
-                <UI>Publier maintenant</UI> rend l&apos;article public à
-                l&apos;instant T. Il apparaît immédiatement sur le site, sa fiche
-                commune, sa catégorie, et passe dans le sitemap.
+                <UI>Publier</UI> met l&apos;article en ligne immédiatement : il
+                apparaît sur l&apos;accueil, dans les Actualités, dans sa
+                rubrique et sur la page de sa commune. Le corps de
+                l&apos;article doit être rempli.
               </>,
               <>
-                <UI>Programmer</UI> définit une date+heure de publication
-                automatique. Pratique pour publier le lendemain matin sans avoir
-                à se reconnecter.
+                Si une information manque, un encadré rouge indique quel champ
+                corriger (ex. <em>« Catégorie : Ce champ est obligatoire. »</em>).
               </>,
             ]}
           />
 
           <Tip>
             <strong>Sponsoring</strong> : si l&apos;article est sponsorisé par
-            un commerçant, sélectionnez-le dans le champ <UI>Sponsor</UI>. Un
-            badge <em>« Article sponsorisé »</em> apparaîtra automatiquement en
-            haut de l&apos;article (obligation légale ARPP).
-          </Tip>
-
-          <Tip>
-            <strong>Publication Facebook</strong> : cocher{" "}
-            <UI>Publier automatiquement sur Facebook</UI> publie un post sur la
-            page geoclicMédia au moment de la mise en ligne (avec image de
-            couverture, titre et chapeau).
+            un commerçant, sélectionnez-le dans le champ{" "}
+            <UI>Commerçant sponsor</UI>. Une mention de partenariat apparaît
+            alors automatiquement en haut et en fin d&apos;article.
           </Tip>
 
           <Done>
-            Article publié ! Vérifiez visuellement le rendu côté lecteur en
-            cliquant sur <UI>Voir l&apos;article</UI> qui apparaît une fois
-            publié. En cas de coquille, vous pouvez modifier en direct — la mise
-            à jour est instantanée.
+            Article publié ! Vérifiez le rendu côté lecteur avec le bouton{" "}
+            <UI>Voir</UI> qui apparaît une fois l&apos;article en ligne. En cas
+            de coquille, corrigez puis cliquez sur <UI>Mettre à jour</UI> : le
+            site est actualisé aussitôt.
           </Done>
         </>
       ),
@@ -255,30 +240,21 @@ export const PUBLISH_ARTICLE: Workflow = {
                 refaire si vous repérez une coquille 3 jours après.
               </>,
               <>
-                <UI>Archiver</UI> retire l&apos;article de la home et de la
-                catégorie, mais l&apos;URL continue de fonctionner (utile pour
-                les vieux articles qu&apos;on veut garder accessibles sans
-                exposer en home).
+                Pour retirer un article sans le supprimer, passez son{" "}
+                <UI>Statut</UI> à <UI>Archivé</UI> (ou <UI>Brouillon</UI>) puis{" "}
+                <UI>Mettre à jour</UI> : il disparaît du site mais reste dans
+                votre liste.
               </>,
               <>
-                Le compteur de vues vous indique l&apos;audience approximative.
-                Combinez-le avec Plausible (
-                <a
-                  href="https://plausible.io"
-                  target="_blank"
-                  rel="noopener"
-                  className="text-camargue underline"
-                >
-                  plausible.io
-                </a>
-                ) pour des stats détaillées.
+                <UI>Supprimer</UI> est définitif : l&apos;article et son adresse
+                web disparaissent. Préférez l&apos;archivage en cas de doute.
               </>,
             ]}
           />
           <KeyTip>
-            <strong>Raccourci utile :</strong> <Kbd>Ctrl</Kbd> + <Kbd>S</Kbd>{" "}
-            (ou <Kbd>Cmd</Kbd> + <Kbd>S</Kbd> sur Mac) pour enregistrer le
-            brouillon sans devoir cliquer sur le bouton.
+            Si vous fermez l&apos;onglet avec des modifications non
+            enregistrées, le navigateur vous demande confirmation. Pensez tout
+            de même à enregistrer avant de changer de menu.
           </KeyTip>
         </>
       ),
