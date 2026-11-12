@@ -38,8 +38,10 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         return settings.BILLING_ENABLED
 
     def get_password_reset_enabled(self, obj: SiteSettings) -> bool:
-        # Réglage serveur : vrai dès qu'un serveur d'envoi d'emails est configuré.
-        return settings.PASSWORD_RESET_ENABLED
+        # Activation explicite et configuration SMTP valide requises.
+        from .recovery import email_ready
+
+        return email_ready()
 
 
 class SiteSettingsView(APIView):

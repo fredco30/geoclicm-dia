@@ -116,7 +116,8 @@ AUTH_USER_MODEL = "core.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "apps.core.password_validators.SymbolValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -287,8 +288,9 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_TIMEOUT = 15
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="geoclicMédia <contact@geoclic.fr>")
-PASSWORD_RESET_ENABLED = bool(EMAIL_HOST)
-PASSWORD_RESET_TIMEOUT = 24 * 60 * 60  # validité du lien : 24 h
+ACCOUNT_RECOVERY_ENABLED = env.bool("ACCOUNT_RECOVERY_ENABLED", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+PASSWORD_RESET_TIMEOUT = 3600  # lien à usage unique, une heure
 
 LOGIN_MAX_FAILURES = env.int("LOGIN_MAX_FAILURES", default=10)
 LOGIN_FAILURE_WINDOW_SECONDS = env.int("LOGIN_FAILURE_WINDOW_SECONDS", default=15 * 60)

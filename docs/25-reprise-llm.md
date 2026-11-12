@@ -902,3 +902,12 @@ sort de l'annuaire generaliste, a sa tuile racine, sa page, ses propres filtres.
 
 Reste possible : page `/marches` a refaire (puis supprimer `business-card`/
 `event-card` devenus orphelins) ; campagnes demo id=1/2 "A VELO" toujours en base.
+
+## Mise à jour 12 novembre 2026 — accès et source de vérité
+
+GitHub main est la source de vérité. Le checkout local était en retard de
+31 commits ; il a été synchronisé sur `84e979f` après sauvegarde privée vérifiée.
+Le correctif récupération avait été adapté sur le serveur hors Git. Son
+intégration est suivie dans [27-recuperation-compte.md](27-recuperation-compte.md).
+Lire son état déployé avant de déployer ; ne pas réappliquer une ancienne
+sauvegarde sur main. L'audit extractions demandé séparément reste en lecture seule.

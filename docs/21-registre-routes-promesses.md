@@ -126,3 +126,11 @@ fait sans audit des données et des logs.
 | `/tags/[slug]` | Les articles y renvoyaient depuis toujours, la page n'existait pas (404 vérifié en production) | **LIVRÉE** : liste paginée des articles du mot-clé, via le filtre API `?tag=` |
 | `/commerces?q=` et `/gastronomie?q=` | Recherche par nom absente côté public alors que l'API l'exposait (`?search=`) | **LIVRÉE** |
 | Dates d'Agenda | Les périodes longues (expositions, marchés à l'année) n'affichaient que leur premier jour, donc une date passée | **CORRIGÉ** à l'affichage (`front/src/lib/event-dates.ts`) : groupe « En ce moment », « Jusqu'au … », heure masquée quand elle vaut minuit par défaut |
+
+## Récupération — 12 novembre 2026
+
+Route canonique `/api/auth/recovery/`. Anciennes pages
+`/advertiser/mot-de-passe-oublie` et `/advertiser/nouveau-mot-de-passe` :
+REMPLACÉES avec redirection et prise en charge des anciens liens uid/token.
+Les deux anciens POST `/api/auth/password-reset/` et `.../confirm/` répondent
+410 avec recovery_url ; aucun changement de mot de passe via ces routes.

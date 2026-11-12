@@ -1087,3 +1087,10 @@ Toujours ouvert : mise à niveau d'Ubuntu 25.04 (opération serveur).
 - `/tarifs` annonce la gratuité pilote alors que les boutons ouvrent Stripe
   (mode test) : trancher le message commercial.
 - Mise à niveau d'Ubuntu 25.04 (hors support) — opération serveur.
+
+## 12 novembre 2026 — intégration récupération des accès
+
+Réintégration du correctif identifiant/mot de passe depuis main GitHub à jour,
+jeton 1h, minimum 8 caractères + symbole, CSRF same-origin, Celery/SMTP explicite.
+Anciennes pages redirigées, anciens POST JSON retirés du parcours actif (410).
+Voir docs/27-recuperation-compte.md pour les preuves et l'état déployé.
