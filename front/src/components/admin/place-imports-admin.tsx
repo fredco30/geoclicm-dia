@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { ImportReviewNote } from "@/components/admin/import-review-note";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { Check, CheckSquare, ExternalLink, Square, X } from "lucide-react";
@@ -136,17 +137,8 @@ export function PlaceImportsAdmin({
       }
       const imported: number = payload?.imported ?? 0;
       const errors: string[] = payload?.errors ?? [];
-      setRows((current) =>
-        current.filter(
-          (row) =>
-            !(
-              selected.has(row.id) &&
-              row.status === "pending" &&
-              row.commune &&
-              row.category
-            ),
-        ),
-      );
+      const importedIds = new Set<number>(payload?.imported_ids ?? []);
+      setRows((current) => current.filter((row) => !importedIds.has(row.id)));
       setSelected(new Set());
       setMessage(
         `${imported} lieu(x) publié(s).` +
@@ -170,6 +162,7 @@ export function PlaceImportsAdmin({
           {[
             ["pending", "À valider"],
             ["invalid", "Incomplets"],
+            ["duplicate", "Doublons"],
           ].map(([value, label]) => (
             <Link
               key={value}
@@ -292,7 +285,8 @@ export function PlaceImportsAdmin({
                     Preuve détectée : « {row.extraction_evidence[0]} »
                   </blockquote>
                 ) : null}
-                {row.validation_errors.length ? (
+                <ImportReviewNote review={row.review} />
+              {row.validation_errors.length ? (
                   <p className="mt-3 rounded bg-amber-50 p-2 text-xs text-amber-900">
                     {row.validation_errors.join(" · ")}
                   </p>
@@ -337,7 +331,7 @@ export function PlaceImportsAdmin({
                       <X className="h-4 w-4" /> Rejeter
                     </Button>
                     <Button
-                      disabled={pending || !row.commune || !row.category}
+                      disabled={pending || ["duplicate", "expired"].includes(row.status) || !row.commune || !row.category}
                       onClick={() => act(row, "approve")}
                     >
                       <Check className="h-4 w-4" /> Approuver et publier

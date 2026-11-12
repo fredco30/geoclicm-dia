@@ -1,3 +1,12 @@
+export type CandidateReview = {
+  possible_duplicate_ids?: number[];
+  proposed_status?: string;
+  canonical_candidate_id?: number;
+  reason?: string;
+  validity: { state: string; reason: string; evidence?: string; until?: string | null };
+};
+
+
 /**
  * Types correspondant aux serializers Django REST.
  *
@@ -245,6 +254,7 @@ export type EventSource = {
 };
 
 export type EventImportCandidate = {
+  review?: CandidateReview;
   id: number;
   source: number;
   source_label: string;
@@ -324,6 +334,7 @@ export type PlaceRelatedItem = {
 };
 
 export type PlaceImportCandidate = {
+  review?: CandidateReview;
   id: number;
   crawl_source: number;
   crawl_source_label: string;
@@ -471,6 +482,7 @@ export type ListingDetail = ListingListItem & {
 };
 
 export type ListingImportCandidate = {
+  review?: CandidateReview;
   id: number;
   crawl_source: number;
   crawl_source_label: string;
@@ -494,7 +506,7 @@ export type ListingImportCandidate = {
   commune_name: string | null;
   category: number | null;
   category_name: string | null;
-  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid";
+  status: "pending" | "imported" | "rejected" | "duplicate" | "invalid" | "expired" | "needs_review";
   validation_errors: string[];
   extraction_evidence: string[];
   matched_listing_slug: string | null;
@@ -503,6 +515,7 @@ export type ListingImportCandidate = {
 };
 
 export type BusinessImportCandidate = {
+  review?: CandidateReview;
   id: number;
   crawl_source: number;
   crawl_source_label: string;

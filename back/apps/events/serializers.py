@@ -460,9 +460,18 @@ class EventImportCandidateSerializer(serializers.ModelSerializer):
     extraction_evidence = serializers.SerializerMethodField()
     generation_id = serializers.SerializerMethodField()
 
+    review = serializers.SerializerMethodField()
+
+    def get_review(self, obj):
+        from apps.discovery.validity import validity
+        stored = dict((obj.raw_payload or {}).get("review") or {})
+        stored.pop("history", None)
+        return {**stored, "validity": validity(obj).as_dict()}
+
     class Meta:
         model = EventImportCandidate
         fields = (
+            "review",
             "id",
             "source",
             "source_label",

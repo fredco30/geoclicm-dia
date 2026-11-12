@@ -61,3 +61,5 @@ consulter `24`, `21`, `22` et `23`. En cas de contradiction temporelle, le
 document `25` prévaut, sous réserve d'une nouvelle vérification Git/VPS.
 
 - [Récupération des accès et état déployé](27-recuperation-compte.md).
+
+- [Qualité des extractions et bilan préalable](28-qualite-extractions.md).

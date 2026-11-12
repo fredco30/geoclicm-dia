@@ -44,6 +44,8 @@ from .multi_extraction import (
     normalize_place,
 )
 from .page_dates import resolve_page_dates
+from .review import guard_import, lock_identity, preserve_review, review_candidate
+from .validity import validity
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +265,7 @@ def import_place_candidate(
     publish: bool = True,
 ) -> Place:
     """Transforme un candidat validé en Place (brouillon ou publié)."""
+    candidate = guard_import(candidate, publish=publish)
     place = candidate.matched_place
     if place is None:
         place = Place(
@@ -360,15 +363,18 @@ def _business_already_known(data: dict, *, exclude_pk: int | None) -> bool:
     )
 
 
+@transaction.atomic
 def _upsert_place_candidate(
     crawl_source: CrawlSource, data: dict
 ) -> tuple[PlaceImportCandidate, bool, bool]:
+    lock_identity(PlaceImportCandidate)
     existing = PlaceImportCandidate.objects.filter(
         crawl_source=crawl_source,
         source_uid=data["source_uid"],
     ).first()
     created = existing is None
     previous_payload = existing.raw_payload if existing else None
+    data = preserve_review(previous_payload, data)
     status = (
         PlaceImportCandidate.Status.INVALID
         if data["validation_errors"]
@@ -394,6 +400,7 @@ def _upsert_place_candidate(
         },
     )
     updated = not created and previous_payload != data["raw_payload"]
+    candidate = review_candidate(candidate)
     return candidate, created, updated
 
 
@@ -412,6 +419,7 @@ def import_business_candidate(
     publish: bool = True,
 ) -> Business:
     """Transforme un candidat validé en Business (brouillon ou publié)."""
+    candidate = guard_import(candidate, publish=publish)
     if candidate.category_id is None or candidate.commune_id is None:
         raise ValueError("Commune et catégorie requises pour importer un commerce")
     business = candidate.matched_business
@@ -455,15 +463,18 @@ def import_business_candidate(
     return business
 
 
+@transaction.atomic
 def _upsert_business_candidate(
     crawl_source: CrawlSource, data: dict
 ) -> tuple[BusinessImportCandidate, bool, bool]:
+    lock_identity(BusinessImportCandidate)
     existing = BusinessImportCandidate.objects.filter(
         crawl_source=crawl_source,
         source_uid=data["source_uid"],
     ).first()
     created = existing is None
     previous_payload = existing.raw_payload if existing else None
+    data = preserve_review(previous_payload, data)
     status = (
         BusinessImportCandidate.Status.INVALID
         if data["validation_errors"]
@@ -489,6 +500,7 @@ def _upsert_business_candidate(
         },
     )
     updated = not created and previous_payload != data["raw_payload"]
+    candidate = review_candidate(candidate)
     return candidate, created, updated
 
 
@@ -507,6 +519,7 @@ def import_listing_candidate(
     publish: bool = True,
 ) -> Listing:
     """Transforme un candidat validé en annonce (brouillon ou publiée)."""
+    candidate = guard_import(candidate, publish=publish)
     if candidate.category_id is None:
         raise ValueError("Catégorie requise pour importer une annonce")
     listing = candidate.matched_listing
@@ -531,7 +544,7 @@ def import_listing_candidate(
     listing.contact_phone = candidate.contact_phone
     listing.application_url = candidate.application_url
     listing.source_url = candidate.source_url
-    listing.expires_at = candidate.expires_at
+    listing.expires_at = _aware(validity(candidate).until)
     listing.status = Listing.Status.PUBLISHED if publish else Listing.Status.DRAFT
     if publish and listing.published_at is None:
         listing.published_at = candidate.published_on_source_at or timezone.now()
@@ -545,15 +558,18 @@ def import_listing_candidate(
     return listing
 
 
+@transaction.atomic
 def _upsert_listing_candidate(
     crawl_source: CrawlSource, data: dict
 ) -> tuple[ListingImportCandidate, bool, bool]:
+    lock_identity(ListingImportCandidate)
     existing = ListingImportCandidate.objects.filter(
         crawl_source=crawl_source,
         source_uid=data["source_uid"],
     ).first()
     created = existing is None
     previous_payload = existing.raw_payload if existing else None
+    data = preserve_review(previous_payload, data)
     status = (
         ListingImportCandidate.Status.INVALID
         if data["validation_errors"]
@@ -577,6 +593,7 @@ def _upsert_listing_candidate(
         },
     )
     updated = not created and previous_payload != data["raw_payload"]
+    candidate = review_candidate(candidate)
     return candidate, created, updated
 
 
@@ -760,14 +777,14 @@ def _route_results(
     # Lieux -> boîte Découvrir.
     # Une page d agrégation (carte, annuaire, agenda) peut lister des dizaines
     # de lieux ; on ne retient que le lieu principal par page (titre le plus
-    # proche du titre de page), puis on deduplique par titre normalise sur tout
-    # le corpus (les traductions /en /de /es d un meme lieu ne font qu un
-    # candidat). Une fiche dediee produit un seul lieu, comportement inchange.
+    # proche du titre de page). Chaque source distincte est conservée : le service
+    # review la rattache au candidat de référence si le doublon est établi.
+    # Ne pas perdre deux établissements homonymes par une empreinte trop large.
     places_by_page: dict[str, list[dict]] = {}
     for raw in results["places"]:
         places_by_page.setdefault(raw["source_page_url"], []).append(raw)
 
-    seen_fingerprints: set[str] = set()
+    seen_candidates: set[tuple[str, str]] = set()
     for page_url, raw_places in places_by_page.items():
         crawl_page = crawl_page_by_url.get(page_url)
         if crawl_page is None:
@@ -777,9 +794,10 @@ def _route_results(
             data = normalize_place(
                 crawl_source, raw, crawl_page=crawl_page, generic_urls=generic_urls
             )
-            if data["fingerprint"] in seen_fingerprints:
+            batch_key = ("place", data["source_uid"])
+            if batch_key in seen_candidates:
                 continue
-            seen_fingerprints.add(data["fingerprint"])
+            seen_candidates.add(batch_key)
             try:
                 _upsert_place_candidate(crawl_source, data)
                 summary["places"] += 1
@@ -802,9 +820,10 @@ def _route_results(
             data = normalize_business(
                 crawl_source, raw, crawl_page=crawl_page, generic_urls=generic_urls
             )
-            if data["fingerprint"] in seen_fingerprints:
+            batch_key = ("business", data["source_uid"])
+            if batch_key in seen_candidates:
                 continue
-            seen_fingerprints.add(data["fingerprint"])
+            seen_candidates.add(batch_key)
             try:
                 _upsert_business_candidate(crawl_source, data)
                 summary["businesses"] += 1
@@ -826,9 +845,10 @@ def _route_results(
         selected = _select_primary_places(crawl_page, raw_listings)
         for raw in selected:
             data = normalize_listing(crawl_source, raw, crawl_page=crawl_page)
-            if data["fingerprint"] in seen_fingerprints:
+            batch_key = ("listing", data["source_uid"])
+            if batch_key in seen_candidates:
                 continue
-            seen_fingerprints.add(data["fingerprint"])
+            seen_candidates.add(batch_key)
             try:
                 _upsert_listing_candidate(crawl_source, data)
                 summary["listings"] += 1

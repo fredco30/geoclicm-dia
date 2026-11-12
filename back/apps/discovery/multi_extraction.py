@@ -37,7 +37,7 @@ from .models import PlaceCategory
 
 logger = logging.getLogger(__name__)
 
-PROMPT_VERSION = "multi-v4"
+PROMPT_VERSION = "multi-v5-validity"
 
 # Seuil minimal de texte pour envoyer une page à l'IA (navigation pure écartée,
 # jamais de filtre sémantique : voie A prudente).
@@ -92,7 +92,9 @@ vides si rien n'est annoncé).
   contact_email, contact_phone, application_url, category_hint (uniquement
   "emploi" pour l'instant), published_on_source_at (date de publication ISO si
   affichée, sinon null), expires_at (date limite de candidature ISO si
-  affichée, sinon null), evidence. Une offre d'emploi n'est NI un événement,
+  affichée, sinon null), evidence. Inclure dans evidence les extraits exacts
+  de date limite, de période ou de fin de contrat/mission, même passées.
+  Une date de publication ou de mise à jour ne prouve pas que le poste reste ouvert. Une offre d'emploi n'est NI un événement,
   NI un commerce : ne la mets que dans "listings".
 
 Règles impératives :

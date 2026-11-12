@@ -58,3 +58,11 @@ class EventDateFilteringTests(TestCase):
         end = _aware_ics_end(datetime(2026, 7, 30).date())
         self.assertEqual(end.hour, 0)
         self.assertEqual(end.day, 30)
+
+    def test_missing_or_invalid_end_does_not_make_the_whole_series_expired(self):
+        past = self.row("2026-07-28T10:00:00+02:00", "2026-07-28T12:00:00+02:00")
+        for unknown in [None, "2026-99-99T12:00:00"]:
+            rows = [past, {"starts_at": "2026-07-30T10:00:00+02:00", "ends_at": unknown}]
+            result = filter_finished_occurrences(rows, cutoff=self.cutoff)
+            self.assertFalse(result.expired)
+            self.assertEqual(result.occurrences, rows)

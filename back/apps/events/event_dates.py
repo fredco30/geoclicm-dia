@@ -24,7 +24,10 @@ def _aware_datetime(value: object) -> datetime | None:
     if isinstance(value, datetime):
         parsed = value
     elif isinstance(value, str):
-        parsed = parse_datetime(value)
+        try:
+            parsed = parse_datetime(value)
+        except ValueError:
+            return None
     else:
         return None
     if parsed is None:
@@ -44,6 +47,9 @@ def filter_finished_occurrences(
     for row in rows:
         if ends_at := _aware_datetime(row.get("ends_at")):
             valid.append((row, ends_at))
+    if len(valid) != len(rows):
+        # An unknown end may still be future: do not silently discard it or expire the series.
+        return OccurrenceFilterResult(rows, False, 0, False)
     if not valid:
         return OccurrenceFilterResult(rows, False, 0, False)
 

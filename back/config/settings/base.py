@@ -322,3 +322,10 @@ AI_ASSIST_BUDGET_USER_DAILY_EUR = env.float(
 AI_ASSIST_BUDGET_GLOBAL_DAILY_EUR = env.float(
     "AI_ASSIST_BUDGET_GLOBAL_DAILY_EUR", default=30.0,
 )
+
+# Réévaluation des candidats uniquement : aucune publication automatique.
+CELERY_BEAT_SCHEDULE = {
+    "review-import-candidates-hourly": {
+        "task": "core.review_import_candidates", "schedule": 3600.0,
+    },
+}

@@ -24,6 +24,8 @@ from PIL import Image, UnidentifiedImageError
 
 from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
+from apps.discovery.review import guard_import, lock_identity, preserve_review, review_candidate
+from apps.discovery.validity import validity
 
 from .ai_extraction import extract_events as extract_events_with_ai
 from .event_dates import apply_occurrence_filter
@@ -678,6 +680,7 @@ def _unique_slug(title: str, source_uid: str) -> str:
 
 @transaction.atomic
 def import_candidate(candidate: EventImportCandidate, *, publish: bool = True) -> Event:
+    candidate = guard_import(candidate, publish=publish)
     event = Event.objects.filter(
         source=candidate.source,
         source_uid=candidate.source_uid,
@@ -723,6 +726,9 @@ def import_candidate(candidate: EventImportCandidate, *, publish: bool = True) -
                 "is_all_day": candidate.is_all_day,
             }
         ]
+        if publish:
+            from .event_dates import filter_finished_occurrences
+            rows = filter_finished_occurrences(rows).occurrences
         seen_starts = []
         for row in rows:
             starts_at = _aware(row.get("starts_at"))
@@ -757,7 +763,9 @@ def import_candidate(candidate: EventImportCandidate, *, publish: bool = True) -
     return event
 
 
+@transaction.atomic
 def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandidate, bool, bool]:
+    lock_identity(EventImportCandidate)
     data = dict(data)
     expired = bool(data.pop("_expired", False))
     data.pop("_removed_occurrence_count", None)
@@ -788,6 +796,7 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
         )
     created = existing is None
     previous_payload = existing.raw_payload if existing else None
+    data = preserve_review(previous_payload, data)
     payload_changed = previous_payload != data["raw_payload"]
     status = (
         EventImportCandidate.Status.EXPIRED
@@ -829,7 +838,9 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
         },
     )
     updated = not created and previous_payload != data["raw_payload"]
-    if candidate.status == EventImportCandidate.Status.IMPORTED and candidate.matched_event_id:
+    candidate = review_candidate(candidate)
+    if (candidate.status == EventImportCandidate.Status.IMPORTED and candidate.matched_event_id
+            and validity(candidate).state == "current"):
         import_candidate(
             candidate, publish=candidate.matched_event.status == Event.Status.PUBLISHED
         )

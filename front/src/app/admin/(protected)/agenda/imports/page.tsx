@@ -3,7 +3,7 @@ import { getCookieHeader } from "@/lib/auth-server";
 import type { Commune, EventCategory, EventImportCandidate } from "@/types/api";
 
 const API_URL=process.env.NEXT_PUBLIC_API_URL??"http://localhost:8002";
-const ALLOWED_STATUSES = new Set(["pending", "invalid", "expired"]);
+const ALLOWED_STATUSES = new Set(["pending", "invalid", "expired", "duplicate"]);
 const PAGE_SIZE=50;
 
 async function get<T>(path:string):Promise<T>{
