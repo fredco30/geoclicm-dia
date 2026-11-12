@@ -5,6 +5,7 @@ import { fetchAllPages, getCurrentUser } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { AdminAdCampaignListItem } from "@/types/admin";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 async function fetchCampaigns(): Promise<AdminAdCampaignListItem[]> {
   return (await fetchAllPages<AdminAdCampaignListItem>("/api/ad-campaigns/?ordering=-starts_at")) ?? [];
@@ -43,7 +44,7 @@ export default async function AdsCampaignsPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <SearchableTable placeholder="Rechercher une campagne…">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr>
@@ -137,7 +138,7 @@ export default async function AdsCampaignsPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CategoryBadge } from "@/components/articles/category-badge";
 import { formatDate } from "@/lib/utils";
 import type { ArticleListItem } from "@/types/api";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 async function fetchAllArticles(): Promise<ArticleListItem[]> {
   return (await fetchAllPages<ArticleListItem>("/api/articles/?ordering=-created_at")) ?? [];
@@ -86,7 +87,7 @@ export default async function AdminDashboard() {
           .
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <SearchableTable placeholder="Rechercher un article (titre, rubrique, commune, statut)…">
           <table className="w-full">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr>
@@ -158,7 +159,7 @@ export default async function AdminDashboard() {
               })}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );

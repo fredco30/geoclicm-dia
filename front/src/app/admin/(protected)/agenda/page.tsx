@@ -4,6 +4,7 @@ import { CalendarDays, Edit, Eye, MapPin, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCookieHeader } from "@/lib/auth-server";
 import type { EventDetail } from "@/types/api";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
@@ -58,7 +59,7 @@ export default async function AgendaAdminPage() {
           Aucun événement. Commence par créer un brouillon puis ajoute au moins une date avant publication.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <SearchableTable placeholder="Rechercher un événement (titre, commune, statut)…">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr><th className="px-3 py-2">Titre</th><th className="px-3 py-2">Type</th><th className="px-3 py-2">Prochaine date</th><th className="px-3 py-2">Commune</th><th className="px-3 py-2">Statut</th><th className="px-3 py-2 text-right">Actions</th></tr>
@@ -79,7 +80,7 @@ export default async function AgendaAdminPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );

@@ -210,7 +210,7 @@ export function EventSourcesAdmin({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px]">
-        <div className="overflow-hidden rounded-xl border bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-white">
           <table className="w-full text-sm">
             <thead className="border-b bg-slate-50 text-left text-xs uppercase">
               <tr>

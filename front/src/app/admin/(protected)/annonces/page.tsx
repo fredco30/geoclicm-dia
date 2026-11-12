@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { getCookieHeader } from "@/lib/auth-server";
 import { formatDate } from "@/lib/utils";
 import type { ListingDetail } from "@/types/api";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
@@ -57,7 +58,7 @@ export default async function ListingsAdminPage() {
           Aucune annonce.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-xl border bg-white">
+        <SearchableTable placeholder="Rechercher une annonce…">
           <table className="w-full text-sm">
             <thead className="border-b bg-slate-50 text-left text-xs uppercase text-slate-600">
               <tr>
@@ -110,7 +111,7 @@ export default async function ListingsAdminPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );
