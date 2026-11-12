@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,15 @@ export function LoginForm() {
       <Button type="submit" disabled={busy} className="w-full" size="lg">
         {busy ? "Connexion..." : "Se connecter"}
       </Button>
+
+      <p className="text-center text-sm">
+        <Link
+          href="/advertiser/mot-de-passe-oublie?from=admin"
+          className="text-slate-600 hover:text-camargue hover:underline"
+        >
+          Mot de passe oublié ?
+        </Link>
+      </p>
     </form>
   );
 }

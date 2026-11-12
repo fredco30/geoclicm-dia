@@ -14,12 +14,14 @@ from .user_views import IsSuperuserOrAdmin
 class SiteSettingsSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()
     billing_enabled = serializers.SerializerMethodField()
+    password_reset_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = SiteSettings
         fields = (
             "site_name", "tagline", "logo", "logo_url",
-            "primary_color", "accent_color", "billing_enabled", "updated_at",
+            "primary_color", "accent_color", "billing_enabled", "password_reset_enabled",
+            "updated_at",
         )
         read_only_fields = ("updated_at",)
         extra_kwargs = {"logo": {"write_only": True, "required": False, "allow_null": True}}
@@ -34,6 +36,10 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         # Réglage serveur (.env BILLING_ENABLED), non modifiable ici :
         # l'ouverture du paiement suppose des clés Stripe LIVE configurées.
         return settings.BILLING_ENABLED
+
+    def get_password_reset_enabled(self, obj: SiteSettings) -> bool:
+        # Réglage serveur : vrai dès qu'un serveur d'envoi d'emails est configuré.
+        return settings.PASSWORD_RESET_ENABLED
 
 
 class SiteSettingsView(APIView):

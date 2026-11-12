@@ -154,3 +154,32 @@ Côté front, mets à jour `front/src/lib/roles.ts` avec le nouveau libellé.
 - **Sprint 3** : invitation par email (lien token magique pour set son mot de passe).
 - **Sprint 4** : espace `/annonceur/` self-service.
 - **Sprint 5** : 2FA obligatoire pour rôles editor/admin.
+
+---
+
+## Mot de passe oublié (ajout du 12 novembre 2026)
+
+Les deux pages de connexion (rédaction et espace annonceur) proposent un lien
+**« Mot de passe oublié ? »**.
+
+- **Serveur d'envoi d'emails configuré** : la personne saisit son adresse,
+  reçoit un lien valable 24 h et à usage unique, puis choisit son nouveau mot
+  de passe. La réponse affichée est la même que le compte existe ou non, et
+  les demandes sont limitées à 5 par heure et par adresse IP.
+- **Aucun serveur configuré** (état par défaut) : la page invite à écrire à
+  `contact@geoclic.fr`. Un administrateur définit alors un nouveau mot de passe
+  depuis **Réglages → Comptes & droits**.
+
+Pour activer l'envoi, renseigner **directement dans le `.env` du VPS** (jamais
+dans une conversation ni dans le dépôt) les lignes suivantes, avec les valeurs
+fournies par le relais SMTP choisi (Brevo, OVH…) :
+
+```dotenv
+EMAIL_HOST=xxx
+EMAIL_PORT=587
+EMAIL_HOST_USER=xxx
+EMAIL_HOST_PASSWORD=xxx
+DEFAULT_FROM_EMAIL=geoclicMédia <contact@geoclic.fr>
+```
+
+Puis redémarrer Django. Tester avec son propre compte avant de l'annoncer.

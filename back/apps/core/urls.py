@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from . import auth_views, views
+from . import auth_views, password_reset_views, views
 from .site_settings_views import SiteSettingsView
 from .user_views import UserAdminViewSet
 
@@ -20,6 +20,16 @@ urlpatterns = [
         "auth/register-advertiser/",
         auth_views.AdvertiserRegisterView.as_view(),
         name="auth-register-advertiser",
+    ),
+    path(
+        "auth/password-reset/",
+        password_reset_views.PasswordResetRequestView.as_view(),
+        name="auth-password-reset",
+    ),
+    path(
+        "auth/password-reset/confirm/",
+        password_reset_views.PasswordResetConfirmView.as_view(),
+        name="auth-password-reset-confirm",
     ),
     path("admin/pending-counts/", views.pending_counts, name="admin-pending-counts"),
     path("site-settings/", SiteSettingsView.as_view(), name="site-settings"),

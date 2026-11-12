@@ -357,6 +357,24 @@ export const auth = {
       body: JSON.stringify(data),
     });
   },
+  requestPasswordReset: async (email: string) => {
+    await apiFetch("/api/auth/csrf/");
+    const csrf = readCookie("csrftoken");
+    return apiFetch("/api/auth/password-reset/", {
+      method: "POST",
+      headers: csrf ? { "X-CSRFToken": csrf } : {},
+      body: JSON.stringify({ email }),
+    });
+  },
+  confirmPasswordReset: async (uid: string, token: string, password: string) => {
+    await apiFetch("/api/auth/csrf/");
+    const csrf = readCookie("csrftoken");
+    return apiFetch("/api/auth/password-reset/confirm/", {
+      method: "POST",
+      headers: csrf ? { "X-CSRFToken": csrf } : {},
+      body: JSON.stringify({ uid, token, password }),
+    });
+  },
 };
 
 function readCookie(name: string): string | null {

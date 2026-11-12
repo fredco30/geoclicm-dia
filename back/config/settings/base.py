@@ -277,6 +277,19 @@ ASSISTANT_RATE_LIMIT_PER_HOUR = env.int("ASSISTANT_RATE_LIMIT_PER_HOUR", default
 ASSISTANT_GLOBAL_DAILY_LIMIT = env.int("ASSISTANT_GLOBAL_DAILY_LIMIT", default=2000)
 
 # Anti force brute sur /api/auth/login/ : échecs max par IP sur la fenêtre.
+# --- Email sortant (mot de passe oublié) -----------------------------------
+# Tant que EMAIL_HOST est vide, aucun email ne part et la réinitialisation
+# par email est désactivée (les pages invitent à contacter l'équipe).
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="geoclicMédia <contact@geoclic.fr>")
+PASSWORD_RESET_ENABLED = bool(EMAIL_HOST)
+PASSWORD_RESET_TIMEOUT = 24 * 60 * 60  # validité du lien : 24 h
+
 LOGIN_MAX_FAILURES = env.int("LOGIN_MAX_FAILURES", default=10)
 LOGIN_FAILURE_WINDOW_SECONDS = env.int("LOGIN_FAILURE_WINDOW_SECONDS", default=15 * 60)
 

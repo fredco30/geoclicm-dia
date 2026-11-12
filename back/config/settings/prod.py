@@ -33,7 +33,7 @@ STORAGES = {
     },
 }
 
-# --- Email (à configurer Brevo en sprint 2) ---
+# --- Email : serveur SMTP défini par EMAIL_HOST… dans le .env (cf. base.py) ---
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 # --- Sentry (optionnel) ---

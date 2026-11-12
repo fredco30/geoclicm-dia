@@ -34,6 +34,7 @@ REST_FRAMEWORK = {
 
 # Email console (dev uniquement)
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+PASSWORD_RESET_ENABLED = True  # le lien s'affiche dans la console
 
 # Logging plus verbeux côté dev
 LOGGING = {
