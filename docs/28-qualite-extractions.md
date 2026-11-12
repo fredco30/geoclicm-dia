@@ -100,7 +100,7 @@ candidature avant le 15 novembre 2022) et 2 (Papy/Mamy, contrat terminé le
 7 juillet 2022) → expirées. Les variantes moins sûres ne sont pas comptées comme
 doublons certains. Rapport privé sur VPS : `/tmp/geoclic-quality-dryrun-final-20261112.json`.
 
-## CURRENT CANONICAL DEPLOYED STATE
+## HISTORICAL — avant livraison
 
 État avant livraison : main `9d34b84` sur camping-vps, `/var/www/geoclicmedia`.
 Ce lot est implémenté/testé dans une copie isolée `/tmp/geoclic-quality-tests-20261112`.
@@ -116,3 +116,40 @@ tâche PeriodicTask core.review_import_candidates si retour à l'ancienne versio
 Rollback du reclassement : restauration ciblée des statuts/raw_payload depuis le
 snapshot après vérification de l'absence de modifications humaines ultérieures ;
 ne pas restaurer la base métier complète ni supprimer des candidats.
+
+
+## CURRENT CANONICAL DEPLOYED STATE
+
+LAST VERIFIED AT : 12 novembre 2026, après migration, reclassement et smoke Chrome.
+RELEASE CODE SHA : `3091f676c360b8859f2c06aae35df5b78ca75e33`, code de la
+[PR #102](https://github.com/fredco30/geoclicm-dia/pull/102). Les commits de
+compte rendu/fusion suivants ne changent pas le runtime de cette release.
+Serveur camping-vps, `/var/www/geoclicmedia`, services Django/worker/beat/Next actifs.
+Le checkout revient sur main GitHub après fusion ; comparer `git rev-parse HEAD`
+avec origin/main avant tout lot suivant. Aucun correctif code hors Git requis.
+
+Migration listings.0005 appliquée, build Next réussi et quatre services redémarrés.
+CI du code : **205 tests Django/PostGIS**, types, lint et build Next réussis
+(run 43257262875). Aucun secret ni fichier personnel non suivi committé.
+
+Reclassement appliqué conforme au bilan : **435 transitions** (30 lieux + 5 commerces
++ 18 événements en doublon ; 377 événements + 2 annonces expirés ; 3 annonces
+à confirmer). Un dry-run suivant renvoie counts={} : aucun reclassement restant.
+Les candidats sont conservés ; pas de suppression, pas de publication par le service.
+Les candidats imported/rejected ne sont pas reclassés.
+
+BACKUP / ROLLBACK : `/var/backups/geoclicmedia-quality-20261112-3091f67` (privé).
+`before-source.tar`, manifest SHA256, `next-build`, `reclassification.json`
+(2666 snapshots avant traitement, motifs et comptes appliqués), `verification.json`.
+Les rapports sont 0600. La migration de choix peut être inversée avant rollback de
+code ; désactiver la tâche horaire si retour à l'ancienne release. Ne restaurer
+statuts/payloads que si aucune modification humaine postérieure n'est écrasée.
+
+Contrôle horaire réellement chargé : PeriodicTask core.review_import_candidates,
+enabled=True, intervalle 3600 secondes. Aucun appel IA ni recrawl déclenché.
+Validation Chrome authentifiée avec compte temporaire ensuite supprimé :
+- une seule fiche Beach Coffee Club dans pending, son doublon dans duplicate ;
+- deux annonces expirées visibles avec preuve et bouton publier désactivé ;
+- trois annonces à confirmer, boutons de confirmation présents et publication
+  désactivée tant que l'humain n'a pas confirmé ; aucun de ces boutons soumis.
+Healthcheck public HTTP 200. Base PostgreSQL de tests jetable supprimée après validation.
