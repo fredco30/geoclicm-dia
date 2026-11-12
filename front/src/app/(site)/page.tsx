@@ -2,7 +2,10 @@ import { api } from "@/lib/api";
 import { UneCarousel } from "@/components/home/une-carousel";
 import { SearchTrigger } from "@/components/home/search-trigger";
 import { TileGrid } from "@/components/tiles/tile-grid";
+import Link from "next/link";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { EventRow } from "@/components/events/event-row";
+import { isOngoing } from "@/lib/event-dates";
 
 export const revalidate = 60;
 
@@ -10,16 +13,23 @@ export const revalidate = 60;
  * Home v2 — pattern « city » :
  *  1. Bandeau "À la une" (carrousel articles featured / récents)
  *  2. Barre de recherche / question (stub vers /recherche, drawer IA en PR 7)
- *  3. Grille de tuiles thématiques actives
+ *  3. Trois prochains rendez-vous de l'Agenda (masqué s'il n'y en a pas)
+ *  3 bis. Grille de tuiles thématiques actives
  *  4. Encart publicitaire home_sidebar (préservé pour la régie)
  *
  * Pages détail (article, commune, commerce, météo) restent inchangées.
  */
 export default async function HomePage() {
-  const [articlesData, tiles] = await Promise.all([
+  const [articlesData, tiles, eventsData] = await Promise.all([
     api.articles.list({ ordering: "-published_at" }).catch(() => null),
     api.tiles.list({ onHome: true }).catch(() => []),
+    api.events.list().catch(() => null),
   ]);
+  // Les trois prochains rendez-vous datés : les périodes en cours (expos,
+  // marchés à l'année) restent dans l'Agenda, elles n'ont rien d'imminent.
+  const upcoming = (eventsData?.results ?? [])
+    .filter((event) => event.next_occurrence && !isOngoing(event.next_occurrence))
+    .slice(0, 3);
 
   const articles = articlesData?.results ?? [];
   // Ordre : les featured d'abord, puis les autres récents. 5 max.
@@ -36,6 +46,24 @@ export default async function HomePage() {
       <UneCarousel articles={sortedForUne} />
 
       <SearchTrigger />
+
+      {upcoming.length > 0 ? (
+        <section aria-labelledby="upcoming-title">
+          <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+            <h2 id="upcoming-title" className="font-serif text-lg font-semibold text-slate-900">
+              Prochains rendez-vous
+            </h2>
+            <Link href="/agenda" className="text-sm text-camargue hover:underline">
+              Tout l&apos;agenda →
+            </Link>
+          </div>
+          <div className="grid gap-2 lg:grid-cols-3">
+            {upcoming.map((event) => (
+              <EventRow key={event.id} event={event} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <TileGrid tiles={tiles} />
 
