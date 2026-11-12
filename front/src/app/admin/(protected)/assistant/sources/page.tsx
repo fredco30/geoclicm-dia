@@ -16,6 +16,7 @@ import { CrawlAllButton } from "@/components/admin/crawl-all-button";
 import { RunMultiButton } from "@/components/admin/run-multi-button";
 import { Button } from "@/components/ui/button";
 import type { AdminCrawlSource, CrawlSourceStatus } from "@/types/admin";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
@@ -136,7 +137,7 @@ export default async function CrawlSourcesPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <SearchableTable searchable={false}>
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr>
@@ -209,7 +210,7 @@ export default async function CrawlSourcesPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );

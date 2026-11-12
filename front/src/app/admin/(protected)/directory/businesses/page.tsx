@@ -5,6 +5,7 @@ import { fetchAllPages, getCurrentUser } from "@/lib/auth-server";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import type { AdminBusinessListItem } from "@/types/admin";
+import { SearchableTable } from "@/components/admin/searchable-table";
 
 const PLAN_LABELS: Record<string, { label: string; className: string }> = {
   free: { label: "Gratuit", className: "bg-slate-100 text-slate-700" },
@@ -64,7 +65,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <SearchableTable placeholder="Rechercher un commerçant (nom, catégorie, commune)…">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
               <tr>
@@ -164,7 +165,7 @@ export default async function BusinessesPage({ searchParams }: Props) {
               })}
             </tbody>
           </table>
-        </div>
+        </SearchableTable>
       )}
     </div>
   );

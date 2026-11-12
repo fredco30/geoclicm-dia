@@ -61,7 +61,7 @@ export function EventCategoriesAdmin({ initialCategories, apiBase = "/api/admin/
         <Button size="sm" onClick={beginCreate}><Plus className="h-4 w-4" /> Nouvelle catégorie</Button>
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr),360px]">
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           {categories.length === 0 ? <p className="p-8 text-center text-sm text-slate-500">Aucune catégorie.</p> : (
             <table className="w-full text-sm"><thead className="border-b bg-slate-50 text-left text-xs uppercase text-slate-600"><tr><th className="px-3 py-2">Catégorie</th><th className="px-3 py-2">Ordre</th><th className="px-3 py-2">État</th></tr></thead><tbody className="divide-y">{categories.map((category) => <tr key={category.id} onClick={() => beginEdit(category)} className={`cursor-pointer hover:bg-slate-50 ${editing?.id === category.id ? "bg-blue-50" : ""}`}><td className="px-3 py-2"><span className="mr-2 inline-block h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} /><span className="font-medium">{category.name}</span><span className="ml-2 text-xs text-slate-400">{category.icon}</span></td><td className="px-3 py-2 text-slate-600">{category.sort_order}</td><td className="px-3 py-2"><span className={category.is_active ? "text-green-700" : "text-slate-400"}>{category.is_active ? "Active" : "Masquée dans les filtres"}</span></td></tr>)}</tbody></table>
           )}
