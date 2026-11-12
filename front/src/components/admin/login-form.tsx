@@ -76,10 +76,10 @@ export function LoginForm() {
 
       <p className="text-center text-sm">
         <Link
-          href="/advertiser/mot-de-passe-oublie?from=admin"
+          href="/api/auth/recovery/"
           className="text-slate-600 hover:text-camargue hover:underline"
         >
-          Mot de passe oublié ?
+          Identifiant ou mot de passe oublié ?
         </Link>
       </p>
     </form>
