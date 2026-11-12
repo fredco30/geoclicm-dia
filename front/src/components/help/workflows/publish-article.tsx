@@ -178,13 +178,26 @@ export const PUBLISH_ARTICLE: Workflow = {
                 description:
                   "Format paysage (16/9 idéal), JPEG, PNG ou WebP. Le système la redimensionne automatiquement pour chaque écran.",
               },
+              {
+                label: "Description de l'image",
+                description:
+                  "Une phrase qui décrit la photo (« Chalutier rentrant au port à l'aube »). Lue par les lecteurs d'écran et par Google.",
+              },
+              {
+                label: "Crédit photo",
+                description: "Auteur ou source, affiché sous l'image.",
+              },
+              {
+                label: "Galerie photos",
+                description:
+                  "Ajouter des photos : elles s'affichent en fin d'article. Donnez à chacune une légende et un crédit ; la croix retire une photo de l'article.",
+              },
             ]}
           />
 
           <Warning>
             <strong>Droits</strong> : n&apos;utilisez que des photos dont vous
-            avez l&apos;autorisation, et mentionnez l&apos;auteur ou la source
-            dans le texte de l&apos;article.
+            avez l&apos;autorisation, et renseignez toujours le crédit photo.
           </Warning>
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
