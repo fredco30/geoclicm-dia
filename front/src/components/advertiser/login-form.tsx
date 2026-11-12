@@ -79,6 +79,15 @@ export function AdvertiserLoginForm() {
         {busy ? "Connexion..." : "Se connecter"}
       </Button>
 
+      <p className="text-center text-sm">
+        <Link
+          href="/advertiser/mot-de-passe-oublie"
+          className="text-slate-600 hover:text-camargue hover:underline"
+        >
+          Mot de passe oublié ?
+        </Link>
+      </p>
+
       <p className="text-center text-sm text-slate-600">
         Pas encore de compte ?{" "}
         <Link

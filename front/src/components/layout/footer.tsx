@@ -56,6 +56,7 @@ export async function Footer() {
             <ul className="space-y-1.5">
               <li><FooterLink href="/contact">Contact</FooterLink></li>
               <li><FooterLink href="/tarifs">Commerçants : nos formules</FooterLink></li>
+              <li><FooterLink href="/advertiser/login">Espace commerçant</FooterLink></li>
               <li><FooterLink href="/numeros-utiles">Numéros utiles</FooterLink></li>
               <li><FooterLink href="/demarches">Démarches</FooterLink></li>
               <li><FooterLink href="/mentions-legales">Mentions légales</FooterLink></li>
