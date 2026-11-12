@@ -21,6 +21,7 @@ from django.utils.text import slugify
 from apps.assistant.models import CrawlSource
 from apps.assistant.services.shared_crawl import ensure_source_fresh
 from apps.core.models import User
+from apps.directory.models import Business, BusinessImportCandidate
 from apps.events.event_images import generic_image_urls, select_event_image
 from apps.events.imports import (
     _absolute_http_url,
@@ -32,9 +33,6 @@ from apps.events.imports import (
     _upsert_candidate,
     commune_id,
 )
-
-from apps.directory.models import Business, BusinessImportCandidate
-
 from apps.listings.models import Listing, ListingImportCandidate
 
 from .cleaning import is_foreign_language_url, norm_text

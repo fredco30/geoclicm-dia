@@ -26,8 +26,8 @@ from apps.events.ai_extraction import (
     _call_ai,
     _content_segments,
     _parse_json_object,
-    _provider_config,
     _provenance_key,
+    _provider_config,
 )
 from apps.events.event_images import select_event_image
 from apps.events.imports import _compact_text, _geocode, _optional_float
@@ -389,6 +389,17 @@ def _locality_commune(crawl_source, locality: str) -> Commune | None:
     return crawl_source.commune if crawl_source.commune_id else None
 
 
+def _locality_names(crawl_source, commune) -> list[str]:
+    """Communes dont le nom, en suffixe d'un titre, n'est que du bruit.
+
+    La commune du contenu et celle de la source : l'annuaire d'une ville
+    suffixe toutes ses fiches de son propre nom, même pour une association
+    domiciliée dans la commune voisine.
+    """
+    source_commune = getattr(crawl_source, "commune", None)
+    return [item.name for item in (commune, source_commune) if item is not None]
+
+
 def _place_category(raw: dict, title: str) -> PlaceCategory | None:
     hint = str(raw.get("category_hint") or "").strip().casefold()
     slug = CATEGORY_HINT_SLUGS.get(hint)
@@ -437,7 +448,7 @@ def normalize_place(
     # L'identifiant source reste calculé sur le titre brut (stable d'un
     # passage à l'autre) ; seul l'affichage perd le suffixe de commune.
     raw_title = title
-    title = strip_locality_suffix(title, locality, commune.name if commune else "")
+    title = strip_locality_suffix(title, locality, *_locality_names(crawl_source, commune))
     errors = []
     if not title:
         errors.append("Titre absent")
@@ -548,7 +559,7 @@ def normalize_business(
 
     category = _business_category(raw)
     raw_name = name
-    name = strip_locality_suffix(name, locality, commune.name if commune else "")
+    name = strip_locality_suffix(name, locality, *_locality_names(crawl_source, commune))
     errors = []
     if not name:
         errors.append("Nom absent")

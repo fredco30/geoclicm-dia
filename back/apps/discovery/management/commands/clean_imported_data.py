@@ -20,6 +20,7 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from apps.core.models import Commune
 from apps.directory.models import Business
 from apps.discovery.cleaning import is_foreign_language_url, norm_text, strip_locality_suffix
 from apps.discovery.models import Place
@@ -57,10 +58,11 @@ class Command(BaseCommand):
 
     def _clean_business_names(self) -> int:
         count = 0
-        for business in Business.objects.select_related("commune").order_by("name"):
-            cleaned = strip_locality_suffix(
-                business.name, business.city, business.commune.name if business.commune else ""
-            )
+        # Toutes les communes du territoire : l'annuaire d'une ville suffixe
+        # ses fiches de son propre nom, même pour une association voisine.
+        communes = list(Commune.objects.values_list("name", flat=True))
+        for business in Business.objects.order_by("name"):
+            cleaned = strip_locality_suffix(business.name, business.city, *communes)
             if cleaned != business.name:
                 self.stdout.write(f"[nom] {business.name}  →  {cleaned}")
                 business.name = cleaned
