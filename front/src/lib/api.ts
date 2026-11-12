@@ -36,6 +36,7 @@ import type {
 
 import { flash } from "@/lib/flash";
 import { revalidateAfterWrite } from "@/lib/revalidate-actions";
+import { tagsForWrite } from "@/lib/revalidate-rules";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
 
@@ -100,7 +101,15 @@ export async function apiFetch(
   // publiques concernées (sans bloquer ni faire échouer l'appel).
   const method = (init.method ?? "GET").toUpperCase();
   if (res.ok && method !== "GET" && typeof window !== "undefined") {
-    revalidateAfterWrite(path.split("?")[0]).catch(() => {});
+    // La Server Action est attendue AVANT de rendre la main : lancée en
+    // parallèle, elle annulait la navigation qui suit l'écriture (ex. la
+    // connexion restait bloquée sur « Connexion... », la redirection vers
+    // /admin étant interrompue). Elle n'est appelée que s'il y a des pages
+    // publiques à rafraîchir.
+    const apiPath = path.split("?")[0];
+    if (tagsForWrite(apiPath).length > 0) {
+      await revalidateAfterWrite(apiPath).catch(() => {});
+    }
     // Confirmation visible dans le back-office. Un POST ne confirme que les
     // créations (201) : les actions (IA, lancement d'import, validation)
     // renvoient 200 et affichent déjà leur propre message.
