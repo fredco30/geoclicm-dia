@@ -13,6 +13,7 @@ import type {
   AdminBusinessCategory,
   AdminBusinessCategoryPayload,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   category?: AdminBusinessCategory; // undefined → mode création
@@ -108,7 +109,7 @@ export function BusinessCategoryForm({ category, parents }: Props) {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         router.push("/admin/directory/categories");
@@ -145,7 +146,7 @@ export function BusinessCategoryForm({ category, parents }: Props) {
       } else {
         const data = await res.json().catch(() => ({}));
         setError(
-          `Suppression impossible : ${JSON.stringify(data, null, 2)}\n\n(une catégorie qui a des sous-catégories ou des commerçants ne peut pas être supprimée)`,
+          `Suppression impossible : ${formatApiError(data)}\n\n(une catégorie qui a des sous-catégories ou des commerçants ne peut pas être supprimée)`,
         );
       }
     });

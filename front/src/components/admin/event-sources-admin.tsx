@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api";
 import type { Commune, EventCategory, EventSource } from "@/types/api";
 import type { AdminCrawlSource } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Draft = {
   label: string;
@@ -139,7 +140,7 @@ export function EventSourcesAdmin({
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        setMessage(payload?.detail ?? JSON.stringify(payload) ?? "Action impossible");
+        setMessage(formatApiError(payload, "Action impossible"));
         return;
       }
       if (path.endsWith("/run/")) {

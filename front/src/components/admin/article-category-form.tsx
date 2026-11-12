@@ -14,6 +14,7 @@ import type {
   AdminArticleCategory,
   AdminArticleCategoryPayload,
 } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   category?: AdminArticleCategory; // undefined → création
@@ -94,7 +95,7 @@ export function ArticleCategoryForm({ category }: Props) {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         router.push("/admin/articles/categories");

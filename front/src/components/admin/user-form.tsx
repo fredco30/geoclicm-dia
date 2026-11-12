@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { AdminUser } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   user?: AdminUser; // undefined → mode création
@@ -79,7 +80,7 @@ export function UserForm({ user, currentUserId, currentUserIsSuperuser }: Props)
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         router.push("/admin/settings/users");

@@ -20,6 +20,7 @@ import type {
   EventDetail,
   EventOccurrenceStatus,
 } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   event?: EventDetail;
@@ -243,7 +244,7 @@ export function EventForm({
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
           setError(
-            payload ? JSON.stringify(payload, null, 2) : "Enregistrement impossible.",
+            formatApiError(payload, "Enregistrement impossible."),
           );
           return;
         }
@@ -293,7 +294,7 @@ export function EventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="sticky top-0 z-10 -mx-4 -mt-6 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
+      <div className="sticky top-14 z-10 -mx-4 -mt-4 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:top-0 sm:-mx-6 sm:-mt-6 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <Link href="/admin/agenda" className="text-sm text-slate-600 hover:text-camargue">

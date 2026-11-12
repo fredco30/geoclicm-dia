@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/api";
+import { formatApiError } from "@/lib/api-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,13 +45,7 @@ export function AdvertiserRegisterForm() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        // Format des erreurs DRF : { field: ["message"] }
-        const messages: string[] = [];
-        for (const [field, msgs] of Object.entries(data)) {
-          const arr = Array.isArray(msgs) ? msgs : [String(msgs)];
-          messages.push(`${field} : ${arr.join(" ")}`);
-        }
-        setError(messages.join("\n") || "Inscription impossible.");
+        setError(formatApiError(data, "Inscription impossible."));
         setBusy(false);
         return;
       }

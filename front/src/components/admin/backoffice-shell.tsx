@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 
+import { FlashToast } from "@/components/admin/flash-toast";
 import { LogoutButton } from "@/components/admin/logout-button";
 import { BrandMark } from "@/components/layout/brand-mark";
 
@@ -164,6 +165,7 @@ export function BackofficeShell({
 
   return (
     <div className="flex min-h-screen flex-col sm:flex-row">
+      <FlashToast />
       {/* Mobile : barre supérieure */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-3 sm:hidden">
         <Link href={brandHref} className="flex items-center gap-2 text-camargue">

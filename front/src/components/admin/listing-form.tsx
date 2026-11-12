@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { Commune, ListingCategory, ListingDetail } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 type Payload = {
   title: string;
@@ -106,7 +107,7 @@ export function ListingForm({
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         router.push("/admin/annonces");
@@ -135,7 +136,7 @@ export function ListingForm({
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
-        setError(`Suppression impossible : ${JSON.stringify(data, null, 2)}`);
+        setError(`Suppression impossible : ${formatApiError(data)}`);
       }
     });
   };

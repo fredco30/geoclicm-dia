@@ -15,6 +15,7 @@ import { TileIconPicker } from "@/components/admin/tile-icon-picker";
 
 import type { Commune } from "@/types/api";
 import type { AdminTile, AdminTilePayload, TileColorPreset, TileKind, TileModuleKey } from "@/types/admin";
+import { formatApiError } from "@/lib/api-errors";
 
 type Props = {
   tile?: AdminTile; // undefined → création
@@ -85,7 +86,7 @@ export function TileForm({ tile, rootTiles, communes }: Props) {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setError(JSON.stringify(data, null, 2));
+          setError(formatApiError(data));
           return;
         }
         const saved = (await res.json()) as { id: number };

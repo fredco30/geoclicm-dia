@@ -11,6 +11,7 @@ import type {
   BusinessImportCandidate,
   Commune,
 } from "@/types/api";
+import { formatApiError } from "@/lib/api-errors";
 
 function csrf() {
   const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
@@ -146,7 +147,7 @@ export function BusinessImportsAdmin({
       );
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        setMessage(payload?.detail ?? JSON.stringify(payload) ?? "Action impossible");
+        setMessage(formatApiError(payload, "Action impossible"));
         return;
       }
       setRows((current) => current.filter((item) => item.id !== row.id));

@@ -28,11 +28,16 @@ Dans la sidebar à gauche, clique **« Nouvel article »** (ou le bouton vert en
 |---|---|
 | **Titre** | La phrase qui résume l'article. Court et accrocheur (max 250 caractères). Ex: *« Le Grau-du-Roi inaugure son nouveau port de plaisance »* |
 | **Chapeau** | L'accroche de 1 à 2 phrases qui apparaît sous le titre. **Maximum 300 caractères** (un compteur s'affiche). C'est ce qui donne envie de cliquer. |
-| **Corps** | Le texte complet de l'article, en **markdown** (voir section ci-dessous). |
+| **Corps** | Le texte complet de l'article. La mise en forme se fait avec les boutons au-dessus de la zone d'écriture (voir section ci-dessous). |
 
-### 3. Le markdown — c'est simple
+### 3. La mise en forme — c'est simple
 
-Pour mettre la mise en forme dans le corps de l'article :
+Sélectionne un passage, puis clique sur un bouton de la barre au-dessus de la
+zone d'écriture : **Titre**, **Sous-titre**, **Gras**, **Italique**, **Liste**,
+**Citation**, **Lien**, **Image**. Le bouton écrit les symboles à ta place.
+
+Pour mémoire, voici ce que les boutons écrivent (le « markdown ») — tu peux
+aussi le taper directement :
 
 | Ce que tu veux | Comment l'écrire |
 |---|---|
@@ -65,22 +70,28 @@ Dans la sidebar à droite, section **« Catégorisation »** :
 - **Commune** (facultatif) : si l'article concerne une commune précise du territoire.
 - **Type** : Reportage, Portrait, Brève, Tribune libre, Dossier.
 
-### 6. Publier
+### 6. Enregistrer et publier
 
-Dans la sidebar **« Publication »** :
+Deux boutons en haut à droite :
 
-| Statut | Quoi |
+| Bouton | Effet |
 |---|---|
-| **Brouillon** | L'article est sauvegardé mais pas visible publiquement. À utiliser pendant l'écriture. |
-| **Programmé** | (À venir Sprint 2) Publication automatique à une date future. |
-| **Publié** | L'article est visible immédiatement sur le site. |
-| **Archivé** | Retiré du site sans suppression définitive. |
+| **Enregistrer le brouillon** | L'article est sauvegardé mais invisible sur le site. À utiliser pendant l'écriture, autant de fois que tu veux. |
+| **Publier** | L'article est enregistré **et** mis en ligne immédiatement ✨ |
+
+Un message **« Modifications enregistrées »** apparaît en haut de l'écran à
+chaque sauvegarde réussie. Si un champ pose problème, un encadré rouge indique
+lequel (ex. *« Catégorie : Ce champ est obligatoire. »*).
+
+Une fois l'article publié, le bouton devient **« Mettre à jour »**, et le bloc
+**« Publication »** de la sidebar propose un **Statut** pour le retirer du site :
+**Brouillon** (retour en écriture) ou **Archivé** (retiré sans suppression).
 
 Coche **« À la une »** si l'article doit apparaître en hero sur la page d'accueil.
 
-### 7. Sauvegarder
-
-Clique **« Enregistrer »** en haut à droite. C'est en ligne ✨
+> ⚠️ Si tu fermes l'onglet avec des modifications non enregistrées, le
+> navigateur te demande confirmation. En revanche, cliquer sur un autre menu du
+> back-office ne prévient pas : enregistre le brouillon avant de changer de page.
 
 ---
 

@@ -9,6 +9,7 @@ import { DEFAULT_SITE_SETTINGS, type SiteSettings } from "@/lib/site-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatApiError } from "@/lib/api-errors";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -108,7 +109,7 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettings }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setMessage({ ok: false, text: `Enregistrement impossible : ${JSON.stringify(data)}` });
+        setMessage({ ok: false, text: `Enregistrement impossible : ${formatApiError(data)}` });
         return;
       }
       setLogoFile(null);
