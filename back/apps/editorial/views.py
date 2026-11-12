@@ -63,13 +63,17 @@ class ArticleViewSet(viewsets.ModelViewSet):
             Article.objects.select_related("category", "commune", "author", "sponsor")
             .prefetch_related("tags", "gallery")
         )
-        # Lecture anonyme : seulement publiés et avec date passée
+        # Lecture anonyme : seulement publiés et avec date passée. Une fiche
+        # archivée reste consultable par son adresse (liens partagés, pages
+        # indexées), mais n'apparaît plus dans les listes.
         user = self.request.user
         if not user.is_authenticated or not getattr(user, "can_publish", False):
-            qs = qs.filter(
-                status=Article.Status.PUBLISHED,
-                published_at__lte=timezone.now(),
+            visible = (
+                (Article.Status.PUBLISHED, Article.Status.ARCHIVED)
+                if self.action == "retrieve"
+                else (Article.Status.PUBLISHED,)
             )
+            qs = qs.filter(status__in=visible, published_at__lte=timezone.now())
         return qs
 
     def get_serializer_class(self):

@@ -104,6 +104,22 @@ export default async function ArticlePage({ params }: Props) {
         </Link>
       </nav>
 
+      {article.status === "archived" ? (
+        <p
+          role="note"
+          className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200"
+        >
+          <strong>Article archivé.</strong> Publié
+          {article.published_at ? ` le ${formatDate(article.published_at)}` : ""}, il
+          est conservé pour mémoire : certaines informations peuvent ne plus être
+          à jour.{" "}
+          <Link href="/articles" className="underline hover:text-terracotta">
+            Voir les actualités récentes
+          </Link>
+          .
+        </p>
+      ) : null}
+
       {/* En-tête */}
       <header className="mb-10">
         <div className="mb-4 flex flex-wrap items-center gap-3 text-xs">

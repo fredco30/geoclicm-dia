@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Save, Send, Trash2, Eye } from "lucide-react";
@@ -108,6 +108,20 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  // Ctrl+S (Cmd+S sur Mac) : même effet que la touche Entrée — enregistre
+  // sans jamais publier un brouillon.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        formRef.current?.requestSubmit();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
@@ -201,6 +215,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
 
   return (
     <form
+      ref={formRef}
       onSubmit={(e) => {
         // Entrée dans un champ : enregistre sans changer le statut (ne
         // publie jamais un brouillon par accident).
@@ -370,9 +385,16 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                   d&apos;enregistrer.
                 </p>
               ) : null}
-              {savedStatus === "published" && form.status !== "published" ? (
+              {form.status === "draft" ? (
                 <p className="text-xs text-amber-700">
                   L&apos;article sera retiré du site à l&apos;enregistrement.
+                </p>
+              ) : null}
+              {form.status === "archived" ? (
+                <p className="text-xs text-slate-600">
+                  Archivé : l&apos;article quitte l&apos;accueil et les listes,
+                  mais son adresse reste consultable, avec une mention
+                  « Article archivé ».
                 </p>
               ) : null}
             </div>

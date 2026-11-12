@@ -18,6 +18,7 @@ import {
 import {
   Done,
   FieldList,
+  Kbd,
   KeyTip,
   Path,
   SubSteps,
@@ -240,10 +241,15 @@ export const PUBLISH_ARTICLE: Workflow = {
                 refaire si vous repérez une coquille 3 jours après.
               </>,
               <>
-                Pour retirer un article sans le supprimer, passez son{" "}
-                <UI>Statut</UI> à <UI>Archivé</UI> (ou <UI>Brouillon</UI>) puis{" "}
-                <UI>Mettre à jour</UI> : il disparaît du site mais reste dans
-                votre liste.
+                <UI>Archivé</UI> (champ <UI>Statut</UI>, puis{" "}
+                <UI>Mettre à jour</UI>) retire l&apos;article de l&apos;accueil,
+                des listes et de sa rubrique, mais son adresse reste
+                consultable avec une mention « Article archivé » : les liens
+                déjà partagés continuent de fonctionner.
+              </>,
+              <>
+                <UI>Brouillon</UI> le retire complètement du site, pour le
+                retravailler.
               </>,
               <>
                 <UI>Supprimer</UI> est définitif : l&apos;article et son adresse
@@ -252,9 +258,11 @@ export const PUBLISH_ARTICLE: Workflow = {
             ]}
           />
           <KeyTip>
-            Si vous fermez l&apos;onglet avec des modifications non
-            enregistrées, le navigateur vous demande confirmation. Pensez tout
-            de même à enregistrer avant de changer de menu.
+            <strong>Raccourci :</strong> <Kbd>Ctrl</Kbd> + <Kbd>S</Kbd> (ou{" "}
+            <Kbd>Cmd</Kbd> + <Kbd>S</Kbd> sur Mac) enregistre sans cliquer —
+            un brouillon reste un brouillon. Si vous fermez l&apos;onglet avec
+            des modifications non enregistrées, le navigateur vous demande
+            confirmation.
           </KeyTip>
         </>
       ),
