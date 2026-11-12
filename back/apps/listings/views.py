@@ -101,6 +101,7 @@ class ListingImportCandidateAdminViewSet(viewsets.ModelViewSet):
                 status__in=(
                     ListingImportCandidate.Status.PENDING,
                     ListingImportCandidate.Status.INVALID,
+                    ListingImportCandidate.Status.NEEDS_REVIEW,
                 )
             )
         if self.action == "list" and "limit" in self.request.query_params:
@@ -111,6 +112,36 @@ class ListingImportCandidateAdminViewSet(viewsets.ModelViewSet):
                 limit, offset = 50, 0
             qs = qs[offset : offset + limit]
         return qs
+
+    @action(detail=True, methods=["post"], url_path="confirm-validity")
+    def confirm_validity(self, request, pk=None):
+        from copy import deepcopy
+
+        from django.db import transaction
+
+        from apps.discovery.review import lock_identity, review_candidate
+        from apps.discovery.validity import validity
+
+        if request.data.get("confirmed") is not True:
+            return Response({"detail": "Confirmer explicitement la vérification de la source."}, status=400)
+        with transaction.atomic():
+            candidate = self.get_object()
+            lock_identity(candidate)
+            candidate.refresh_from_db()
+            if candidate.status in {"imported", "rejected"}:
+                return Response({"detail": "Ce candidat est déjà traité."}, status=400)
+            if validity(candidate).state == "expired":
+                return Response({"detail": "La période prouvée est terminée : corriger la source avant validation."}, status=400)
+            payload = deepcopy(candidate.raw_payload or {})
+            review = payload.setdefault("review", {})
+            review["validity_confirmation"] = {
+                "checked_at": timezone.now().isoformat(), "user_id": request.user.pk,
+                "source_url": candidate.source_url,
+            }
+            candidate.raw_payload = payload
+            candidate.save(update_fields=["raw_payload"])
+            candidate = review_candidate(candidate)
+        return Response(self.get_serializer(candidate).data)
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { ImportReviewNote } from "@/components/admin/import-review-note";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { Check, CheckSquare, ExternalLink, Square, X } from "lucide-react";
@@ -34,6 +35,7 @@ function schedule(row: EventImportCandidate) {
 // Un évènement « fiable » a commune + catégorie + preuve vérifiée + une date
 // de fin future (on n'auto-valide jamais un évènement passé ou non daté).
 function isReliable(row: EventImportCandidate) {
+  if (row.review?.validity.state !== "current") return false;
   if (
     row.commune == null ||
     row.category == null ||
@@ -159,19 +161,8 @@ export function EventImportsAdmin({
       }
       const imported: number = payload?.imported ?? 0;
       const errors: string[] = payload?.errors ?? [];
-      setRows((current) =>
-        current.filter(
-          (row) =>
-            !(
-              selected.has(row.id) &&
-              row.status === "pending" &&
-              row.commune &&
-              row.category &&
-              row.starts_at &&
-              row.ends_at
-            ),
-        ),
-      );
+      const importedIds = new Set<number>(payload?.imported_ids ?? []);
+      setRows((current) => current.filter((row) => !importedIds.has(row.id)));
       setSelected(new Set());
       setMessage(
         `${imported} évènement(s) publié(s).` +
@@ -194,6 +185,7 @@ export function EventImportsAdmin({
           {[
             ["pending", "À valider"],
             ["invalid", "Incomplets"],
+            ["duplicate", "Doublons"],
             ["expired", "Expirés"],
           ].map(([value, label]) => (
             <Link
@@ -317,12 +309,13 @@ export function EventImportsAdmin({
                     Preuve détectée : « {row.extraction_evidence[0]} »
                   </blockquote>
                 ) : null}
-                {row.validation_errors.length ? (
+                <ImportReviewNote review={row.review} />
+              {row.validation_errors.length ? (
                   <p className="mt-3 rounded bg-amber-50 p-2 text-xs text-amber-900">
                     {row.validation_errors.join(" · ")}
                   </p>
                 ) : null}
-                {row.status !== "expired" ? (
+                {!["expired", "duplicate"].includes(row.status) ? (
                   <>
                     <div className="mt-4 flex flex-wrap items-center gap-2">
                       <Select

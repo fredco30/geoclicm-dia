@@ -911,3 +911,10 @@ Le correctif récupération avait été adapté sur le serveur hors Git. Son
 intégration est suivie dans [27-recuperation-compte.md](27-recuperation-compte.md).
 Lire son état déployé avant de déployer ; ne pas réappliquer une ancienne
 sauvegarde sur main. L'audit extractions demandé séparément reste en lecture seule.
+
+## 12 novembre 2026 — qualité des extractions
+
+Lot distinct du correctif mots de passe, basé sur main GitHub synchronisé.
+Voir [28-qualite-extractions.md](28-qualite-extractions.md) pour le service commun,
+les tests, le bilan READ ONLY et l’état réellement déployé. Rien n’est supprimé
+ni publié automatiquement ; ne pas confondre propositions et reclassement appliqué.

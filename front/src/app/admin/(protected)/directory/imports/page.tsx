@@ -3,7 +3,7 @@ import { getCookieHeader } from "@/lib/auth-server";
 import type { BusinessCategory, BusinessImportCandidate, Commune } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8002";
-const ALLOWED_STATUSES = new Set(["pending", "invalid"]);
+const ALLOWED_STATUSES = new Set(["pending", "invalid", "duplicate"]);
 const PAGE_SIZE = 50;
 
 async function get<T>(path: string): Promise<T> {

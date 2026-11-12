@@ -358,6 +358,7 @@ class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
             )
         ids = [i for i in ids if isinstance(i, int)][:500]
         imported, skipped, errors = 0, 0, []
+        imported_ids = []
         for candidate in EventImportCandidate.objects.filter(
             pk__in=ids, status=EventImportCandidate.Status.PENDING
         ):
@@ -372,8 +373,9 @@ class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
             try:
                 import_candidate(candidate, publish=True)
                 imported += 1
+                imported_ids.append(candidate.pk)
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{candidate.title}: {str(exc)[:120]}")
         return Response(
-            {"imported": imported, "skipped": skipped, "errors": errors[:20]}
+            {"imported": imported, "imported_ids": imported_ids, "skipped": skipped, "errors": errors[:20]}
         )

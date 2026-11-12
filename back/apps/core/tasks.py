@@ -44,3 +44,11 @@ def send_account_recovery(email):
         except Exception:
             # Avoid logging recipient, username, token, password or SMTP credentials.
             logger.error("Account recovery email delivery failed")
+
+
+@shared_task(name="core.review_import_candidates", ignore_result=True)
+def review_import_candidates():
+    from apps.discovery.review import review_all
+
+    changes = review_all(apply=True)
+    logger.info("Import candidate review: %d status changes", len(changes))

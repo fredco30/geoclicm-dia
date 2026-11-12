@@ -1,4 +1,5 @@
 "use client";
+import { ImportReviewNote } from "@/components/admin/import-review-note";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Check, ExternalLink, X } from "lucide-react";
@@ -36,6 +37,19 @@ export function ListingImportsAdmin({
   }
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const confirmValidity = (row: ListingImportCandidate) => startTransition(async () => {
+    let token = csrf();
+    if (!token) { await apiFetch("/api/auth/csrf/"); token = csrf(); }
+    const response = await apiFetch(`/api/admin/listing-imports/${row.id}/confirm-validity/`, {
+      method: "POST", headers: token ? { "X-CSRFToken": token } : {},
+      body: JSON.stringify({ confirmed: true }),
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) { setMessage(formatApiError(payload, "Confirmation impossible")); return; }
+    setRows((current) => current.map((item) => item.id === row.id ? payload : item));
+    setMessage("Actualité confirmée pour 30 jours. L'approbation reste nécessaire.");
+  });
+
   const update = (id: number, field: "commune" | "category", value: string) =>
     setRows((current) =>
       current.map((row) =>
@@ -84,6 +98,9 @@ export function ListingImportsAdmin({
           {[
             ["pending", "À valider"],
             ["invalid", "Incomplets"],
+            ["duplicate", "Doublons"],
+            ["expired", "Expirées"],
+            ["needs_review", "Actualité à confirmer"],
           ].map(([value, label]) => (
             <Link
               key={value}
@@ -139,6 +156,13 @@ export function ListingImportsAdmin({
                   Preuve détectée : « {row.extraction_evidence[0]} »
                 </blockquote>
               ) : null}
+              <ImportReviewNote review={row.review} />
+              {row.review?.validity.state === "needs_review" && !["duplicate", "rejected", "imported"].includes(row.status) ? (
+                <Button className="mt-3" variant="secondary" disabled={pending} onClick={() => confirmValidity(row)}>
+                  J’ai vérifié la source : l’offre est toujours ouverte
+                </Button>
+              ) : null}
+
               {row.validation_errors.length ? (
                 <p className="mt-3 rounded bg-amber-50 p-2 text-xs text-amber-900">
                   {row.validation_errors.join(" · ")}
@@ -172,10 +196,10 @@ export function ListingImportsAdmin({
                   ))}
                 </Select>
                 <div className="ml-auto flex gap-2">
-                  <Button variant="secondary" disabled={pending} onClick={() => act(row, "reject")}>
+                  <Button variant="secondary" disabled={pending || ["expired", "duplicate"].includes(row.status)} onClick={() => act(row, "reject")}>
                     <X className="h-4 w-4" /> Rejeter
                   </Button>
-                  <Button disabled={pending || !row.category} onClick={() => act(row, "approve")}>
+                  <Button disabled={pending || !row.category || ["expired", "duplicate"].includes(row.status) || row.review?.validity.state !== "current"} onClick={() => act(row, "approve")}>
                     <Check className="h-4 w-4" /> Approuver et publier
                   </Button>
                 </div>

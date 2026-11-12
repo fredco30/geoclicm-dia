@@ -168,6 +168,8 @@ class ListingImportCandidate(models.Model):
         REJECTED = "rejected", "Rejetée"
         DUPLICATE = "duplicate", "Doublon"
         INVALID = "invalid", "Incomplète"
+        EXPIRED = "expired", "Expirée"
+        NEEDS_REVIEW = "needs_review", "Actualité à confirmer"
 
     crawl_source = models.ForeignKey(
         "assistant.CrawlSource",

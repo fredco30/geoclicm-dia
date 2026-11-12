@@ -56,7 +56,7 @@ def pending_counts(request):
 
     def count(model) -> int:
         return model.objects.filter(
-            status__in=(model.Status.PENDING, model.Status.INVALID)
+            status__in=(model.Status.PENDING, model.Status.INVALID, "needs_review")
         ).count()
 
     return Response(
