@@ -230,6 +230,13 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
             "meta_title", "meta_description",
         )
         read_only_fields = ("id",)
+        # Le formulaire n'expose pas l'adresse web : elle est générée depuis
+        # le titre (Article.save). Un brouillon peut n'avoir qu'un titre ; le
+        # corps n'est exigé qu'à la publication (cf. validate).
+        extra_kwargs = {
+            "slug": {"required": False, "allow_blank": True},
+            "body": {"required": False, "allow_blank": True},
+        }
 
     def validate_chapeau(self, value: str) -> str:
         if value and len(value) > 300:
@@ -238,7 +245,9 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         # Si on tente de publier sans corps, on refuse
-        if data.get("status") == Article.Status.PUBLISHED and not data.get("body", "").strip():
+        # En modification partielle, le corps non renvoyé est celui déjà en base.
+        body = data.get("body", self.instance.body if self.instance else "")
+        if data.get("status") == Article.Status.PUBLISHED and not (body or "").strip():
             raise serializers.ValidationError(
                 {"body": "Un article publié doit avoir un corps non vide."}
             )

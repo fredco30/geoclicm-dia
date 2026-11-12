@@ -189,7 +189,7 @@ class Article(models.Model):
 
     def save(self, *args, **kwargs) -> None:
         if not self.slug:
-            self.slug = slugify(self.title)[:280]
+            self.slug = self._unique_slug()
         # Auto-set published_at à la première publication
         if self.status == self.Status.PUBLISHED and self.published_at is None:
             self.published_at = timezone.now()
@@ -197,6 +197,14 @@ class Article(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("articles:detail", kwargs={"slug": self.slug})
+
+    def _unique_slug(self) -> str:
+        """Adresse web tirée du titre, suffixée (-2, -3…) si déjà prise."""
+        base = slugify(self.title)[:270] or "article"
+        slug, index = base, 2
+        while Article.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+            slug, index = f"{base}-{index}", index + 1
+        return slug
 
     @property
     def is_published(self) -> bool:
