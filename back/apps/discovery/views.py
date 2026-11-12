@@ -33,7 +33,9 @@ class PlacePublicViewSet(viewsets.ReadOnlyModelViewSet):
             qs = qs.filter(commune__slug=params["commune"])
         if params.get("featured") in ("true", "1"):
             qs = qs.filter(is_featured=True)
-        return qs
+        # Départage par id : deux lieux de même titre changeaient de page d'une
+        # requête à l'autre (un lieu en double, un autre absent de la liste).
+        return qs.order_by("sort_order", "-is_featured", "title", "id")
 
     def get_serializer_class(self):
         return PlaceListSerializer if self.action == "list" else PlaceDetailSerializer

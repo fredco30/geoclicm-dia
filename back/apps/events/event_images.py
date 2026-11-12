@@ -37,6 +37,24 @@ def _first_url(value: object) -> str:
     return ""
 
 
+# Pictogrammes et habillage du site source : jamais une image de contenu.
+# Ex. réel : …/wp-content/themes/otlgm/images/type-pdf.png pris pour la photo
+# d'un marché parce qu'il était dans le même bloc que le titre.
+_DECORATIVE_PATH = re.compile(r"/(themes?|plugins|wp-includes|assets/icons?|static/icons?)/", re.I)
+_DECORATIVE_NAME = re.compile(
+    r"(^|[-_.])(type|picto|pictogramme|icon|icone|icons|logo|sprite|placeholder|avatar|flag|drapeau)([-_.]|$)",
+    re.I,
+)
+
+
+def is_decorative_image_url(url: str) -> bool:
+    path = urlparse(url or "").path
+    filename = path.rsplit("/", 1)[-1]
+    if filename.casefold().endswith((".svg", ".gif", ".ico")):
+        return True
+    return bool(_DECORATIVE_PATH.search(path) or _DECORATIVE_NAME.search(filename))
+
+
 def generic_image_urls(crawl_source) -> set[str]:
     """Repère les OG manifestement globaux sans liste de domaines codée en dur."""
     pages = list(
@@ -81,7 +99,7 @@ def select_event_image(
     generic_urls = generic_urls or set()
     if raw_json_ld := _first_url(json_ld_image):
         url = urljoin(page.final_url or page.canonical_url, raw_json_ld)
-        if url not in generic_urls:
+        if url not in generic_urls and not is_decorative_image_url(url):
             return EventImageSelection(url, "json_ld_event", reason="Event.image")
 
     if not page.raw_html_gzip:
@@ -93,7 +111,7 @@ def select_event_image(
     candidates: list[tuple[int, int, str, str]] = []
     for order, image in enumerate(soup.find_all("img")):
         url = _image_url(image, page_url)
-        if not url or url in generic_urls:
+        if not url or url in generic_urls or is_decorative_image_url(url):
             continue
         descriptor = _normalized(
             " ".join(
@@ -146,6 +164,6 @@ def select_event_image(
 
     og = soup.find("meta", attrs={"property": "og:image"})
     og_url = urljoin(page_url, og.get("content")) if og and og.get("content") else ""
-    if og_url and og_url not in generic_urls:
+    if og_url and og_url not in generic_urls and not is_decorative_image_url(og_url):
         return EventImageSelection(og_url, "og_image", reason="OG non générique")
     return EventImageSelection(reason="Aucune image spécifique fiable")

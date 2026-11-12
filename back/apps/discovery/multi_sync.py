@@ -37,6 +37,7 @@ from apps.directory.models import Business, BusinessImportCandidate
 
 from apps.listings.models import Listing, ListingImportCandidate
 
+from .cleaning import is_foreign_language_url, norm_text
 from .models import Place, PlaceImportCandidate
 from .multi_extraction import (
     extract_multi,
@@ -308,6 +309,59 @@ def import_place_candidate(
     return place
 
 
+def _place_already_known(data: dict, *, exclude_pk: int | None) -> bool:
+    """Même lieu déjà proposé ou publié (autre rubrique du site, autre source).
+
+    Un site officiel range souvent une même fiche sous plusieurs rubriques
+    (…/experience-en-mer/x et …/loisirs-et-detente/x) : chaque URL créait un
+    candidat, puis un lieu en double à la validation en masse.
+    """
+    others = PlaceImportCandidate.objects.filter(
+        fingerprint=data["fingerprint"],
+        status__in=(
+            PlaceImportCandidate.Status.PENDING,
+            PlaceImportCandidate.Status.IMPORTED,
+        ),
+    )
+    if exclude_pk is not None:
+        others = others.exclude(pk=exclude_pk)
+    if others.exists():
+        return True
+    commune = data.get("commune")
+    if commune is None:
+        return False
+    wanted = norm_text(data["title"])
+    return any(
+        norm_text(title) == wanted
+        for title in Place.objects.filter(commune=commune)
+        .exclude(status=Place.Status.ARCHIVED)
+        .values_list("title", flat=True)
+    )
+
+
+def _business_already_known(data: dict, *, exclude_pk: int | None) -> bool:
+    """Même commerce déjà proposé ou présent dans l'annuaire (cf. lieux)."""
+    others = BusinessImportCandidate.objects.filter(
+        fingerprint=data["fingerprint"],
+        status__in=(
+            BusinessImportCandidate.Status.PENDING,
+            BusinessImportCandidate.Status.IMPORTED,
+        ),
+    )
+    if exclude_pk is not None:
+        others = others.exclude(pk=exclude_pk)
+    if others.exists():
+        return True
+    commune = data.get("commune")
+    if commune is None:
+        return False
+    wanted = norm_text(data["name"])
+    return any(
+        norm_text(name) == wanted
+        for name in Business.objects.filter(commune=commune).values_list("name", flat=True)
+    )
+
+
 def _upsert_place_candidate(
     crawl_source: CrawlSource, data: dict
 ) -> tuple[PlaceImportCandidate, bool, bool]:
@@ -322,6 +376,8 @@ def _upsert_place_candidate(
         if data["validation_errors"]
         else PlaceImportCandidate.Status.PENDING
     )
+    if _place_already_known(data, exclude_pk=existing.pk if existing else None):
+        status = PlaceImportCandidate.Status.DUPLICATE
     candidate, _ = PlaceImportCandidate.objects.update_or_create(
         crawl_source=crawl_source,
         source_uid=data["source_uid"],
@@ -415,6 +471,8 @@ def _upsert_business_candidate(
         if data["validation_errors"]
         else BusinessImportCandidate.Status.PENDING
     )
+    if _business_already_known(data, exclude_pk=existing.pk if existing else None):
+        status = BusinessImportCandidate.Status.DUPLICATE
     candidate, _ = BusinessImportCandidate.objects.update_or_create(
         crawl_source=crawl_source,
         source_uid=data["source_uid"],
@@ -562,6 +620,10 @@ def source_page_urls(crawl_source: CrawlSource, *, short_first: bool = False) ->
         page
         for page in _dedup_canonical(_crawl_pages(crawl_source))
         if len(page.cleaned_text or "") >= 200
+        # Versions traduites (/en/, /es/…) : mêmes contenus qu'en français,
+        # elles créaient des doublons dans une autre langue. Elles restent
+        # dans le corpus de l'assistant.
+        and not is_foreign_language_url(page.final_url or page.canonical_url)
     ]
     if short_first:
         pages.sort(key=lambda page: len(page.cleaned_text or ""))
@@ -652,6 +714,15 @@ def _route_results(
     """Route les sorties IA vers les boites Agenda, Decouvrir et Commercants."""
     commune = crawl_source.commune
     agenda_source = _agenda_event_source(crawl_source)
+    # Garde commune aux deux points d'entrée (lot de pages et passe complète).
+    results = {
+        key: [
+            raw
+            for raw in items
+            if not is_foreign_language_url(str(raw.get("source_page_url") or ""))
+        ]
+        for key, items in results.items()
+    }
     summary = {
         "source": crawl_source.label,
         "events": 0,

@@ -32,6 +32,7 @@ from apps.events.ai_extraction import (
 from apps.events.event_images import select_event_image
 from apps.events.imports import _compact_text, _geocode, _optional_float
 
+from .cleaning import strip_locality_suffix
 from .models import PlaceCategory
 
 logger = logging.getLogger(__name__)
@@ -433,6 +434,10 @@ def normalize_place(
                 verified_evidence.append(snippet)
 
     category = _place_category(raw, title)
+    # L'identifiant source reste calculé sur le titre brut (stable d'un
+    # passage à l'autre) ; seul l'affichage perd le suffixe de commune.
+    raw_title = title
+    title = strip_locality_suffix(title, locality, commune.name if commune else "")
     errors = []
     if not title:
         errors.append("Titre absent")
@@ -445,7 +450,7 @@ def normalize_place(
     if not verified_evidence:
         errors.append("Preuve textuelle IA non vérifiable dans la page")
 
-    uid_basis = f"{page_url}|{slugify(title)}"
+    uid_basis = f"{page_url}|{slugify(raw_title)}"
     source_uid = hashlib.sha256(uid_basis.encode()).hexdigest()[:48]
     # Dedup par titre normalise + localite normalisee : robuste aux variantes
     # de nom et aux traductions d un meme lieu, sans dependre de la resolution
@@ -542,6 +547,8 @@ def normalize_business(
                 verified_evidence.append(snippet)
 
     category = _business_category(raw)
+    raw_name = name
+    name = strip_locality_suffix(name, locality, commune.name if commune else "")
     errors = []
     if not name:
         errors.append("Nom absent")
@@ -554,7 +561,7 @@ def normalize_business(
     if not verified_evidence:
         errors.append("Preuve textuelle IA non vérifiable dans la page")
 
-    uid_basis = f"{page_url}|{slugify(name)}"
+    uid_basis = f"{page_url}|{slugify(raw_name)}"
     source_uid = hashlib.sha256(uid_basis.encode()).hexdigest()[:48]
     fingerprint = hashlib.sha256(
         f"{_norm_locality(name)}|{_norm_locality(locality)}".encode()
