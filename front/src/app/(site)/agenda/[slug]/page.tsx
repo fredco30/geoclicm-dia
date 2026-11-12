@@ -6,7 +6,8 @@ import { CalendarDays, Download, ExternalLink, Mail, MapPin, Phone } from "lucid
 
 import { ArticleBody } from "@/components/articles/article-body";
 import { ApiError, api } from "@/lib/api";
-import type { EventDetail, EventOccurrence } from "@/types/api";
+import { isOngoing, occurrenceLong } from "@/lib/event-dates";
+import type { EventDetail } from "@/types/api";
 
 export const revalidate = 300;
 type Props = { params: Promise<{ slug: string }> };
@@ -16,15 +17,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const event = await api.events.detail((await params).slug);
     return { title: event.meta_title || event.title, description: event.meta_description || event.short_description, openGraph: { title: event.title, description: event.short_description, images: event.cover_image?.large ? [event.cover_image.large] : undefined } };
   } catch { return { title: "Événement introuvable" }; }
-}
-
-function formatOccurrence(occurrence: EventOccurrence): string {
-  const start = new Date(occurrence.starts_at);
-  const end = new Date(occurrence.ends_at);
-  const date = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Paris" }).format(start);
-  if (occurrence.is_all_day) return `${date} — toute la journée`;
-  const time = (value: Date) => new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(value);
-  return `${date}, de ${time(start)} à ${time(end)}`;
 }
 
 export default async function EventPage({ params }: Props) {
@@ -68,14 +60,14 @@ export default async function EventPage({ params }: Props) {
       <Link href="/agenda" className="text-sm text-slate-600 hover:text-camargue">← Agenda</Link>
       <header className="mt-5 grid gap-7 lg:grid-cols-[minmax(0,1fr),320px]">
         <div>
-          <div className="mb-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full px-2 py-1 font-medium text-white" style={{ backgroundColor: event.category.color }}>{event.category.name}</span>{event.kind === "market" ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-900">Marché</span> : null}</div>
+          <div className="mb-3 flex flex-wrap gap-2 text-xs"><span className="rounded-full px-2 py-1 font-medium text-white" style={{ backgroundColor: event.category.color }}>{event.category.name}</span>{event.kind === "market" && event.category.name.toLowerCase() !== "marché" ? <span className="rounded-full bg-amber-100 px-2 py-1 font-medium text-amber-900">Marché</span> : null}</div>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-5xl">{event.title}</h1>
           <p className="mt-4 text-lg leading-relaxed text-slate-700">{event.short_description}</p>
         </div>
         <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900">{isPast ? "Événement terminé" : "Prochaines dates"}</h2>
+          <h2 className="font-semibold text-slate-900">{isPast ? "Événement terminé" : isOngoing(upcoming[0]) ? "En ce moment" : "Prochaines dates"}</h2>
           {isPast ? <p className="mt-2 text-sm text-slate-600">Cet événement a eu lieu. <Link href="/agenda" className="text-camargue underline">Voir l’agenda à venir</Link></p> : null}
-          <div className="mt-3 space-y-3">{(isPast ? lastOccurrences : upcoming).map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {formatOccurrence(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
+          <div className="mt-3 space-y-3">{(isPast ? lastOccurrences : upcoming).map((occurrence) => <div key={occurrence.id} className={occurrence.status === "cancelled" ? "text-red-700 line-through" : "text-slate-700"}><p className="flex gap-2 text-sm"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0" /> {occurrenceLong(occurrence)}</p>{occurrence.note ? <p className="ml-6 text-xs">{occurrence.note}</p> : null}</div>)}</div>
           {isPast ? null : <a href={`${apiUrl}/api/events/${event.slug}/calendar.ics`} className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-camargue underline"><Download className="h-4 w-4" /> Ajouter au calendrier</a>}
         </aside>
       </header>
@@ -89,7 +81,7 @@ export default async function EventPage({ params }: Props) {
         <ArticleBody content={event.description} />
         <aside className="space-y-3 rounded-xl bg-slate-50 p-5 text-sm text-slate-700">
           <h2 className="font-semibold text-slate-900">Informations pratiques</h2>
-          <p className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /> <span>{event.venue_name}<br />{event.address}<br />{event.commune_name}</span></p>
+          <p className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /> <span>{Array.from(new Set([event.venue_name, event.address, event.commune_name].filter(Boolean))).map((line) => <span key={line} className="block">{line}</span>)}</span></p>
           {event.price ? <p><strong>Tarif :</strong> {event.price}</p> : null}
           {event.organizer ? <p><strong>Organisateur :</strong> {event.organizer}</p> : null}
           {event.contact_phone ? <a href={`tel:${event.contact_phone}`} className="flex items-center gap-2 underline"><Phone className="h-4 w-4" /> {event.contact_phone}</a> : null}

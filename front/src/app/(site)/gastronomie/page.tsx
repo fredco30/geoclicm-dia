@@ -11,7 +11,7 @@ import { Pagination } from "@/components/ui/pagination";
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "Gastronomie — geoclicMédia",
+  title: "Gastronomie",
   description:
     "Restaurants, bars, glaciers et producteurs du littoral camarguais. Trouvez une table par envie : pizzeria, fruits de mer, tapas, vue mer…",
 };
@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 type Props = {
   searchParams: Promise<{
     page?: string;
+    q?: string;
     specialty?: string;
     commune?: string;
   }>;
@@ -34,6 +35,7 @@ export default async function GastronomiePage({ searchParams }: Props) {
       // Section autonome : la branche gastronomie est forcee ici, jamais
       // exposee dans l'URL. L'API matche toute la descendance.
       category: "gastronomie",
+      search: sp.q,
       specialty: sp.specialty,
       commune: sp.commune,
     }),
@@ -55,7 +57,7 @@ export default async function GastronomiePage({ searchParams }: Props) {
 
       <GastronomieFilters
         communes={communes}
-        values={{ specialty: sp.specialty, commune: sp.commune }}
+        values={{ q: sp.q, specialty: sp.specialty, commune: sp.commune }}
       />
 
       {/* Table a la une (emplacement premium monétisé, scopé gastronomie) */}
@@ -71,10 +73,10 @@ export default async function GastronomiePage({ searchParams }: Props) {
       {businesses.results.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center">
           <p className="text-slate-600">
-            Aucune table ne correspond à cette envie pour l&apos;instant.
+            Aucune table ne correspond à cette recherche pour l&apos;instant.
           </p>
           <p className="mt-2 text-sm text-slate-500">
-            Essayez une autre envie, ou{" "}
+            Essayez un autre nom ou une autre envie, ou{" "}
             <Link
               href="/gastronomie"
               className="text-camargue underline hover:text-terracotta"
@@ -96,8 +98,9 @@ export default async function GastronomiePage({ searchParams }: Props) {
             totalCount={businesses.count}
             pageSize={20}
             baseUrl={
-              sp.specialty || sp.commune
+              sp.q || sp.specialty || sp.commune
                 ? `/gastronomie?${new URLSearchParams({
+                    ...(sp.q ? { q: sp.q } : {}),
                     ...(sp.specialty ? { specialty: sp.specialty } : {}),
                     ...(sp.commune ? { commune: sp.commune } : {}),
                   }).toString()}`

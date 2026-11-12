@@ -8,7 +8,7 @@ import { LoginForbiddenBanner } from "@/components/advertiser/login-forbidden-ba
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Connexion annonceur — geoclicMédia",
+  title: "Connexion annonceur",
   robots: { index: false, follow: false },
 };
 

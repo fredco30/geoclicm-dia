@@ -6,6 +6,7 @@ import { AgendaFilters } from "@/components/events/agenda-filters";
 import { AgendaMapExplorer } from "@/components/events/agenda-map-explorer";
 import { Pagination } from "@/components/ui/pagination";
 import { api } from "@/lib/api";
+import { isOngoing } from "@/lib/event-dates";
 import type { EventListItem } from "@/types/api";
 
 export const revalidate = 60;
@@ -93,7 +94,9 @@ function EventGroups({ events }: { events: EventListItem[] }) {
   const groups = new Map<string, EventListItem[]>();
   for (const event of events) {
     const occ = event.next_occurrence;
-    const key = (occ && safeMonthKey(occ.starts_at)) || "à venir";
+    // Périodes déjà commencées (expos, marchés à l'année) : regroupées en tête
+    // plutôt que rangées sous le mois, passé, de leur premier jour.
+    const key = occ && isOngoing(occ) ? "en cours" : (occ && safeMonthKey(occ.starts_at)) || "à venir";
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(event);
   }
@@ -102,7 +105,7 @@ function EventGroups({ events }: { events: EventListItem[] }) {
       {Array.from(groups.entries()).map(([key, items]) => (
         <section key={key} className="mb-6">
           <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            {key === "à venir" ? "Sans date précise" : monthLabel(key)}
+            {key === "en cours" ? "En ce moment" : key === "à venir" ? "Sans date précise" : monthLabel(key)}
           </h2>
           <div className="flex flex-col gap-2">
             {items.map((event) => (

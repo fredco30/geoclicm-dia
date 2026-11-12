@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Search } from "lucide-react";
 import { CollapsibleFilters } from "@/components/ui/collapsible-filters";
 import type { Commune } from "@/types/api";
 
@@ -29,7 +30,7 @@ const CRAVINGS = [
 
 type Props = {
   communes: Commune[];
-  values: { specialty?: string; commune?: string };
+  values: { q?: string; specialty?: string; commune?: string };
 };
 
 /**
@@ -39,6 +40,7 @@ type Props = {
  */
 export function GastronomieFilters({ communes, values }: Props) {
   const router = useRouter();
+  const [q, setQ] = useState(values.q ?? "");
   const [specialty, setSpecialty] = useState(values.specialty ?? "");
   const [commune, setCommune] = useState(values.commune ?? "");
 
@@ -47,18 +49,37 @@ export function GastronomieFilters({ communes, values }: Props) {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
+    if (q.trim()) params.set("q", q.trim());
     if (specialty) params.set("specialty", specialty);
     if (commune) params.set("commune", commune);
     router.push(params.size ? `/gastronomie?${params.toString()}` : "/gastronomie");
   };
 
   const onReset = () => {
+    setQ("");
     setSpecialty("");
     setCommune("");
     router.push("/gastronomie");
   };
 
   return (
+    <>
+      <form onSubmit={onSubmit} role="search" className="mb-3 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Rechercher un restaurant, un bar…"
+            aria-label="Rechercher par nom"
+            className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-camargue focus:outline-none focus:ring-2 focus:ring-camargue/20"
+          />
+        </div>
+        <button type="submit" className="h-11 rounded-lg bg-camargue px-4 text-sm font-medium text-white hover:bg-camargue-dark">
+          Rechercher
+        </button>
+      </form>
     <CollapsibleFilters summary="Envie · Commune" activeCount={activeCount}>
       <form onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="text-xs font-medium text-slate-600">
@@ -110,5 +131,6 @@ export function GastronomieFilters({ communes, values }: Props) {
         </div>
       </form>
     </CollapsibleFilters>
+    </>
   );
 }

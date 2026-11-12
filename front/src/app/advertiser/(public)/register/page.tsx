@@ -6,7 +6,7 @@ import { AdvertiserRegisterForm } from "@/components/advertiser/register-form";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Inscription annonceur — geoclicMédia",
+  title: "Inscription annonceur",
   robots: { index: false, follow: false },
 };
 

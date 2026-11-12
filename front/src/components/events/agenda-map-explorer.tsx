@@ -7,6 +7,7 @@ import { CalendarDays, ExternalLink, Map, MapPin, Navigation, X } from "lucide-r
 import maplibregl, { type Marker, type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+import { occurrenceSummary } from "@/lib/event-dates";
 import type { EventListItem } from "@/types/api";
 
 type Props = { events: EventListItem[]; initialSelectedSlug?: string };
@@ -16,11 +17,6 @@ const OSM_STYLE: StyleSpecification = {
   sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' } },
   layers: [{ id: "osm", type: "raster", source: "osm" }],
 };
-
-function formatDate(value?: string): string {
-  if (!value || Number.isNaN(new Date(value).getTime())) return "Date à confirmer";
-  return new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(value));
-}
 
 export function AgendaMapExplorer({ events, initialSelectedSlug }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,8 +94,8 @@ function EventWindow({ event, onClose }: { event: EventListItem; onClose: () => 
     <button type="button" onClick={onClose} className="absolute right-3 top-3 z-10 rounded-full bg-white/95 p-2 text-slate-700 shadow" aria-label="Fermer"><X className="h-4 w-4" /></button>
     {event.cover_image?.large || event.cover_image?.medium ? <img src={event.cover_image.large ?? event.cover_image.medium ?? ""} alt="" className="h-44 w-full object-cover" /> : <div className="flex h-32 items-center justify-center bg-gradient-to-br from-camargue/15 to-terracotta/20"><CalendarDays className="h-10 w-10 text-camargue" /></div>}
     <div className="p-4"><span className="rounded-full px-2 py-1 text-xs font-semibold text-white" style={{ backgroundColor: event.category.color }}>{event.category.name}</span><h2 className="mt-3 font-serif text-2xl font-semibold leading-tight text-slate-900">{event.title}</h2>
-    <p className="mt-3 flex gap-2 text-sm font-medium text-terracotta"><CalendarDays className="h-4 w-4 shrink-0" />{formatDate(event.next_occurrence?.starts_at)}</p>
-    <p className="mt-2 flex gap-2 text-sm text-slate-600"><MapPin className="h-4 w-4 shrink-0" />{[event.venue_name, event.address, event.commune_name].filter(Boolean).join(", ")}</p>
+    <p className="mt-3 flex gap-2 text-sm font-medium text-terracotta"><CalendarDays className="h-4 w-4 shrink-0" />{occurrenceSummary(event.next_occurrence)}</p>
+    <p className="mt-2 flex gap-2 text-sm text-slate-600"><MapPin className="h-4 w-4 shrink-0" />{Array.from(new Set([event.venue_name, event.address, event.commune_name].filter(Boolean))).join(", ")}</p>
     {event.short_description ? <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-slate-700">{event.short_description}</p> : null}
     <div className="mt-4 grid grid-cols-2 gap-2">{directions ? <a href={directions} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium"><Navigation className="h-4 w-4" /> Itinéraire</a> : <span />}<Link href={`/agenda/${event.slug}`} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#123b5d] px-3 py-2 text-sm font-semibold text-white">Détails <ExternalLink className="h-4 w-4" /></Link></div>
     {event.official_url ? <a href={event.official_url} target="_blank" rel="noopener noreferrer" className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-terracotta px-3 py-2 text-sm font-semibold text-white">Ouvrir le site officiel <ExternalLink className="h-4 w-4" /></a> : null}
