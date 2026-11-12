@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth-server";
+import { canUseAdvertiserSpace } from "@/lib/roles";
 import { getSiteSettings } from "@/lib/site-settings";
 import { BackofficeShell, type NavSection } from "@/components/admin/backoffice-shell";
 import { HelpProvider } from "@/components/help/help-context";
@@ -32,7 +33,7 @@ export default async function AdvertiserProtectedLayout({
   }
   // Annonceur, éditeur ou admin peuvent accéder à leur espace.
   // (Editor/admin = équipe geoclicMédia qui gère pour le compte d'un commerçant)
-  if (user.role === "reader") {
+  if (!canUseAdvertiserSpace(user)) {
     redirect("/advertiser/login?error=forbidden");
   }
   const site = await getSiteSettings();

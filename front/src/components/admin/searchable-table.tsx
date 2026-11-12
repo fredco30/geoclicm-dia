@@ -41,13 +41,17 @@ export function SearchableTable({
   const apply = (value: string) => {
     setQuery(value);
     const wanted = norm(value);
+    // Chaque mot est cherché séparément, dans n'importe quel ordre :
+    // « grau yoga » trouve « SECTION YOGA … Le Grau-du-Roi ».
+    const words = wanted ? wanted.split(" ") : [];
     const rows = ref.current?.querySelectorAll<HTMLTableRowElement>("tbody tr") ?? [];
     let visible = 0;
     rows.forEach((row) => {
       // Cellules séparées par une espace : sans cela « votive » et « Le Grau »
       // se collent en un seul mot.
       const text = Array.from(row.cells, (cell) => cell.textContent ?? "").join(" ");
-      const match = !wanted || norm(text).includes(wanted);
+      const haystack = norm(text);
+      const match = words.every((word) => haystack.includes(word));
       row.hidden = !match;
       if (match) visible += 1;
     });

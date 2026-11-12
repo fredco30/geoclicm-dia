@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth-server";
+import { canUseAdvertiserSpace } from "@/lib/roles";
 import { AdvertiserLoginForm } from "@/components/advertiser/login-form";
 import { LoginForbiddenBanner } from "@/components/advertiser/login-forbidden-banner";
 
@@ -18,14 +19,14 @@ export default async function AdvertiserLoginPage() {
   // Redirige uniquement les utilisateurs autorisés à entrer dans l'espace
   // annonceur. Sinon (rôle reader), on reste sur la page login pour éviter
   // la boucle de redirections /advertiser ↔ /advertiser/login.
-  if (user && user.role !== "reader") {
+  if (user && canUseAdvertiserSpace(user)) {
     redirect("/advertiser");
   }
 
   // Cas spécial : reader connecté → affiche un bandeau explicite + bouton
   // déconnexion, plus le formulaire au cas où il veut se ré-authentifier
   // avec un autre compte.
-  const isForbiddenReader = user !== null && user.role === "reader";
+  const isForbiddenReader = user !== null && !canUseAdvertiserSpace(user);
 
   return (
     <div className="mx-auto max-w-sm px-4 py-12">

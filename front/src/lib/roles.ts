@@ -19,3 +19,15 @@ export function getRoleLabel(user: Pick<CurrentUser, "role" | "is_superuser">): 
   if (user.is_superuser) return "Administrateur";
   return ROLE_LABELS[user.role] ?? user.role;
 }
+
+/**
+ * Accès à l'espace annonceur : les annonceurs, et l'équipe (éditeurs,
+ * administrateurs, superutilisateurs) qui gère des fiches pour le compte des
+ * commerçants. Un superutilisateur dont le champ « rôle » est resté à
+ * « Lecteur » était refusé à tort.
+ */
+export function canUseAdvertiserSpace(
+  user: Pick<CurrentUser, "role" | "is_superuser" | "can_publish">,
+): boolean {
+  return user.role !== "reader" || user.is_superuser || user.can_publish;
+}
