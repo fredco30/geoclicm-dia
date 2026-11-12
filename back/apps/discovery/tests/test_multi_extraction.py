@@ -520,3 +520,81 @@ class ExtractMultiPromptTests(SimpleTestCase):
             results, errors = extract_multi(user, pages)
         self.assertEqual(errors, [])
         self.assertIn("today", captured["prompt"])
+
+
+_SOME_COMMUNE = SimpleNamespace(name="Le Grau-du-Roi")
+
+
+class ImportQualityTests(SimpleTestCase):
+    """Lot 3 de l'audit : pages traduites, suffixes de commune, doublons."""
+
+    def _normalize(self, raw):
+        with (
+            patch.object(me, "_locality_commune", return_value=None),
+            patch.object(me, "_geocode", return_value=(None, None)),
+            patch.object(me, "_business_category", return_value=None),
+            patch.object(me, "select_event_image", return_value=SimpleNamespace(url="")),
+        ):
+            return normalize_business(SimpleNamespace(), raw, crawl_page=_FakeCrawlPage())
+
+    def test_commune_suffix_stripped_but_source_uid_stable(self):
+        polluted = self._normalize(
+            _business_raw(
+                title="Club Taurin - Le Grau du Roi :Le Grau du Roi",
+                locality="Le Grau du Roi",
+            )
+        )
+        clean = self._normalize(_business_raw(title="Club Taurin", locality="Le Grau du Roi"))
+        self.assertEqual(polluted["name"], "Club Taurin")
+        # Même empreinte de dédoublonnage, mais identifiant source inchangé
+        # pour le candidat déjà en base (calculé sur le titre brut).
+        self.assertEqual(polluted["fingerprint"], clean["fingerprint"])
+        self.assertNotEqual(polluted["source_uid"], clean["source_uid"])
+
+    def test_translated_pages_excluded_from_ai_pass(self):
+        def page(url):
+            return SimpleNamespace(canonical_url=url, final_url=url, cleaned_text="x" * 300)
+
+        pages = [
+            page("https://ot.example/les-remparts"),
+            page("https://ot.example/es/las-murallas"),
+            page("https://ot.example/en/the-ramparts"),
+        ]
+        with patch.object(ms, "_crawl_pages", return_value=pages):
+            urls = ms.source_page_urls(SimpleNamespace())
+        self.assertEqual(urls, ["https://ot.example/les-remparts"])
+
+    def _known(self, *, candidate_exists, place_titles, commune=_SOME_COMMUNE):
+        candidates = SimpleNamespace(
+            exclude=lambda **kwargs: candidates, exists=lambda: candidate_exists
+        )
+        places = SimpleNamespace(
+            exclude=lambda **kwargs: places,
+            values_list=lambda *args, **kwargs: place_titles,
+        )
+        with (
+            patch.object(ms.PlaceImportCandidate, "objects") as candidate_manager,
+            patch.object(ms.Place, "objects") as place_manager,
+        ):
+            candidate_manager.filter.return_value = candidates
+            place_manager.filter.return_value = places
+            return ms._place_already_known(
+                {"fingerprint": "f", "title": "Arènes du Grau-du-Roi", "commune": commune},
+                exclude_pk=None,
+            )
+
+    def test_place_known_from_another_candidate(self):
+        self.assertTrue(self._known(candidate_exists=True, place_titles=[]))
+
+    def test_place_known_from_published_place_despite_spelling(self):
+        self.assertTrue(
+            self._known(candidate_exists=False, place_titles=["ARENES DU GRAU DU ROI"])
+        )
+
+    def test_new_place_not_flagged(self):
+        self.assertFalse(self._known(candidate_exists=False, place_titles=["Phare"]))
+        self.assertFalse(
+            self._known(
+                candidate_exists=False, place_titles=["ARENES DU GRAU DU ROI"], commune=None
+            )
+        )
