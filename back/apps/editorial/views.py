@@ -86,6 +86,20 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    @action(detail=True, methods=["post"], url_path="facebook")
+    def facebook(self, request, slug=None):
+        """POST /api/articles/<slug>/facebook/ — publication manuelle sur la page."""
+        from . import facebook
+
+        article = self.get_object()
+        try:
+            post_id = facebook.publish_article(article)
+        except facebook.FacebookError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response(
+            {"facebook_post_id": post_id, "facebook_published_at": article.facebook_published_at}
+        )
+
     @action(
         detail=True,
         methods=["post"],
