@@ -33,6 +33,7 @@ from .ai_extraction import extract_events as extract_events_with_ai
 from .categorize import guess_category_slug
 from .event_dates import apply_occurrence_filter
 from .event_images import generic_image_urls, select_event_image
+from .french_dates import read_dates
 from .models import (
     Event,
     EventCategory,
@@ -114,6 +115,24 @@ def build_occurrences(raw_occurrences: object) -> list[dict]:
         )
     rows.sort(key=lambda row: row["starts_at"])
     return rows
+
+
+def occurrences_from_text(*parts: object, reference: date) -> list[dict]:
+    """Occurrences reconstituées depuis le texte, quand l'IA n'en renvoie aucune.
+
+    Le prompt lui interdit désormais d'inventer une année : elle s'abstient et
+    recopie « vendredi 04 juillet à 18h30 » dans ses preuves. L'année se déduit
+    du jour de la semaine. On ne lit que des preuves déjà vérifiées dans la
+    page, donc une date reconstituée vient toujours du document.
+    """
+    rows = [
+        {
+            "starts_at": datetime.combine(found.day, found.at or time.min).isoformat(),
+            "is_all_day": found.at is None,
+        }
+        for found in read_dates(*parts, reference=reference)
+    ]
+    return build_occurrences(rows)
 
 
 def normalize_page_text(value: object) -> str:
@@ -515,6 +534,16 @@ def _normalize_ai_event(
             snippet = _compact_text(value, 300)
             if snippet and " ".join(snippet.split()).casefold() in page_text:
                 verified_evidence.append(snippet)
+
+    if not occurrences and verified_evidence:
+        occurrences = occurrences_from_text(
+            title,
+            short_description,
+            *verified_evidence,
+            reference=item["crawl_page"].fetched_at.date(),
+        )
+        start = _aware(occurrences[0]["starts_at"]) if occurrences else None
+        end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
     category = _guess_category(source, title, description)
     errors = []

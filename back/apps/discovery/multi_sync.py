@@ -37,6 +37,7 @@ from apps.events.imports import (
     commune_id,
     implausible_date_reason,
     normalize_page_text,
+    occurrences_from_text,
 )
 from apps.listings.models import Listing, ListingImportCandidate
 
@@ -130,6 +131,16 @@ def _normalize_agenda_item(
             snippet = _compact_text(value, 300)
             if snippet and " ".join(snippet.split()).casefold() in page_text:
                 verified_evidence.append(snippet)
+
+    if not occurrences and verified_evidence:
+        occurrences = occurrences_from_text(
+            title,
+            short_description,
+            *verified_evidence,
+            reference=crawl_page.fetched_at.date(),
+        )
+        start = _aware(occurrences[0]["starts_at"]) if occurrences else None
+        end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
     category_stub = _AgendaSourceStub(resolved_commune, None, kind, created_by)
     category = _guess_category(category_stub, title, description)
