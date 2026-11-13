@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 MAX_PAGE_CHARS = 12_000
 SEGMENT_OVERLAP_CHARS = 1_000
 MAX_INPUT_CHARS = MAX_PAGE_CHARS
-PROMPT_VERSION = "events-v6-no-year-guess"
+PROMPT_VERSION = "events-v7-keep-past-dates"
 
 
 class ExtractionUnavailable(RuntimeError):
@@ -245,9 +245,13 @@ Règles impératives :
    "occurrences": [] et recopie la date telle qu'elle est écrite, jour de la semaine
    inclus ("samedi 23 novembre"), dans "evidence" : notre code retrouve l'année en
    accordant ce jour de la semaine.
-7. Si tu ne peux pas déterminer une date réelle et future, mets "occurrences": [] (ne
-   fabrique pas un 1er janvier par défaut).
-8. Une activité permanente sans calendrier daté ("toute l'année", "tous les jours") n'est
+7. Une date passée se renvoie comme une autre. Ne juge JAMAIS si un événement est
+   encore à venir : "today" ne sert qu'à lire les formulations relatives. Si le
+   document écrit « le mardi 26 août 2025 », mets cette date dans "occurrences" même
+   si elle est passée — c'est notre code qui la classera comme terminée.
+8. Si aucune date n'est lisible dans le document, mets "occurrences": [] (ne fabrique
+   pas un 1er janvier par défaut).
+9. Une activité permanente sans calendrier daté ("toute l'année", "tous les jours") n'est
    pas un événement daté : mets "occurrences": [].
 """.strip()
 
