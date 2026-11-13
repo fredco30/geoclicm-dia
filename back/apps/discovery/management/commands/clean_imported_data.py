@@ -3,12 +3,15 @@
     python manage.py clean_imported_data            # rapport seul
     python manage.py clean_imported_data --apply    # applique
 
-Quatre corrections, toutes réversibles depuis le back-office :
+Cinq corrections, toutes réversibles :
 
 1. commerces  : suffixe de commune répété retiré du nom (l'adresse web ne change pas) ;
 2. lieux      : pages traduites (/en/, /es/…) archivées ;
 3. lieux      : doublons (même titre, même commune) archivés, un seul conservé ;
-4. événements : pictogramme du site source pris pour une image, retiré.
+4. événements : pictogramme du site source pris pour une image, retiré ;
+5. boîtes « À valider » : candidats issus de pages traduites (/en/, /es/…)
+   passés en « Rejeté » (Agenda, Découvrir, Commerçants, Annonces). Ils restent
+   en base et consultables ; un rejet ne publie ni ne supprime rien.
 
 Les mêmes règles s'appliquent désormais à l'import (apps.discovery.cleaning).
 """
@@ -21,11 +24,20 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.core.models import Commune
-from apps.directory.models import Business
+from apps.directory.models import Business, BusinessImportCandidate
 from apps.discovery.cleaning import is_foreign_language_url, norm_text, strip_locality_suffix
-from apps.discovery.models import Place
+from apps.discovery.models import Place, PlaceImportCandidate
 from apps.events.event_images import is_decorative_image_url
-from apps.events.models import Event
+from apps.events.models import Event, EventImportCandidate
+from apps.listings.models import ListingImportCandidate
+
+FOREIGN_REASON = "Page en langue étrangère (traduction d'une page française)"
+CANDIDATE_BOXES = (
+    ("Agenda", EventImportCandidate),
+    ("Découvrir", PlaceImportCandidate),
+    ("Commerçants", BusinessImportCandidate),
+    ("Annonces", ListingImportCandidate),
+)
 
 
 class Command(BaseCommand):
@@ -43,6 +55,10 @@ class Command(BaseCommand):
                 "Lieux en double archivés": self._archive_duplicate_places(),
                 "Fausses images d'événements retirées": self._drop_decorative_event_images(),
             }
+            for box, model in CANDIDATE_BOXES:
+                counts[f"Candidats « {box} » en langue étrangère rejetés"] = (
+                    self._reject_foreign_candidates(box, model)
+                )
             if not apply_changes:
                 transaction.set_rollback(True)
 
@@ -126,5 +142,25 @@ class Command(BaseCommand):
                     "updated_at",
                 ]
             )
+            count += 1
+        return count
+
+    def _reject_foreign_candidates(self, box: str, model) -> int:
+        """Rejette les candidats en attente issus d'une page traduite."""
+        waiting = (model.Status.PENDING, model.Status.INVALID, model.Status.DUPLICATE)
+        count = 0
+        for candidate in model.objects.filter(status__in=waiting).only(
+            "pk", "status", "source_url", "validation_errors"
+        ):
+            if not is_foreign_language_url(candidate.source_url):
+                continue
+            if count < 5:
+                self.stdout.write(f"[{box} · langue] {candidate.source_url}")
+            candidate.status = model.Status.REJECTED
+            errors = list(candidate.validation_errors or [])
+            if FOREIGN_REASON not in errors:
+                errors.append(FOREIGN_REASON)
+            candidate.validation_errors = errors
+            candidate.save(update_fields=["status", "validation_errors"])
             count += 1
         return count
