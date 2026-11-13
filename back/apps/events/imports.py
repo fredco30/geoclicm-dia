@@ -115,6 +115,28 @@ def build_occurrences(raw_occurrences: object) -> list[dict]:
     return rows
 
 
+def normalize_page_text(value: object) -> str:
+    """Texte de page comparable : espaces réduits, casse neutralisée."""
+    return " ".join(str(value or "").split()).casefold()
+
+
+def years_absent_from_page(occurrences: list[dict], page_text: str) -> list[str]:
+    """Années d'occurrence introuvables dans le texte de la page.
+
+    Le prompt d'extraction interdit de fabriquer une date (« ne fabrique pas un
+    1er janvier par défaut ») et de projeter une année que le document ne donne
+    pas. Le modèle le fait quand même, surtout sur les activités permanentes.
+    Une année qui ne figure nulle part dans la page n'a donc pas été lue : elle
+    a été déduite, et seul un humain peut trancher.
+
+    Sans texte de page, il n'y a rien à corroborer : on n'invente pas de motif.
+    """
+    if not page_text:
+        return []
+    years = {str(row.get("starts_at") or "")[:4] for row in occurrences}
+    return sorted(year for year in years if year and year not in page_text)
+
+
 def _compact_text(value: object, limit: int | None = None) -> str:
     text = BeautifulSoup(str(value or ""), "lxml").get_text(" ", strip=True)
     text = " ".join(text.split())
@@ -454,7 +476,7 @@ def _normalize_ai_event(
     start = _aware(occurrences[0]["starts_at"]) if occurrences else None
     end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
-    page_text = " ".join(str(page.get("content") or "").split()).casefold()
+    page_text = normalize_page_text(page.get("content"))
     verified_evidence = []
     evidence = raw.get("evidence") or []
     if isinstance(evidence, list):
@@ -475,6 +497,8 @@ def _normalize_ai_event(
         errors.append("Catégorie non déterminée")
     if not verified_evidence:
         errors.append("Preuve textuelle IA non vérifiable dans la page")
+    if years_absent_from_page(occurrences, page_text):
+        errors.append(DATE_EVIDENCE_ERROR)
 
     links = set(page.get("links") or [])
     booking_candidate = _absolute_http_url(page_url, raw.get("booking_url"))
@@ -1034,6 +1058,7 @@ def sync_event_source(source: EventSource) -> EventImportRun:
 CATEGORY_ERROR = "Catégorie non déterminée"
 COMMUNE_ERROR = "Commune non reconnue"
 DATES_ERROR = "Dates absentes, incomplètes ou invalides"
+DATE_EVIDENCE_ERROR = "Date non corroborée par la page"
 
 
 def classify_candidates(ids, *, category=None, commune=None) -> dict:

@@ -24,6 +24,7 @@ from apps.core.models import User
 from apps.directory.models import Business, BusinessImportCandidate
 from apps.events.event_images import generic_image_urls, select_event_image
 from apps.events.imports import (
+    DATE_EVIDENCE_ERROR,
     DATES_ERROR,
     _absolute_http_url,
     _aware,
@@ -34,6 +35,8 @@ from apps.events.imports import (
     _upsert_candidate,
     build_occurrences,
     commune_id,
+    normalize_page_text,
+    years_absent_from_page,
 )
 from apps.listings.models import Listing, ListingImportCandidate
 
@@ -119,7 +122,7 @@ def _normalize_agenda_item(
     start = _aware(occurrences[0]["starts_at"]) if occurrences else None
     end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
-    page_text = " ".join(str(crawl_page.cleaned_text or "").split()).casefold()
+    page_text = normalize_page_text(crawl_page.cleaned_text)
     verified_evidence = []
     evidence = raw.get("evidence") or []
     if isinstance(evidence, list):
@@ -141,6 +144,8 @@ def _normalize_agenda_item(
         errors.append("Catégorie non déterminée")
     if not verified_evidence:
         errors.append("Preuve textuelle IA non vérifiable dans la page")
+    if years_absent_from_page(occurrences, page_text):
+        errors.append(DATE_EVIDENCE_ERROR)
 
     links = set(crawl_page.links or [])
     booking_candidate = _absolute_http_url(page_url, raw.get("booking_url"))
