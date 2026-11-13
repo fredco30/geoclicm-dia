@@ -143,7 +143,7 @@ def _normalize_agenda_item(
                 verified_evidence.append(snippet)
 
     category_stub = _AgendaSourceStub(resolved_commune, None, kind, created_by)
-    category = _guess_category(category_stub, f"{title} {description}")
+    category = _guess_category(category_stub, title, description)
     errors = []
     if not title:
         errors.append("Titre absent")

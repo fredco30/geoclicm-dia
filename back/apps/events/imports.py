@@ -29,6 +29,7 @@ from apps.discovery.review import guard_import, lock_identity, preserve_review, 
 from apps.discovery.validity import validity
 
 from .ai_extraction import extract_events as extract_events_with_ai
+from .categorize import guess_category_slug
 from .event_dates import apply_occurrence_filter
 from .event_images import generic_image_urls, select_event_image
 from .models import (
@@ -238,11 +239,19 @@ def _locality_commune(source: EventSource, locality: str) -> Commune | None:
     return Commune.objects.filter(name__iexact=locality, is_active=True).first()
 
 
-def _guess_category(source: EventSource, text: str) -> EventCategory | None:
+def _guess_category(
+    source: EventSource, title: str, description: str = ""
+) -> EventCategory | None:
+    """Catégorie par défaut de la source, sinon devinée par mots-clés (categorize)."""
     if source.default_category_id:
         return source.default_category
-    normalized = slugify(text)
-    for category in EventCategory.objects.filter(is_active=True):
+    active = {category.slug: category for category in EventCategory.objects.filter(is_active=True)}
+    slug = guess_category_slug(title, description, getattr(source, "default_kind", None))
+    if slug in active:
+        return active[slug]
+    # Catégories créées par la rédaction (absentes des règles) : nom exact.
+    normalized = slugify(f"{title} {description}")
+    for category in active.values():
         if category.slug in normalized or slugify(category.name) in normalized:
             return category
     return None
@@ -330,7 +339,7 @@ def _normalize_json_ld(
         errors.append("Dates absentes ou invalides")
     if not commune:
         errors.append("Commune non reconnue")
-    category = _guess_category(source, f"{title} {description}")
+    category = _guess_category(source, title, description)
     if not category:
         errors.append("Catégorie non déterminée")
     image = select_event_image(
@@ -433,7 +442,7 @@ def _normalize_ai_event(
             if snippet and " ".join(snippet.split()).casefold() in page_text:
                 verified_evidence.append(snippet)
 
-    category = _guess_category(source, f"{title} {description}")
+    category = _guess_category(source, title, description)
     errors = []
     if not title:
         errors.append("Titre absent")
@@ -551,7 +560,7 @@ def _normalize_ics(source: EventSource, item: dict) -> dict:
         base_url,
         first.get("image") or first.get("attach"),
     )
-    category = _guess_category(source, f"{title} {description}")
+    category = _guess_category(source, title, description)
     errors = []
     if not title:
         errors.append("Titre absent")
