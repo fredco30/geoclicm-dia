@@ -98,6 +98,14 @@ export function EventImportsAdmin({
     });
   const selectReliable = () =>
     setSelected(new Set(pendingRows.filter(isReliable).map((row) => row.id)));
+  // Candidats modifiables (classement, sélection) : à valider ou incomplets.
+  const editableRows = useMemo(
+    () => rows.filter((row) => row.status === "pending" || row.status === "invalid"),
+    [rows],
+  );
+  const selectPage = () => setSelected(new Set(editableRows.map((row) => row.id)));
+  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkCommune, setBulkCommune] = useState("");
   const clearSelection = () => setSelected(new Set());
   const ensureCsrf = async () => {
     let token = csrf();
@@ -140,6 +148,42 @@ export function EventImportsAdmin({
         action === "approve"
           ? `« ${row.title} » publié et synchronisé.`
           : `« ${row.title} » rejeté.`,
+      );
+    });
+
+  const bulkClassify = () =>
+    startTransition(async () => {
+      const token = await ensureCsrf();
+      const response = await apiFetch("/api/admin/event-imports/bulk-classify/", {
+        method: "POST",
+        headers: token ? { "X-CSRFToken": token } : {},
+        body: JSON.stringify({
+          ids: Array.from(selected),
+          category: bulkCategory ? Number(bulkCategory) : null,
+          commune: bulkCommune ? Number(bulkCommune) : null,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        setMessage(formatApiError(payload, "Classement impossible"));
+        return;
+      }
+      const updated = new Map<number, EventImportCandidate>(
+        (payload?.updated ?? []).map((row: EventImportCandidate) => [row.id, row]),
+      );
+      const ready: number = (payload?.ready_ids ?? []).length;
+      // Un candidat devenu complet quitte l'onglet « Incomplets ».
+      setRows((current) =>
+        current
+          .map((row) => updated.get(row.id) ?? row)
+          .filter((row) => row.status === filterStatus),
+      );
+      setSelected(new Set());
+      setMessage(
+        `${updated.size} candidat(s) classé(s).` +
+          (ready
+            ? ` ${ready} désormais complet(s) : à approuver dans l'onglet « À valider ».`
+            : ""),
       );
     });
 
@@ -197,15 +241,21 @@ export function EventImportsAdmin({
             </Link>
           ))}
         </nav>
-        {filterStatus === "pending" && pendingRows.length > 0 ? (
-          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3 shadow-sm">
-            <Button
-              variant="secondary"
-              disabled={pending}
-              onClick={selectReliable}
-            >
-              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables (
-              {reliableCount})
+        {(filterStatus === "pending" || filterStatus === "invalid") && editableRows.length > 0 ? (
+          <div className="mt-4 space-y-3 rounded-xl border bg-white p-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            {filterStatus === "pending" ? (
+              <Button
+                variant="secondary"
+                disabled={pending}
+                onClick={selectReliable}
+              >
+                <CheckSquare className="h-4 w-4" /> Sélectionner les fiables (
+                {reliableCount})
+              </Button>
+            ) : null}
+            <Button variant="secondary" disabled={pending} onClick={selectPage}>
+              <CheckSquare className="h-4 w-4" /> Sélectionner la page ({editableRows.length})
             </Button>
             <Button
               variant="secondary"
@@ -214,17 +264,57 @@ export function EventImportsAdmin({
             >
               <Square className="h-4 w-4" /> Tout décocher
             </Button>
-            <Button
-              disabled={pending || selectedCount === 0}
-              onClick={bulkApprove}
+            {filterStatus === "pending" ? (
+              <Button
+                disabled={pending || selectedCount === 0}
+                onClick={bulkApprove}
+              >
+                <Check className="h-4 w-4" /> Approuver la sélection (
+                {selectedCount})
+              </Button>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+            <span className="text-sm font-medium text-slate-700">Classer la sélection :</span>
+            <Select
+              aria-label="Catégorie à attribuer"
+              value={bulkCategory}
+              onChange={(event) => setBulkCategory(event.target.value)}
+              className="w-44"
             >
-              <Check className="h-4 w-4" /> Approuver la sélection (
-              {selectedCount})
+              <option value="">Catégorie…</option>
+              {categories.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="Commune à attribuer"
+              value={bulkCommune}
+              onChange={(event) => setBulkCommune(event.target.value)}
+              className="w-44"
+            >
+              <option value="">Commune…</option>
+              {communes.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+            <Button
+              variant="secondary"
+              disabled={pending || selectedCount === 0 || (!bulkCategory && !bulkCommune)}
+              onClick={bulkClassify}
+            >
+              Appliquer à {selectedCount} candidat{selectedCount > 1 ? "s" : ""}
             </Button>
-            <span className="text-xs text-slate-500">
-              Les « fiables » ont commune + catégorie + preuve + une date
-              future. Décoche ceux à exclure avant d&apos;approuver.
-            </span>
+          </div>
+          <p className="text-xs text-slate-500">
+            {filterStatus === "pending"
+              ? "Les « fiables » ont commune + catégorie + preuve + une date future. Décochez ceux à exclure avant d'approuver."
+              : "La plupart des incomplets n'ont pas de catégorie : cochez-en plusieurs, choisissez la catégorie, puis « Appliquer ». Ceux qui deviennent complets passent dans « À valider » (rien n'est publié sans approbation)."}
+          </p>
           </div>
         ) : null}
       </div>
@@ -244,7 +334,7 @@ export function EventImportsAdmin({
               key={row.id}
               className="relative grid overflow-hidden rounded-xl border bg-white shadow-sm md:grid-cols-[220px_minmax(0,1fr)]"
             >
-              {row.status === "pending" ? (
+              {row.status === "pending" || row.status === "invalid" ? (
                 <label
                   className="absolute left-2 top-2 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white/90 shadow"
                   title={
