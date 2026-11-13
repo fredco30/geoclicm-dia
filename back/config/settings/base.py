@@ -255,6 +255,25 @@ OVH_AI_ENDPOINTS_ACCESS_TOKEN = env(
 DEEPSEEK_BASE_URL = env("DEEPSEEK_BASE_URL", default="https://api.deepseek.com")
 DEEPSEEK_API_KEY = env("DEEPSEEK_API_KEY", default="")
 DEEPSEEK_MODEL = env("DEEPSEEK_MODEL", default="deepseek-v4-flash")
+# OpenCode Zen : passerelle compatible OpenAI. Les modèles GLM et Kimi
+# répondent sur /chat/completions ; les modèles GPT (/responses) et Claude
+# (/messages) ne passent pas par ce client. Le forfait « Go » a sa propre
+# base, https://opencode.ai/zen/go/v1 — à régler dans le .env.
+OPENCODE_BASE_URL = env("OPENCODE_BASE_URL", default="https://opencode.ai/zen/v1")
+OPENCODE_API_KEY = env("OPENCODE_API_KEY", default="")
+OPENCODE_MODEL = env("OPENCODE_MODEL", default="")
+
+# Budget propre à la collecte Agenda. Il existe parce que le cap de
+# l'assistant public et la collecte partageaient la même enveloppe : un crawl
+# de plusieurs centaines de pages la vidait, et la collecte est restée à
+# l'arrêt du 1er août au 13 novembre 2026 sans que rien ne le signale.
+#
+# Deux limites, parce qu'aucune ne suffit seule : le plafond en euros ne veut
+# rien dire sur un abonnement au forfait (le coût journalisé y est nul), et le
+# plafond en appels ne protège pas d'un modèle cher. Mettre 0 désactive la
+# limite correspondante.
+EVENT_AI_DAILY_CALL_CAP = env.int("EVENT_AI_DAILY_CALL_CAP", default=1500)
+EVENT_AI_DAILY_EUR_CAP = env.float("EVENT_AI_DAILY_EUR_CAP", default=10.0)
 
 # Navigateur Chromium isolé pour les sources Agenda rendues en JavaScript.
 # Vide = moteur standard uniquement, avec comportement inchangé.

@@ -267,4 +267,49 @@ curl -s -X POST https://media.geoclic.fr/api/assistant/ask/ \
 
 ---
 
+## Fournisseur IA de la collecte Agenda
+
+La collecte Agenda ne passe pas forcément par Mistral. `EVENT_AI_PROVIDER`
+accepte `mistral` (défaut), `ovh`, `deepseek` et `opencode`. Les trois
+derniers parlent le dialecte OpenAI `/chat/completions`.
+
+| Fournisseur | Variables `.env` |
+|---|---|
+| `ovh` | `OVH_AI_ENDPOINTS_ACCESS_TOKEN`, `EVENT_AI_MODEL` |
+| `deepseek` | `DEEPSEEK_API_KEY`, `DEEPSEEK_MODEL` |
+| `opencode` | `OPENCODE_API_KEY`, `OPENCODE_MODEL`, éventuellement `OPENCODE_BASE_URL` |
+
+Sur OpenCode Zen, seuls les modèles servis sur `/chat/completions` (GLM,
+Kimi) fonctionnent : les modèles GPT répondent sur `/responses` et Claude sur
+`/messages`, que ce client ne parle pas. Le forfait « Go » a sa propre base,
+`https://opencode.ai/zen/go/v1`.
+
+Changer de fournisseur ou de modèle **invalide le cache de prompt** : la
+prochaine collecte ré-interroge toutes les pages. C'est voulu — une
+extraction mise en cache sous un autre modèle n'est pas comparable — mais il
+faut le prévoir côté budget et côté durée.
+
+### Budget de la collecte
+
+La collecte a son enveloppe, séparée de celle de l'assistant public. Elle
+existe parce que les deux partageaient le cap utilisateur de 5 €/jour : un
+crawl de plusieurs centaines de pages le vidait, et la collecte est restée à
+l'arrêt du 1er août au 13 novembre 2026 sans alerte.
+
+- `EVENT_AI_DAILY_CALL_CAP` (défaut 1500) — appels par jour.
+- `EVENT_AI_DAILY_EUR_CAP` (défaut 10.0) — euros par jour.
+
+Les deux comptent, et `0` désactive celle qu'on met à zéro. Sur un
+abonnement au forfait ou un modèle gratuit, le coût journalisé est nul : le
+plafond en euros ne retient rien et **seul le compte d'appels protège**.
+Inversement, sur un modèle facturé au token, c'est le plafond en euros qui
+mord en premier. D'où les deux.
+
+Un modèle absent de `pricing.MODEL_PRICING` n'est pas refusé : son coût est
+journalisé à 0 € avec un avertissement. Correct pour un modèle gratuit,
+trompeur pour un modèle payant — y penser avant de conclure que la collecte
+ne coûte rien.
+
+---
+
 *Document à jour PR 5 — refonte portail v2 (cf 19-plan-refonte-portail-v2.md).*
