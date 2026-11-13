@@ -17,9 +17,14 @@ La fenêtre a son propre piège : un même jour de semaine revient tous les six 
 donc une vieille date dont l'année vraie est hors fenêtre peut trouver une
 solution unique… dans le futur. « Mercredi 29 décembre » vaut 2021 et 2027 ;
 fenêtre ouverte sur 2027 seulement, un marché de 2021 ressort en 2027. D'où
-`latest` : l'appelant plafonne les années déduites, et pour une reprise de
-l'existant ce plafond est la date de crawl — la page ne peut pas annoncer plus
-tard que ce qu'elle disait ce jour-là sans que nous l'ayons lu.
+`latest` : l'appelant plafonne les dates renvoyées, et pour une reprise de
+l'existant ce plafond est la date de crawl — si la page avait annoncé plus tard
+que cela le jour où nous l'avons lue, nous l'aurions vu passer.
+
+Le plafond vaut aussi pour une année écrite noir sur blanc. Les textes repris
+ne sont pas tous de la page : les titres et résumés sortent du modèle, et
+l'ancien prompt inventait des millésimes. Un « 29 décembre 2027 » recopié dans
+un résumé n'est pas une preuve, c'est le bug d'hier qui ressort.
 """
 
 from __future__ import annotations
@@ -94,7 +99,7 @@ def _single_year(
             value = date(candidate, month, day)
         except ValueError:
             continue
-        if year is None and latest is not None and value > latest:
+        if latest is not None and value > latest:
             continue
         if weekday is None or value.weekday() == weekday:
             found.append(value)
@@ -113,7 +118,7 @@ def _time_after(text: str, position: int) -> time | None:
 def read_dates(*parts: object, reference: date, latest: date | None = None) -> list[ReadDate]:
     """Dates complètes lisibles dans ces textes, sans aucune invention.
 
-    `latest` plafonne les seules années déduites ; une année écrite est crue.
+    `latest` écarte toute date postérieure, année écrite comprise.
     """
     found: dict[date, time | None] = {}
     for part in parts:
