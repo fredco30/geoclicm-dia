@@ -8,6 +8,7 @@ Trois niveaux d'expo :
 """
 from __future__ import annotations
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.core.models import Commune, Media, User
@@ -186,7 +187,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     commune = CommuneSerializer(read_only=True)
     cover_image = ImageVariantsField(read_only=True)
-    gallery = MediaSerializer(many=True, read_only=True)
+    gallery = serializers.SerializerMethodField()
     author = AuthorSerializer(read_only=True)
     sponsor = SponsorDetailSerializer(read_only=True)
 
@@ -194,15 +195,21 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         model = Article
         fields = (
             "id", "title", "slug", "chapeau", "body",
-            "cover_image", "gallery",
+            "cover_image", "cover_alt", "cover_credit", "gallery",
             "category", "tags", "article_type",
             "commune", "location",
             "status", "is_featured", "author", "published_at",
             "sponsor", "sponsor_disclosure",
             "meta_title", "meta_description",
             "view_count",
+            "auto_publish_to_facebook", "facebook_post_id", "facebook_published_at",
             "created_at", "updated_at",
         )
+
+    def get_gallery(self, obj: Article) -> list[dict]:
+        # Ordre d'ajout (la relation n'a pas d'ordre propre).
+        photos = sorted(obj.gallery.all(), key=lambda media: media.pk)
+        return MediaSerializer(photos, many=True, context=self.context).data
 
 
 # ============================================================================
@@ -221,7 +228,7 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         model = Article
         fields = (
             "id", "title", "slug", "chapeau", "body",
-            "cover_image", "gallery",
+            "cover_image", "cover_alt", "cover_credit", "gallery",
             "category", "tags", "article_type",
             "commune", "location",
             "status", "is_featured", "published_at",
@@ -244,11 +251,31 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        # Si on tente de publier sans corps, on refuse
+        status = data.get("status", self.instance.status if self.instance else None)
         # En modification partielle, le corps non renvoyé est celui déjà en base.
         body = data.get("body", self.instance.body if self.instance else "")
-        if data.get("status") == Article.Status.PUBLISHED and not (body or "").strip():
+        published_at = data.get(
+            "published_at", self.instance.published_at if self.instance else None
+        )
+        now = timezone.now()
+
+        if status in (Article.Status.PUBLISHED, Article.Status.SCHEDULED) and not (
+            body or ""
+        ).strip():
             raise serializers.ValidationError(
-                {"body": "Un article publié doit avoir un corps non vide."}
+                {"body": "Un article publié ou programmé doit avoir un corps non vide."}
             )
+        if status == Article.Status.SCHEDULED:
+            if published_at is None:
+                raise serializers.ValidationError(
+                    {"published_at": "Choisissez la date et l'heure de publication."}
+                )
+            if published_at <= now:
+                raise serializers.ValidationError(
+                    {"published_at": "La date de publication programmée doit être dans le futur."}
+                )
+        if status == Article.Status.PUBLISHED and published_at and published_at > now:
+            # « Publier maintenant » sur un article programmé (ou déprogrammé) :
+            # une date future le laisserait invisible jusqu'à cette date.
+            data["published_at"] = now
         return data

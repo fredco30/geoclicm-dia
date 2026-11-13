@@ -63,13 +63,17 @@ class ArticleViewSet(viewsets.ModelViewSet):
             Article.objects.select_related("category", "commune", "author", "sponsor")
             .prefetch_related("tags", "gallery")
         )
-        # Lecture anonyme : seulement publiés et avec date passée
+        # Lecture anonyme : seulement publiés et avec date passée. Une fiche
+        # archivée reste consultable par son adresse (liens partagés, pages
+        # indexées), mais n'apparaît plus dans les listes.
         user = self.request.user
         if not user.is_authenticated or not getattr(user, "can_publish", False):
-            qs = qs.filter(
-                status=Article.Status.PUBLISHED,
-                published_at__lte=timezone.now(),
+            visible = (
+                (Article.Status.PUBLISHED, Article.Status.ARCHIVED)
+                if self.action == "retrieve"
+                else (Article.Status.PUBLISHED,)
             )
+            qs = qs.filter(status__in=visible, published_at__lte=timezone.now())
         return qs
 
     def get_serializer_class(self):
@@ -81,6 +85,20 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(detail=True, methods=["post"], url_path="facebook")
+    def facebook(self, request, slug=None):
+        """POST /api/articles/<slug>/facebook/ — publication manuelle sur la page."""
+        from . import facebook
+
+        article = self.get_object()
+        try:
+            post_id = facebook.publish_article(article)
+        except facebook.FacebookError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response(
+            {"facebook_post_id": post_id, "facebook_published_at": article.facebook_published_at}
+        )
 
     @action(
         detail=True,

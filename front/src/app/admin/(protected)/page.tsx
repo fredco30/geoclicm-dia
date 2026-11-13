@@ -133,7 +133,9 @@ export default async function AdminDashboard() {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-sm text-slate-600">
-                      {formatDate(a.published_at) || "—"}
+                      {a.status === "scheduled" && a.published_at
+                        ? `Prévu le ${formatDate(a.published_at)}`
+                        : formatDate(a.published_at) || "—"}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex gap-1">

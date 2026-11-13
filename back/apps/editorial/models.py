@@ -99,6 +99,12 @@ class Article(models.Model):
     body = models.TextField(help_text="Corps de l'article en markdown")
 
     cover_image = models.ImageField(upload_to="articles/%Y/%m/", blank=True, null=True)
+    cover_alt = models.CharField(
+        max_length=300, blank=True, help_text="Description de l'image de couverture (accessibilité, SEO)"
+    )
+    cover_credit = models.CharField(
+        max_length=200, blank=True, help_text="Crédit de l'image de couverture (auteur, source)"
+    )
     gallery = models.ManyToManyField(Media, blank=True, related_name="articles")
 
     # --- Catégorisation ---

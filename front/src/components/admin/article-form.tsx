@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Save, Send, Trash2, Eye } from "lucide-react";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "./markdown-editor";
 import { ImageUploader } from "./image-uploader";
+import { GalleryEditor, toGalleryPhotos, type GalleryPhoto } from "./gallery-editor";
+import { FacebookShare } from "./facebook-share";
 import { AIRewriteButton } from "./ai-rewrite-button";
 import type {
   ArticleDetail,
@@ -26,6 +28,8 @@ type Props = {
   categories: Category[];
   communes: Commune[];
   businesses: BusinessListItem[];
+  /** Publication automatique sur la page Facebook configurée côté serveur. */
+  facebookEnabled?: boolean;
 };
 
 type FormState = {
@@ -44,7 +48,28 @@ type FormState = {
   meta_description: string;
   sponsor: string; // id Business en string ou ""
   sponsor_disclosure: string;
+  /** Date de publication programmée, au format du champ datetime-local. */
+  publish_at: string;
+  cover_alt: string;
+  cover_credit: string;
+  gallery: GalleryPhoto[];
+  auto_publish_to_facebook: boolean;
 };
+
+/** ISO → valeur d'un <input type="datetime-local"> (heure locale). */
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatScheduled(local: string): string {
+  const date = new Date(local);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "full", timeStyle: "short" }).format(date);
+}
 
 const ARTICLE_TYPES = [
   { value: "reportage", label: "Reportage" },
@@ -66,7 +91,7 @@ function readCsrfToken(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function ArticleForm({ article, categories, communes, businesses }: Props) {
+export function ArticleForm({ article, categories, communes, businesses, facebookEnabled = false }: Props) {
   const router = useRouter();
   const isEdit = !!article;
 
@@ -86,7 +111,16 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     meta_description: article?.meta_description ?? "",
     sponsor: article?.sponsor ? String(article.sponsor.id) : "",
     sponsor_disclosure: article?.sponsor_disclosure ?? "",
+    publish_at: article?.status === "scheduled" ? toLocalInput(article.published_at) : "",
+    cover_alt: article?.cover_alt ?? "",
+    cover_credit: article?.cover_credit ?? "",
+    gallery: toGalleryPhotos(article?.gallery ?? []),
+    auto_publish_to_facebook: article?.auto_publish_to_facebook ?? true,
   });
+  // Galerie telle qu'enregistrée : la liste n'est renvoyée que si elle change.
+  const [savedGalleryIds, setSavedGalleryIds] = useState(() =>
+    (article?.gallery ?? []).map((item) => item.id).join(","),
+  );
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -96,6 +130,9 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
   // « Publier », jamais par un changement de liste déroulante.
   const savedStatus = article?.status ?? "draft";
   const isDraft = savedStatus === "draft";
+  const isScheduled = savedStatus === "scheduled";
+  // Brouillon ou programmé : pas encore en ligne, piloté par des boutons.
+  const notYetOnline = isDraft || isScheduled;
 
   // Alerte du navigateur si on ferme ou recharge l'onglet avec des
   // modifications non enregistrées.
@@ -108,6 +145,20 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  // Ctrl+S (Cmd+S sur Mac) : même effet que la touche Entrée — enregistre
+  // sans jamais publier un brouillon.
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        formRef.current?.requestSubmit();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
@@ -115,10 +166,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     setError(null);
 
     if (status === "scheduled") {
-      setError(
-        "La publication programmée n'est pas encore implémentée. Choisissez Brouillon ou Publié.",
-      );
-      return;
+      const when = new Date(form.publish_at);
+      if (!form.publish_at || Number.isNaN(when.getTime())) {
+        setError("Choisissez la date et l'heure de publication.");
+        return;
+      }
+      if (when.getTime() <= Date.now()) {
+        setError("La date de publication programmée doit être dans le futur.");
+        return;
+      }
     }
 
     // S'assurer d'avoir un csrftoken (le cookie est posé au login)
@@ -137,12 +193,16 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     if (form.commune) fd.append("commune", form.commune);
     fd.append("article_type", form.article_type);
     fd.append("status", status);
+    if (status === "scheduled") fd.append("published_at", new Date(form.publish_at).toISOString());
     fd.append("is_featured", String(form.is_featured));
     fd.append("meta_title", form.meta_title);
     fd.append("meta_description", form.meta_description);
     // sponsor : "" pour clear, sinon ID en string. DRF traite "" comme null sur FK.
     fd.append("sponsor", form.sponsor);
     fd.append("sponsor_disclosure", form.sponsor_disclosure);
+    fd.append("cover_alt", form.cover_alt);
+    fd.append("auto_publish_to_facebook", String(form.auto_publish_to_facebook));
+    fd.append("cover_credit", form.cover_credit);
     if (coverFile) fd.append("cover_image", coverFile);
 
     const url = isEdit
@@ -163,6 +223,21 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
           return;
         }
         const saved = (await res.json()) as { slug: string };
+        // Galerie : envoyée en JSON (un envoi de formulaire ne sait pas
+        // représenter une liste vide).
+        const galleryIds = form.gallery.map((photo) => photo.id);
+        if (galleryIds.join(",") !== savedGalleryIds) {
+          const galleryRes = await apiFetch(`/api/articles/${saved.slug}/`, {
+            method: "PATCH",
+            body: JSON.stringify({ gallery: galleryIds }),
+            headers: csrf ? { "X-CSRFToken": csrf } : {},
+          });
+          if (!galleryRes.ok) {
+            setError(formatApiError(await galleryRes.json().catch(() => null), "La galerie n'a pas pu être enregistrée."));
+            return;
+          }
+          setSavedGalleryIds(galleryIds.join(","));
+        }
         const savedForm = { ...form, status };
         setForm(savedForm);
         setCoverFile(null);
@@ -170,7 +245,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
         router.push(`/admin/articles/${saved.slug}/edit`);
         router.refresh();
       } catch {
-        setError("Erreur réseau, réessaie.");
+        setError("Erreur réseau, réessayez.");
       }
     });
   };
@@ -201,11 +276,12 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
 
   return (
     <form
+      ref={formRef}
       onSubmit={(e) => {
         // Entrée dans un champ : enregistre sans changer le statut (ne
         // publie jamais un brouillon par accident).
         e.preventDefault();
-        void save(isDraft ? "draft" : form.status);
+        void save(isDraft ? "draft" : isScheduled ? "scheduled" : form.status);
       }}
       className="space-y-8"
     >
@@ -244,11 +320,15 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 <Trash2 className="h-4 w-4" /> Supprimer
               </Button>
             ) : null}
-            {isDraft ? (
+            {notYetOnline ? (
               <>
                 <Button type="submit" variant="secondary" disabled={isPending} size="md">
                   <Save className="h-4 w-4" />
-                  {isPending ? "Enregistrement..." : "Enregistrer le brouillon"}
+                  {isPending
+                    ? "Enregistrement..."
+                    : isScheduled
+                      ? "Enregistrer"
+                      : "Enregistrer le brouillon"}
                 </Button>
                 <Button
                   type="button"
@@ -259,7 +339,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                     if (e.currentTarget.form?.reportValidity()) void save("published");
                   }}
                 >
-                  <Send className="h-4 w-4" /> Publier
+                  <Send className="h-4 w-4" /> {isScheduled ? "Publier maintenant" : "Publier"}
                 </Button>
               </>
             ) : (
@@ -336,14 +416,63 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               Publication
             </legend>
 
-            {isDraft ? (
-              <p className="text-sm text-slate-600">
-                <span className="mr-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
-                  Brouillon
-                </span>
-                Invisible sur le site tant que le bouton « Publier » n&apos;a
-                pas été utilisé.
-              </p>
+            {notYetOnline ? (
+              <div className="space-y-3">
+                {isScheduled ? (
+                  <p className="text-sm text-slate-600">
+                    <span className="mr-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                      Programmé
+                    </span>
+                    Mise en ligne automatique le{" "}
+                    <strong>{formatScheduled(form.publish_at)}</strong> (à 5
+                    minutes près).
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    <span className="mr-2 inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      Brouillon
+                    </span>
+                    Invisible sur le site tant que le bouton « Publier » n&apos;a
+                    pas été utilisé.
+                  </p>
+                )}
+                <div className="space-y-2 rounded-md bg-slate-50 p-3">
+                  <Label htmlFor="publish_at">
+                    {isScheduled ? "Date de publication" : "Ou programmer la publication"}
+                  </Label>
+                  <Input
+                    id="publish_at"
+                    type="datetime-local"
+                    value={form.publish_at}
+                    min={toLocalInput(new Date().toISOString())}
+                    onChange={(e) => update("publish_at", e.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isPending || !form.publish_at}
+                      onClick={(e) => {
+                        if (e.currentTarget.form?.reportValidity()) void save("scheduled");
+                      }}
+                    >
+                      {isScheduled ? "Changer la date" : "Programmer"}
+                    </Button>
+                    {isScheduled ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => void save("draft")}
+                      >
+                        Annuler la programmation
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             ) : (
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>
@@ -352,27 +481,22 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 value={form.status}
                 onChange={(e) => update("status", e.target.value)}
               >
-                {article?.status === "scheduled" ? (
-                  <option value="scheduled">
-                    Programmé (hérité — publication automatique indisponible)
-                  </option>
-                ) : null}
                 {STATUSES.map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.label}
                   </option>
                 ))}
               </Select>
-              {form.status === "scheduled" ? (
-                <p className="text-xs text-amber-700">
-                  Ce statut ancien ne possède ni date de programmation ni
-                  tâche de publication. Choisissez Brouillon ou Publié avant
-                  d&apos;enregistrer.
-                </p>
-              ) : null}
-              {savedStatus === "published" && form.status !== "published" ? (
+              {form.status === "draft" ? (
                 <p className="text-xs text-amber-700">
                   L&apos;article sera retiré du site à l&apos;enregistrement.
+                </p>
+              ) : null}
+              {form.status === "archived" ? (
+                <p className="text-xs text-slate-600">
+                  Archivé : l&apos;article quitte l&apos;accueil et les listes,
+                  mais son adresse reste consultable, avec une mention
+                  « Article archivé ».
                 </p>
               ) : null}
             </div>
@@ -387,7 +511,34 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               />
               À la une
             </label>
+            {facebookEnabled && savedStatus !== "published" ? (
+              <label className="flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.auto_publish_to_facebook}
+                  onChange={(e) => update("auto_publish_to_facebook", e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                />
+                <span>Publier aussi sur la page Facebook à la mise en ligne</span>
+              </label>
+            ) : null}
           </fieldset>
+
+          {isEdit && savedStatus === "published" ? (
+            <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+              <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Facebook
+              </legend>
+              <FacebookShare
+                slug={article!.slug}
+                title={article!.title}
+                chapeau={article!.chapeau}
+                pageEnabled={facebookEnabled}
+                postId={article!.facebook_post_id ?? ""}
+                publishedAt={article!.facebook_published_at ?? null}
+              />
+            </fieldset>
+          ) : null}
 
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -402,6 +553,36 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 }
               }}
             />
+            <div className="space-y-2">
+              <Label htmlFor="cover_alt">Description de l&apos;image</Label>
+              <Input
+                id="cover_alt"
+                value={form.cover_alt}
+                maxLength={300}
+                placeholder="Ex. : Chalutier rentrant au port à l'aube"
+                onChange={(e) => update("cover_alt", e.target.value)}
+              />
+              <p className="text-xs text-slate-500">
+                Lue par les lecteurs d&apos;écran et par Google. Une phrase simple suffit.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cover_credit">Crédit photo</Label>
+              <Input
+                id="cover_credit"
+                value={form.cover_credit}
+                maxLength={200}
+                placeholder="Ex. : Photo Marie Dupont"
+                onChange={(e) => update("cover_credit", e.target.value)}
+              />
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Galerie photos
+            </legend>
+            <GalleryEditor photos={form.gallery} onChange={(photos) => update("gallery", photos)} />
           </fieldset>
 
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">

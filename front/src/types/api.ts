@@ -99,6 +99,8 @@ export type ArticleDetail = {
   chapeau: string;
   body: string;
   cover_image: ImageVariants | null;
+  cover_alt: string;
+  cover_credit: string;
   gallery: Media[];
   category: Category;
   tags: Tag[];
@@ -114,6 +116,9 @@ export type ArticleDetail = {
   meta_title: string;
   meta_description: string;
   view_count: number;
+  auto_publish_to_facebook?: boolean;
+  facebook_post_id?: string;
+  facebook_published_at?: string | null;
   created_at: string;
   updated_at: string;
 };

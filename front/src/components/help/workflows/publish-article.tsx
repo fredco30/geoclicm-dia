@@ -18,6 +18,7 @@ import {
 import {
   Done,
   FieldList,
+  Kbd,
   KeyTip,
   Path,
   SubSteps,
@@ -177,13 +178,26 @@ export const PUBLISH_ARTICLE: Workflow = {
                 description:
                   "Format paysage (16/9 idéal), JPEG, PNG ou WebP. Le système la redimensionne automatiquement pour chaque écran.",
               },
+              {
+                label: "Description de l'image",
+                description:
+                  "Une phrase qui décrit la photo (« Chalutier rentrant au port à l'aube »). Lue par les lecteurs d'écran et par Google.",
+              },
+              {
+                label: "Crédit photo",
+                description: "Auteur ou source, affiché sous l'image.",
+              },
+              {
+                label: "Galerie photos",
+                description:
+                  "Ajouter des photos : elles s'affichent en fin d'article. Donnez à chacune une légende et un crédit ; la croix retire une photo de l'article.",
+              },
             ]}
           />
 
           <Warning>
             <strong>Droits</strong> : n&apos;utilisez que des photos dont vous
-            avez l&apos;autorisation, et mentionnez l&apos;auteur ou la source
-            dans le texte de l&apos;article.
+            avez l&apos;autorisation, et renseignez toujours le crédit photo.
           </Warning>
 
           <h4 className="mt-4 mb-1 font-semibold text-slate-800">
@@ -204,6 +218,13 @@ export const PUBLISH_ARTICLE: Workflow = {
                 l&apos;article doit être rempli.
               </>,
               <>
+                <UI>Programmer</UI> : dans le bloc <UI>Publication</UI>, choisissez
+                une date et une heure, puis cliquez sur <UI>Programmer</UI>.
+                L&apos;article se met en ligne tout seul à l&apos;heure dite (à
+                5 minutes près). Vous pouvez changer la date, le publier
+                immédiatement ou <UI>Annuler la programmation</UI>.
+              </>,
+              <>
                 Si une information manque, un encadré rouge indique quel champ
                 corriger (ex. <em>« Catégorie : Ce champ est obligatoire. »</em>).
               </>,
@@ -215,6 +236,17 @@ export const PUBLISH_ARTICLE: Workflow = {
             un commerçant, sélectionnez-le dans le champ{" "}
             <UI>Commerçant sponsor</UI>. Une mention de partenariat apparaît
             alors automatiquement en haut et en fin d&apos;article.
+          </Tip>
+
+          <Tip>
+            <strong>Facebook</strong> : une fois l&apos;article en ligne, le
+            bloc <UI>Facebook</UI> propose <UI>Partager via Facebook</UI>{" "}
+            (Facebook s&apos;ouvre avec l&apos;aperçu de l&apos;article : choisissez
+            de publier sur la page) et <UI>Copier le texte du post</UI>. Si la
+            publication automatique est activée, cochez{" "}
+            <UI>Publier aussi sur la page Facebook à la mise en ligne</UI>{" "}
+            avant de publier, ou utilisez <UI>Publier sur la page Facebook</UI>{" "}
+            ensuite. Un article n&apos;est jamais publié deux fois sur la page.
           </Tip>
 
           <Done>
@@ -240,10 +272,15 @@ export const PUBLISH_ARTICLE: Workflow = {
                 refaire si vous repérez une coquille 3 jours après.
               </>,
               <>
-                Pour retirer un article sans le supprimer, passez son{" "}
-                <UI>Statut</UI> à <UI>Archivé</UI> (ou <UI>Brouillon</UI>) puis{" "}
-                <UI>Mettre à jour</UI> : il disparaît du site mais reste dans
-                votre liste.
+                <UI>Archivé</UI> (champ <UI>Statut</UI>, puis{" "}
+                <UI>Mettre à jour</UI>) retire l&apos;article de l&apos;accueil,
+                des listes et de sa rubrique, mais son adresse reste
+                consultable avec une mention « Article archivé » : les liens
+                déjà partagés continuent de fonctionner.
+              </>,
+              <>
+                <UI>Brouillon</UI> le retire complètement du site, pour le
+                retravailler.
               </>,
               <>
                 <UI>Supprimer</UI> est définitif : l&apos;article et son adresse
@@ -252,9 +289,11 @@ export const PUBLISH_ARTICLE: Workflow = {
             ]}
           />
           <KeyTip>
-            Si vous fermez l&apos;onglet avec des modifications non
-            enregistrées, le navigateur vous demande confirmation. Pensez tout
-            de même à enregistrer avant de changer de menu.
+            <strong>Raccourci :</strong> <Kbd>Ctrl</Kbd> + <Kbd>S</Kbd> (ou{" "}
+            <Kbd>Cmd</Kbd> + <Kbd>S</Kbd> sur Mac) enregistre sans cliquer —
+            un brouillon reste un brouillon. Si vous fermez l&apos;onglet avec
+            des modifications non enregistrées, le navigateur vous demande
+            confirmation.
           </KeyTip>
         </>
       ),
