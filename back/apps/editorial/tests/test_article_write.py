@@ -52,3 +52,27 @@ class UniqueSlugTests(SimpleTestCase):
 
     def test_title_without_letters(self):
         self.assertEqual(self._slug("!!!", set()), "article")
+
+
+class ArchivedVisibilityTests(SimpleTestCase):
+    """Une fiche archivée reste consultable par son adresse, pas dans les listes."""
+
+    def _statuses(self, action):
+        from django.contrib.auth.models import AnonymousUser
+
+        from apps.editorial.views import ArticleViewSet
+
+        view = ArticleViewSet()
+        view.action = action
+        view.request = SimpleNamespace(user=AnonymousUser())
+        where = view.get_queryset().query.where
+        lookups = [child for child in where.children if child.lhs.target.name == "status"]
+        return set(lookups[0].rhs) if lookups[0].lookup_name == "in" else {lookups[0].rhs}
+
+    def test_detail_includes_archived(self):
+        self.assertEqual(
+            self._statuses("retrieve"), {Article.Status.PUBLISHED, Article.Status.ARCHIVED}
+        )
+
+    def test_lists_exclude_archived(self):
+        self.assertEqual(self._statuses("list"), {Article.Status.PUBLISHED})
