@@ -39,12 +39,66 @@ def _provenance_key(url: str) -> str:
     return urlunparse((parsed.scheme.lower(), parsed.netloc.lower(), path, "", query, ""))
 
 
+COLLECT_ENDPOINT_PREFIX = "events.extract."
+
+
+def _collect_budget_guard() -> None:
+    """Limite journalière propre à la collecte, en appels et en euros.
+
+    La collecte partageait le cap de l'assistant public. Un crawl de plusieurs
+    centaines de pages le vidait en quelques minutes, et la collecte est restée
+    muette du 1er août au 13 novembre 2026. Elle a donc son enveloppe.
+
+    Les deux limites se complètent : sur un abonnement au forfait, ou sur un
+    modèle gratuit, le coût journalisé est nul et seul le compte d'appels
+    retient quelque chose ; sur un modèle facturé au token, c'est l'inverse.
+    Une limite à 0 est désactivée.
+    """
+    from django.db.models import Sum
+    from django.utils import timezone
+
+    from apps.ai_assist.models import AIGeneration
+
+    call_cap = int(getattr(settings, "EVENT_AI_DAILY_CALL_CAP", 0) or 0)
+    eur_cap = float(getattr(settings, "EVENT_AI_DAILY_EUR_CAP", 0) or 0)
+    if call_cap <= 0 and eur_cap <= 0:
+        return
+
+    since = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = AIGeneration.objects.filter(
+        created_at__gte=since,
+        endpoint__startswith=COLLECT_ENDPOINT_PREFIX,
+        status=AIGeneration.Status.SUCCESS,
+    )
+    if call_cap > 0:
+        calls = today.count()
+        if calls >= call_cap:
+            raise ExtractionUnavailable(
+                f"Plafond journalier de la collecte atteint ({calls} / {call_cap} appels). "
+                "Relancer demain ou relever EVENT_AI_DAILY_CALL_CAP."
+            )
+    if eur_cap > 0:
+        spent = float(today.aggregate(total=Sum("cost_eur")).get("total") or 0)
+        if spent >= eur_cap:
+            raise ExtractionUnavailable(
+                f"Budget journalier de la collecte atteint ({spent:.2f}€ / {eur_cap:.2f}€). "
+                "Relancer demain ou relever EVENT_AI_DAILY_EUR_CAP."
+            )
+
+
 def _provider_config() -> tuple[str, str]:
     provider = str(getattr(settings, "EVENT_AI_PROVIDER", "mistral")).strip().lower()
     if provider == "ovh":
         return provider, str(getattr(settings, "EVENT_AI_MODEL", "Qwen3.5-9B"))
     if provider == "deepseek":
         return provider, str(getattr(settings, "DEEPSEEK_MODEL", "deepseek-v4-flash"))
+    if provider == "opencode":
+        model = str(getattr(settings, "OPENCODE_MODEL", "") or "").strip()
+        if not model:
+            raise ExtractionUnavailable(
+                "OPENCODE_MODEL doit nommer le modèle à utiliser (aucun défaut raisonnable)."
+            )
+        return provider, model
     if provider == "mistral":
         return provider, str(
             getattr(settings, "AI_ASSIST_DEFAULT_MODEL", "mistral-small-latest")
@@ -55,7 +109,36 @@ def _provider_config() -> tuple[str, str]:
 def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
     """Appelle le fournisseur Agenda configuré sans modifier les embeddings."""
     provider, model = _provider_config()
+    _collect_budget_guard()
     effective_system_prompt = system_prompt if system_prompt is not None else SYSTEM_PROMPT
+    if provider == "opencode":
+        from apps.ai_assist.services.mistral import BudgetExceeded
+        from apps.ai_assist.services.openai_compatible import (
+            LLMProviderError,
+            LLMProviderNotConfigured,
+            generate_openai_compatible,
+        )
+
+        try:
+            return generate_openai_compatible(
+                user=source.created_by,
+                endpoint="events.extract.opencode",
+                provider="OpenCode Zen",
+                base_url=settings.OPENCODE_BASE_URL,
+                api_key=settings.OPENCODE_API_KEY,
+                model=model,
+                system_prompt=effective_system_prompt,
+                user_prompt=prompt,
+                temperature=0.0,
+                max_tokens=6000,
+                response_format={"type": "json_object"},
+                timeout=settings.EVENT_AI_HTTP_TIMEOUT,
+                max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
+                enforce_user_budget=False,
+            )
+        except (BudgetExceeded, LLMProviderNotConfigured, LLMProviderError) as exc:
+            raise ExtractionUnavailable(str(exc)) from exc
+
     if provider == "ovh":
         from apps.ai_assist.services.mistral import BudgetExceeded
         from apps.ai_assist.services.openai_compatible import (
@@ -80,6 +163,7 @@ def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
                 reasoning_effort="none",
                 timeout=settings.EVENT_AI_HTTP_TIMEOUT,
                 max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
+                enforce_user_budget=False,
             )
         except (BudgetExceeded, LLMProviderNotConfigured, LLMProviderError) as exc:
             raise ExtractionUnavailable(str(exc)) from exc
@@ -107,6 +191,7 @@ def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
                 response_format={"type": "json_object"},
                 timeout=settings.EVENT_AI_HTTP_TIMEOUT,
                 max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
+                enforce_user_budget=False,
             )
         except (BudgetExceeded, LLMProviderNotConfigured, LLMProviderError) as exc:
             raise ExtractionUnavailable(str(exc)) from exc
@@ -128,6 +213,7 @@ def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
             temperature=0.0,
             max_tokens=6000,
             response_format={"type": "json_object"},
+            enforce_user_budget=False,
         )
         return {**result, "provider": "mistral"}
     except (BudgetExceeded, MistralNotConfigured, MistralError) as exc:

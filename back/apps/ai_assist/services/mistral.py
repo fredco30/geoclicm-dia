@@ -97,9 +97,13 @@ def generate(
     temperature: float = 0.4,
     max_tokens: int = 1024,
     response_format: dict | None = None,
+    enforce_user_budget: bool = True,
 ) -> dict[str, Any]:
     """
     Appelle Mistral chat avec audit log, budget check et retour structuré.
+
+    ``enforce_user_budget=False`` laisse l'appelant poser sa propre limite
+    (voir la collecte Agenda) ; le journal d'audit reste écrit.
 
     Args:
         user: User Django authentifié (FK obligatoire pour audit).
@@ -154,7 +158,8 @@ def generate(
 
     # 2. Budget check (lève BudgetExceeded → log + 429 côté view)
     try:
-        _check_budget(user_id=user.id)
+        if enforce_user_budget:
+            _check_budget(user_id=user.id)
     except BudgetExceeded as exc:
         AIGeneration.objects.create(
             user=user,

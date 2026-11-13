@@ -39,8 +39,16 @@ def generate_openai_compatible(
     reasoning_effort: str | None = None,
     timeout: int = 120,
     max_attempts: int = 3,
+    enforce_user_budget: bool = True,
 ) -> dict[str, Any]:
-    """Appelle ``/chat/completions`` avec budget, reprises et journal d'audit."""
+    """Appelle ``/chat/completions`` avec budget, reprises et journal d'audit.
+
+    ``enforce_user_budget=False`` laisse l'appelant poser sa propre limite. La
+    collecte Agenda s'en sert : elle tourne sous le compte qui a créé la
+    source, et le cap pensé pour un humain devant l'assistant arrêtait un
+    traitement de plusieurs centaines de pages. Le journal d'audit, lui, est
+    écrit dans tous les cas.
+    """
     token = str(api_key or "").strip()
     if not token:
         raise LLMProviderNotConfigured(
@@ -55,7 +63,8 @@ def generate_openai_compatible(
         )
 
     try:
-        _check_budget(user_id=user.id)
+        if enforce_user_budget:
+            _check_budget(user_id=user.id)
     except BudgetExceeded as exc:
         AIGeneration.objects.create(
             user=user,
