@@ -24,6 +24,7 @@ from apps.core.models import User
 from apps.directory.models import Business, BusinessImportCandidate
 from apps.events.event_images import generic_image_urls, select_event_image
 from apps.events.imports import (
+    DATES_ERROR,
     _absolute_http_url,
     _aware,
     _compact_text,
@@ -31,6 +32,7 @@ from apps.events.imports import (
     _guess_category,
     _optional_float,
     _upsert_candidate,
+    build_occurrences,
     commune_id,
 )
 from apps.listings.models import Listing, ListingImportCandidate
@@ -113,23 +115,7 @@ def _normalize_agenda_item(
     if (latitude is None or longitude is None) and address:
         latitude, longitude = _geocode(address, resolved_commune)
 
-    occurrences = []
-    raw_occurrences = raw.get("occurrences") or []
-    if isinstance(raw_occurrences, list):
-        for occurrence in raw_occurrences:
-            if not isinstance(occurrence, dict):
-                continue
-            starts_at = _aware(occurrence.get("starts_at"))
-            ends_at = _aware(occurrence.get("ends_at"), end=True)
-            if starts_at and ends_at and ends_at > starts_at:
-                occurrences.append(
-                    {
-                        "starts_at": starts_at.isoformat(),
-                        "ends_at": ends_at.isoformat(),
-                        "is_all_day": bool(occurrence.get("is_all_day")),
-                    }
-                )
-    occurrences.sort(key=lambda row: row["starts_at"])
+    occurrences = build_occurrences(raw.get("occurrences"))
     start = _aware(occurrences[0]["starts_at"]) if occurrences else None
     end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
@@ -148,7 +134,7 @@ def _normalize_agenda_item(
     if not title:
         errors.append("Titre absent")
     if not occurrences:
-        errors.append("Dates absentes, incomplètes ou invalides")
+        errors.append(DATES_ERROR)
     if not resolved_commune:
         errors.append("Commune non reconnue")
     if not category:
