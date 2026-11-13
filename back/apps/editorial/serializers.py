@@ -187,7 +187,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     commune = CommuneSerializer(read_only=True)
     cover_image = ImageVariantsField(read_only=True)
-    gallery = MediaSerializer(many=True, read_only=True)
+    gallery = serializers.SerializerMethodField()
     author = AuthorSerializer(read_only=True)
     sponsor = SponsorDetailSerializer(read_only=True)
 
@@ -195,7 +195,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
         model = Article
         fields = (
             "id", "title", "slug", "chapeau", "body",
-            "cover_image", "gallery",
+            "cover_image", "cover_alt", "cover_credit", "gallery",
             "category", "tags", "article_type",
             "commune", "location",
             "status", "is_featured", "author", "published_at",
@@ -204,6 +204,11 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             "view_count",
             "created_at", "updated_at",
         )
+
+    def get_gallery(self, obj: Article) -> list[dict]:
+        # Ordre d'ajout (la relation n'a pas d'ordre propre).
+        photos = sorted(obj.gallery.all(), key=lambda media: media.pk)
+        return MediaSerializer(photos, many=True, context=self.context).data
 
 
 # ============================================================================
@@ -222,7 +227,7 @@ class ArticleWriteSerializer(serializers.ModelSerializer):
         model = Article
         fields = (
             "id", "title", "slug", "chapeau", "body",
-            "cover_image", "gallery",
+            "cover_image", "cover_alt", "cover_credit", "gallery",
             "category", "tags", "article_type",
             "commune", "location",
             "status", "is_featured", "published_at",

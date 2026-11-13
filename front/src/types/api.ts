@@ -99,6 +99,8 @@ export type ArticleDetail = {
   chapeau: string;
   body: string;
   cover_image: ImageVariants | null;
+  cover_alt: string;
+  cover_credit: string;
   gallery: Media[];
   category: Category;
   tags: Tag[];

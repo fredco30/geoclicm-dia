@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "./markdown-editor";
 import { ImageUploader } from "./image-uploader";
+import { GalleryEditor, toGalleryPhotos, type GalleryPhoto } from "./gallery-editor";
 import { AIRewriteButton } from "./ai-rewrite-button";
 import type {
   ArticleDetail,
@@ -46,6 +47,9 @@ type FormState = {
   sponsor_disclosure: string;
   /** Date de publication programmée, au format du champ datetime-local. */
   publish_at: string;
+  cover_alt: string;
+  cover_credit: string;
+  gallery: GalleryPhoto[];
 };
 
 /** ISO → valeur d'un <input type="datetime-local"> (heure locale). */
@@ -104,7 +108,14 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     sponsor: article?.sponsor ? String(article.sponsor.id) : "",
     sponsor_disclosure: article?.sponsor_disclosure ?? "",
     publish_at: article?.status === "scheduled" ? toLocalInput(article.published_at) : "",
+    cover_alt: article?.cover_alt ?? "",
+    cover_credit: article?.cover_credit ?? "",
+    gallery: toGalleryPhotos(article?.gallery ?? []),
   });
+  // Galerie telle qu'enregistrée : la liste n'est renvoyée que si elle change.
+  const [savedGalleryIds, setSavedGalleryIds] = useState(() =>
+    (article?.gallery ?? []).map((item) => item.id).join(","),
+  );
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +195,8 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     // sponsor : "" pour clear, sinon ID en string. DRF traite "" comme null sur FK.
     fd.append("sponsor", form.sponsor);
     fd.append("sponsor_disclosure", form.sponsor_disclosure);
+    fd.append("cover_alt", form.cover_alt);
+    fd.append("cover_credit", form.cover_credit);
     if (coverFile) fd.append("cover_image", coverFile);
 
     const url = isEdit
@@ -204,6 +217,21 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
           return;
         }
         const saved = (await res.json()) as { slug: string };
+        // Galerie : envoyée en JSON (un envoi de formulaire ne sait pas
+        // représenter une liste vide).
+        const galleryIds = form.gallery.map((photo) => photo.id);
+        if (galleryIds.join(",") !== savedGalleryIds) {
+          const galleryRes = await apiFetch(`/api/articles/${saved.slug}/`, {
+            method: "PATCH",
+            body: JSON.stringify({ gallery: galleryIds }),
+            headers: csrf ? { "X-CSRFToken": csrf } : {},
+          });
+          if (!galleryRes.ok) {
+            setError(formatApiError(await galleryRes.json().catch(() => null), "La galerie n'a pas pu être enregistrée."));
+            return;
+          }
+          setSavedGalleryIds(galleryIds.join(","));
+        }
         const savedForm = { ...form, status };
         setForm(savedForm);
         setCoverFile(null);
@@ -492,6 +520,36 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
                 }
               }}
             />
+            <div className="space-y-2">
+              <Label htmlFor="cover_alt">Description de l&apos;image</Label>
+              <Input
+                id="cover_alt"
+                value={form.cover_alt}
+                maxLength={300}
+                placeholder="Ex. : Chalutier rentrant au port à l'aube"
+                onChange={(e) => update("cover_alt", e.target.value)}
+              />
+              <p className="text-xs text-slate-500">
+                Lue par les lecteurs d&apos;écran et par Google. Une phrase simple suffit.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cover_credit">Crédit photo</Label>
+              <Input
+                id="cover_credit"
+                value={form.cover_credit}
+                maxLength={200}
+                placeholder="Ex. : Photo Marie Dupont"
+                onChange={(e) => update("cover_credit", e.target.value)}
+              />
+            </div>
+          </fieldset>
+
+          <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Galerie photos
+            </legend>
+            <GalleryEditor photos={form.gallery} onChange={(photos) => update("gallery", photos)} />
           </fieldset>
 
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">

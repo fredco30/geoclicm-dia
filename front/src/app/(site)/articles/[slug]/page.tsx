@@ -190,16 +190,52 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Cover — orientation préservée, hauteur max 600px */}
       {article.cover_image?.large ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={article.cover_image.large}
-          alt={article.title}
-          className="mx-auto mb-10 block max-h-[600px] w-auto max-w-full rounded-2xl shadow-sm"
-        />
+        <figure className="mb-10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={article.cover_image.large}
+            alt={article.cover_alt || article.title}
+            className="mx-auto block max-h-[600px] w-auto max-w-full rounded-2xl shadow-sm"
+          />
+          {article.cover_credit ? (
+            <figcaption className="mt-2 text-right text-xs text-slate-500">
+              {article.cover_credit}
+            </figcaption>
+          ) : null}
+        </figure>
       ) : null}
 
       {/* Corps */}
       <ArticleBody content={article.body} />
+
+      {article.gallery.length > 0 ? (
+        <section className="mt-10" aria-label="Galerie photos">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {article.gallery.map((photo) =>
+              photo.file?.medium ? (
+                <figure key={photo.id}>
+                  <a href={photo.file.original ?? photo.file.large ?? photo.file.medium} target="_blank" rel="noopener">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.file.medium}
+                      alt={photo.alt_text || photo.caption || ""}
+                      loading="lazy"
+                      className="aspect-[4/3] w-full rounded-xl object-cover"
+                    />
+                  </a>
+                  {photo.caption || photo.credit ? (
+                    <figcaption className="mt-1.5 text-xs text-slate-600">
+                      {photo.caption}
+                      {photo.caption && photo.credit ? " — " : ""}
+                      {photo.credit ? <span className="text-slate-500">{photo.credit}</span> : null}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              ) : null,
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {/* Encart pub fin d'article (ciblé sur la commune + catégorie de l'article) */}
       <div className="mt-10">
