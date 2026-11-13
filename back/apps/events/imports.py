@@ -24,6 +24,7 @@ from PIL import Image, UnidentifiedImageError
 
 from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
+from apps.discovery.cleaning import is_foreign_language_url
 from apps.discovery.review import guard_import, lock_identity, preserve_review, review_candidate
 from apps.discovery.validity import validity
 
@@ -187,6 +188,9 @@ def _discover_json_ld(
     patterns = [line.strip().lower() for line in source.url_patterns.splitlines() if line.strip()]
     pages = list(shared.pages.filter(is_active=True).order_by("canonical_url"))
     pages = [page for page in pages if _matches_url_patterns(page, patterns)]
+    # Versions traduites (/en/, /es/…) : mêmes événements qu'en français, elles
+    # remplissaient la boîte « À valider » de doublons dans d'autres langues.
+    pages = [page for page in pages if not is_foreign_language_url(_event_page_url(page))]
     page_record_by_url = {_event_page_url(page): page for page in pages}
 
     events: list[dict] = []
