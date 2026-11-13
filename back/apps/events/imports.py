@@ -117,20 +117,24 @@ def build_occurrences(raw_occurrences: object) -> list[dict]:
     return rows
 
 
-def occurrences_from_text(*parts: object, reference: date) -> list[dict]:
+def occurrences_from_text(
+    *parts: object, reference: date, latest: date | None = None
+) -> list[dict]:
     """Occurrences reconstituées depuis le texte, quand l'IA n'en renvoie aucune.
 
     Le prompt lui interdit désormais d'inventer une année : elle s'abstient et
     recopie « vendredi 04 juillet à 18h30 » dans ses preuves. L'année se déduit
     du jour de la semaine. On ne lit que des preuves déjà vérifiées dans la
     page, donc une date reconstituée vient toujours du document.
+
+    `latest` plafonne les années déduites : voir `french_dates`.
     """
     rows = [
         {
             "starts_at": datetime.combine(found.day, found.at or time.min).isoformat(),
             "is_all_day": found.at is None,
         }
-        for found in read_dates(*parts, reference=reference)
+        for found in read_dates(*parts, reference=reference, latest=latest)
     ]
     return build_occurrences(rows)
 

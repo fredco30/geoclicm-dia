@@ -12,6 +12,14 @@ la page : sur ces sites, toutes les pages portent la même date de modification.
 Sans jour de la semaine ni année écrite, rien n'est renvoyé. Une date absente
 vaut mieux qu'une date inventée. Un jour de la semaine qui contredit l'année
 écrite ne renvoie rien non plus : la page se contredit, un humain doit lire.
+
+La fenêtre a son propre piège : un même jour de semaine revient tous les six ans,
+donc une vieille date dont l'année vraie est hors fenêtre peut trouver une
+solution unique… dans le futur. « Mercredi 29 décembre » vaut 2021 et 2027 ;
+fenêtre ouverte sur 2027 seulement, un marché de 2021 ressort en 2027. D'où
+`latest` : l'appelant plafonne les années déduites, et pour une reprise de
+l'existant ce plafond est la date de crawl — la page ne peut pas annoncer plus
+tard que ce qu'elle disait ce jour-là sans que nous l'ayons lu.
 """
 
 from __future__ import annotations
@@ -74,6 +82,7 @@ def _single_year(
     weekday: int | None,
     year: int | None,
     reference: date,
+    latest: date | None,
 ) -> date | None:
     """La seule date compatible dans la fenêtre, sinon rien."""
     years = (
@@ -84,6 +93,8 @@ def _single_year(
         try:
             value = date(candidate, month, day)
         except ValueError:
+            continue
+        if year is None and latest is not None and value > latest:
             continue
         if weekday is None or value.weekday() == weekday:
             found.append(value)
@@ -99,8 +110,11 @@ def _time_after(text: str, position: int) -> time | None:
     return time(hour, minute) if hour <= 23 and minute <= 59 else None
 
 
-def read_dates(*parts: object, reference: date) -> list[ReadDate]:
-    """Dates complètes lisibles dans ces textes, sans aucune invention."""
+def read_dates(*parts: object, reference: date, latest: date | None = None) -> list[ReadDate]:
+    """Dates complètes lisibles dans ces textes, sans aucune invention.
+
+    `latest` plafonne les seules années déduites ; une année écrite est crue.
+    """
     found: dict[date, time | None] = {}
     for part in parts:
         text = normalize(part)
@@ -113,6 +127,7 @@ def read_dates(*parts: object, reference: date) -> list[ReadDate]:
                 WEEKDAYS[name] if name else None,
                 int(written_year) if written_year else None,
                 reference,
+                latest,
             )
             if resolved is None:
                 continue

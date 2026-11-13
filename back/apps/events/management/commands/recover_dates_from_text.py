@@ -8,6 +8,11 @@
 année, tout en recopiant « Vernissage le vendredi 04 juillet à 18h30 » dans ses
 preuves. L'année se retrouve en accordant le jour de la semaine, sans appel IA.
 
+Une année déduite ne peut pas dépasser la date de crawl : un même jour de
+semaine revenant tous les six ans, une date de 2021 trouverait sinon une
+solution unique en 2027 et un marché ancien ressortirait dans le futur. On
+reprend ici de l'existant, donc toutes les dates à retrouver sont derrière nous.
+
 Les dates retrouvées étant souvent passées, beaucoup de candidats partent en
 « Expirés » : c'est l'objectif, ils encombraient la boîte. Rien n'est publié,
 l'approbation reste un geste humain.
@@ -67,6 +72,7 @@ class Command(BaseCommand):
                     candidate.short_description,
                     *(evidence if isinstance(evidence, list) else []),
                     reference=page.fetched_at.date(),
+                    latest=page.fetched_at.date(),
                 )
                 if not occurrences:
                     counters["aucune date lisible (reste sans date)"] += 1
