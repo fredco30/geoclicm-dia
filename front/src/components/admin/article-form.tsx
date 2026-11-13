@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "./markdown-editor";
 import { ImageUploader } from "./image-uploader";
 import { GalleryEditor, toGalleryPhotos, type GalleryPhoto } from "./gallery-editor";
+import { FacebookShare } from "./facebook-share";
 import { AIRewriteButton } from "./ai-rewrite-button";
 import type {
   ArticleDetail,
@@ -27,6 +28,8 @@ type Props = {
   categories: Category[];
   communes: Commune[];
   businesses: BusinessListItem[];
+  /** Publication automatique sur la page Facebook configurée côté serveur. */
+  facebookEnabled?: boolean;
 };
 
 type FormState = {
@@ -50,6 +53,7 @@ type FormState = {
   cover_alt: string;
   cover_credit: string;
   gallery: GalleryPhoto[];
+  auto_publish_to_facebook: boolean;
 };
 
 /** ISO → valeur d'un <input type="datetime-local"> (heure locale). */
@@ -87,7 +91,7 @@ function readCsrfToken(): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function ArticleForm({ article, categories, communes, businesses }: Props) {
+export function ArticleForm({ article, categories, communes, businesses, facebookEnabled = false }: Props) {
   const router = useRouter();
   const isEdit = !!article;
 
@@ -111,6 +115,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     cover_alt: article?.cover_alt ?? "",
     cover_credit: article?.cover_credit ?? "",
     gallery: toGalleryPhotos(article?.gallery ?? []),
+    auto_publish_to_facebook: article?.auto_publish_to_facebook ?? true,
   });
   // Galerie telle qu'enregistrée : la liste n'est renvoyée que si elle change.
   const [savedGalleryIds, setSavedGalleryIds] = useState(() =>
@@ -196,6 +201,7 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
     fd.append("sponsor", form.sponsor);
     fd.append("sponsor_disclosure", form.sponsor_disclosure);
     fd.append("cover_alt", form.cover_alt);
+    fd.append("auto_publish_to_facebook", String(form.auto_publish_to_facebook));
     fd.append("cover_credit", form.cover_credit);
     if (coverFile) fd.append("cover_image", coverFile);
 
@@ -505,7 +511,34 @@ export function ArticleForm({ article, categories, communes, businesses }: Props
               />
               À la une
             </label>
+            {facebookEnabled && savedStatus !== "published" ? (
+              <label className="flex items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={form.auto_publish_to_facebook}
+                  onChange={(e) => update("auto_publish_to_facebook", e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                />
+                <span>Publier aussi sur la page Facebook à la mise en ligne</span>
+              </label>
+            ) : null}
           </fieldset>
+
+          {isEdit && savedStatus === "published" ? (
+            <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+              <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Facebook
+              </legend>
+              <FacebookShare
+                slug={article!.slug}
+                title={article!.title}
+                chapeau={article!.chapeau}
+                pageEnabled={facebookEnabled}
+                postId={article!.facebook_post_id ?? ""}
+                publishedAt={article!.facebook_published_at ?? null}
+              />
+            </fieldset>
+          ) : null}
 
           <fieldset className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

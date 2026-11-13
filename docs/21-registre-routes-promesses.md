@@ -134,3 +134,14 @@ Route canonique `/api/auth/recovery/`. Anciennes pages
 REMPLACÉES avec redirection et prise en charge des anciens liens uid/token.
 Les deux anciens POST `/api/auth/password-reset/` et `.../confirm/` répondent
 410 avec recovery_url ; aucun changement de mot de passe via ces routes.
+
+## Mise à jour — 13 novembre 2026 (articles)
+
+| Élément | État | Décision |
+|---|---|---|
+| Publication programmée | Bloc « Programmer » du formulaire, tâche Celery `editorial.publish_scheduled` toutes les 5 min (créée au `migrate`) | **LIVRÉE** — à valider en production en programmant un article de test |
+| Publication Facebook | Partage manuel (fenêtre Facebook + texte à copier) toujours disponible. Publication automatique sur la page via l'API Graph, une seule fois par article, **inactive tant que `FACEBOOK_PAGE_ID` et `FACEBOOK_PAGE_ACCESS_TOKEN` sont vides** | Partage manuel **LIVRÉ** ; automatique **LIVRÉ MAIS INACTIF** — ne pas l'annoncer avant un test réel avec le jeton de page |
+| Galerie photos, crédit et description de la couverture | Bloc « Galerie photos », champs `cover_alt` / `cover_credit` (migration editorial 0003) | **LIVRÉS** |
+| Article archivé | Hors listes, mais adresse consultable avec un bandeau « Article archivé » | **LIVRÉ** |
+| Ctrl+S dans le formulaire article | Enregistre sans publier | **LIVRÉ** |
+

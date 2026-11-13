@@ -292,6 +292,13 @@ ACCOUNT_RECOVERY_ENABLED = env.bool("ACCOUNT_RECOVERY_ENABLED", default=False)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 PASSWORD_RESET_TIMEOUT = 3600  # lien à usage unique, une heure
 
+# --- Publication Facebook automatique (docs/08) ---------------------------
+# Vide = désactivée : seul le partage manuel est proposé dans le back-office.
+FACEBOOK_PAGE_ID = env("FACEBOOK_PAGE_ID", default="")
+FACEBOOK_PAGE_ACCESS_TOKEN = env("FACEBOOK_PAGE_ACCESS_TOKEN", default="")
+# Version de l'API Graph (ex. « v23.0 ») ; vide = version par défaut de l'app.
+FACEBOOK_GRAPH_VERSION = env("FACEBOOK_GRAPH_VERSION", default="")
+
 LOGIN_MAX_FAILURES = env.int("LOGIN_MAX_FAILURES", default=10)
 LOGIN_FAILURE_WINDOW_SECONDS = env.int("LOGIN_FAILURE_WINDOW_SECONDS", default=15 * 60)
 

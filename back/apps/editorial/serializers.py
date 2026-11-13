@@ -202,6 +202,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
             "sponsor", "sponsor_disclosure",
             "meta_title", "meta_description",
             "view_count",
+            "auto_publish_to_facebook", "facebook_post_id", "facebook_published_at",
             "created_at", "updated_at",
         )
 

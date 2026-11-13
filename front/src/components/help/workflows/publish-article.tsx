@@ -238,6 +238,17 @@ export const PUBLISH_ARTICLE: Workflow = {
             alors automatiquement en haut et en fin d&apos;article.
           </Tip>
 
+          <Tip>
+            <strong>Facebook</strong> : une fois l&apos;article en ligne, le
+            bloc <UI>Facebook</UI> propose <UI>Partager via Facebook</UI>{" "}
+            (Facebook s&apos;ouvre avec l&apos;aperçu de l&apos;article : choisissez
+            de publier sur la page) et <UI>Copier le texte du post</UI>. Si la
+            publication automatique est activée, cochez{" "}
+            <UI>Publier aussi sur la page Facebook à la mise en ligne</UI>{" "}
+            avant de publier, ou utilisez <UI>Publier sur la page Facebook</UI>{" "}
+            ensuite. Un article n&apos;est jamais publié deux fois sur la page.
+          </Tip>
+
           <Done>
             Article publié ! Vérifiez le rendu côté lecteur avec le bouton{" "}
             <UI>Voir</UI> qui apparaît une fois l&apos;article en ligne. En cas

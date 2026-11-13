@@ -15,6 +15,8 @@ export type SiteSettings = {
   billing_enabled: boolean;
   /** Réinitialisation du mot de passe par email (serveur d'envoi configuré). */
   password_reset_enabled: boolean;
+  /** Publication automatique sur la page Facebook (jeton configuré). */
+  facebook_enabled: boolean;
   updated_at?: string;
 };
 
@@ -26,6 +28,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   accent_color: "#a8533a",
   billing_enabled: false,
   password_reset_enabled: false,
+  facebook_enabled: false,
 };
 
 const HEX = /^#[0-9a-f]{6}$/i;

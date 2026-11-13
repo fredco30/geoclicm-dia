@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { fetchAllPages, getCookieHeader } from "@/lib/auth-server";
 import { api } from "@/lib/api";
+import { getSiteSettings } from "@/lib/site-settings";
 import { ArticleForm } from "@/components/admin/article-form";
 import type {
   ArticleDetail,
@@ -27,7 +28,8 @@ async function fetchBusinessesAuth(): Promise<BusinessListItem[]> {
 
 export default async function EditArticlePage({ params }: Props) {
   const { slug } = await params;
-  const [article, categories, communes, businesses] = await Promise.all([
+  const [site, article, categories, communes, businesses] = await Promise.all([
+    getSiteSettings(),
     fetchArticleAuth(slug),
     api.categories(),
     api.communes(),
@@ -41,6 +43,7 @@ export default async function EditArticlePage({ params }: Props) {
       categories={categories}
       communes={communes}
       businesses={businesses}
+      facebookEnabled={site.facebook_enabled}
     />
   );
 }

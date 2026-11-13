@@ -1,5 +1,22 @@
 # 08 — Setup Meta App + Procédure App Review
 
+> **État au 13 novembre 2026** : le code de publication est livré et inactif.
+> Pour l'activer, renseigner **directement dans le `.env` du VPS** (jamais
+> dans une conversation ni dans le dépôt) :
+>
+> ```dotenv
+> FACEBOOK_PAGE_ID=xxx
+> FACEBOOK_PAGE_ACCESS_TOKEN=xxx
+> # facultatif, ex. v23.0 ; vide = version par défaut de l'app Meta
+> FACEBOOK_GRAPH_VERSION=
+> ```
+>
+> Le jeton doit être un **jeton de page longue durée** avec la permission
+> `pages_manage_posts`. Redémarrer ensuite `geoclicmedia-django` et
+> `geoclicmedia-celery-worker`, puis tester avec un article réel (bloc
+> Facebook → « Publier sur la page Facebook »). Les variables `FACEBOOK_APP_ID`
+> et `FACEBOOK_APP_SECRET` citées plus bas ne sont pas utilisées par le code.
+
 Procédure complète pour configurer la publication automatique vers la Page Facebook depuis le back-office Django, et passer l'App Review Meta du premier coup.
 
 > **Important** : la review Meta prend 2-7 jours en moyenne. **Démarrer la procédure dès que possible** en parallèle du dev pour ne pas bloquer le sprint 2.

@@ -15,12 +15,14 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
     logo_url = serializers.SerializerMethodField()
     billing_enabled = serializers.SerializerMethodField()
     password_reset_enabled = serializers.SerializerMethodField()
+    facebook_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = SiteSettings
         fields = (
             "site_name", "tagline", "logo", "logo_url",
             "primary_color", "accent_color", "billing_enabled", "password_reset_enabled",
+            "facebook_enabled",
             "updated_at",
         )
         read_only_fields = ("updated_at",)
@@ -36,6 +38,10 @@ class SiteSettingsSerializer(serializers.ModelSerializer):
         # Réglage serveur (.env BILLING_ENABLED), non modifiable ici :
         # l'ouverture du paiement suppose des clés Stripe LIVE configurées.
         return settings.BILLING_ENABLED
+
+    def get_facebook_enabled(self, obj: SiteSettings) -> bool:
+        # Réglage serveur : publication automatique sur la page Facebook.
+        return bool(settings.FACEBOOK_PAGE_ID and settings.FACEBOOK_PAGE_ACCESS_TOKEN)
 
     def get_password_reset_enabled(self, obj: SiteSettings) -> bool:
         # Activation explicite et configuration SMTP valide requises.

@@ -35,3 +35,17 @@ def publish_due_articles(now=None) -> list[str]:
 @shared_task(name="editorial.publish_scheduled")
 def publish_scheduled() -> int:
     return len(publish_due_articles())
+
+
+@shared_task(name="editorial.publish_to_facebook")
+def publish_to_facebook(article_id: int) -> str:
+    from . import facebook
+
+    article = Article.objects.filter(pk=article_id).first()
+    if article is None or not facebook.is_enabled():
+        return ""
+    try:
+        return facebook.publish_article(article)
+    except facebook.FacebookError as exc:
+        logger.warning("Publication Facebook de l'article %s : %s", article_id, exc)
+        return ""
