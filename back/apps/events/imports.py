@@ -127,7 +127,7 @@ def occurrences_from_text(
     du jour de la semaine. On ne lit que des preuves déjà vérifiées dans la
     page, donc une date reconstituée vient toujours du document.
 
-    `latest` plafonne les années déduites : voir `french_dates`.
+    `latest` écarte toute date postérieure : voir `french_dates`.
     """
     rows = [
         {

@@ -59,7 +59,7 @@ class ReadDatesTests(SimpleTestCase):
 
 
 class LatestBoundTests(SimpleTestCase):
-    """Une année déduite ne doit pas dépasser le plafond donné par l'appelant."""
+    """Aucune date retrouvée ne doit dépasser le plafond donné par l'appelant."""
 
     def test_old_market_is_not_projected_into_the_future(self):
         # Le 29 décembre est un mercredi en 2021 et en 2027. 2021 est hors
@@ -76,8 +76,15 @@ class LatestBoundTests(SimpleTestCase):
         )
         self.assertEqual([row.day for row in found], [date(2025, 7, 4)])
 
-    def test_written_year_is_trusted_beyond_the_bound(self):
-        found = read_dates(
-            "Du vendredi 4 au samedi 5 décembre 2026.", reference=CRAWL, latest=CRAWL
+    def test_written_year_is_bounded_too(self):
+        # « 2027 » écrit dans un résumé généré par l'ancien prompt n'est pas une
+        # preuve : sous plafond, il est écarté comme le reste.
+        text = "Marchés traditionnels, mercredi 29 décembre 2027"
+        self.assertEqual(
+            [row.day for row in read_dates(text, reference=CRAWL)], [date(2027, 12, 29)]
         )
+        self.assertEqual(read_dates(text, reference=CRAWL, latest=CRAWL), [])
+
+    def test_without_a_bound_a_written_year_is_still_trusted(self):
+        found = read_dates("Du vendredi 4 au samedi 5 décembre 2026.", reference=CRAWL)
         self.assertEqual([row.day for row in found], [date(2026, 12, 5)])

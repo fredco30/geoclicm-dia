@@ -8,7 +8,7 @@
 année, tout en recopiant « Vernissage le vendredi 04 juillet à 18h30 » dans ses
 preuves. L'année se retrouve en accordant le jour de la semaine, sans appel IA.
 
-Une année déduite ne peut pas dépasser la date de crawl : un même jour de
+Aucune date retrouvée ne peut dépasser la date de crawl : un même jour de
 semaine revenant tous les six ans, une date de 2021 trouverait sinon une
 solution unique en 2027 et un marché ancien ressortirait dans le futur. On
 reprend ici de l'existant, donc toutes les dates à retrouver sont derrière nous.
