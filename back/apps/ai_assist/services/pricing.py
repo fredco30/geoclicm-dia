@@ -12,6 +12,7 @@ change ses tarifs, mettre à jour les valeurs et déployer — les coûts
 historiques stockés dans `AIGeneration.cost_eur` restent figés (ils
 représentent le coût au moment de la génération).
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -40,6 +41,34 @@ MODEL_PRICING: dict[str, tuple[Decimal, Decimal]] = {
     "mistral-embed": (Decimal("0.10"), Decimal("0.00")),
 }
 
+# OpenCode Zen — modèles gratuits, relevés dans la console le 13/11/2026.
+# Les inscrire ici n'est pas cosmétique : un modèle absent de la table
+# déclenche un avertissement à chaque appel, soit plusieurs centaines par
+# collecte. Leur coût est réellement nul, le 0 ci-dessous n'est donc pas un
+# trou dans le suivi.
+#
+# ATTENTION : cette liste tourne. Un modèle peut devenir payant ou
+# disparaître sans préavis, et il resterait alors journalisé à 0 € — le
+# budget de la collecte ne verrait plus rien venir. Le plafond en appels
+# (EVENT_AI_DAILY_CALL_CAP) est là pour ça. Revérifier la console avant de
+# s'appuyer sur un de ces identifiants.
+OPENCODE_FREE_MODELS = (
+    "beam-free",
+    "big-pickle",
+    "deepseek-v4.1-flash-free",
+    "flint-40b-free",
+    "glm-5.3-flash-free",
+    "iceman-free",
+    "inkling-2-small-free",
+    "jev-1.13-free",
+    "longcat-2.5-free",
+    "mimo-v2.6-flash-free",
+    "minimax-m3.1-flash-free",
+    "nemotron-3.5-lightning-free",
+    "nemotron-3.5-super-vl-free",
+)
+MODEL_PRICING.update({model: (Decimal("0"), Decimal("0")) for model in OPENCODE_FREE_MODELS})
+
 
 def estimate_cost_eur(
     model: str,
@@ -58,9 +87,8 @@ def estimate_cost_eur(
     if pricing is None:
         return Decimal("0")
     in_price, out_price = pricing
-    cost = (
-        (Decimal(tokens_in) / Decimal("1000000")) * in_price
-        + (Decimal(tokens_out) / Decimal("1000000")) * out_price
-    )
+    cost = (Decimal(tokens_in) / Decimal("1000000")) * in_price + (
+        Decimal(tokens_out) / Decimal("1000000")
+    ) * out_price
     # Quantize à 6 décimales (cohérent avec AIGeneration.cost_eur)
     return cost.quantize(Decimal("0.000001"))
