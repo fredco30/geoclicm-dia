@@ -797,6 +797,16 @@ def _upsert_candidate(source: EventSource, data: dict) -> tuple[EventImportCandi
     created = existing is None
     previous_payload = existing.raw_payload if existing else None
     data = preserve_review(previous_payload, data)
+    if existing is not None:
+        # Une catégorie ou une commune choisie à la main (classement groupé,
+        # approbation) n'est pas effacée par une nouvelle extraction qui ne
+        # sait pas la déterminer.
+        for field, error in (("category", "Catégorie non déterminée"), ("commune", "Commune non reconnue")):
+            if data.get(field) is None and getattr(existing, f"{field}_id"):
+                data[field] = getattr(existing, field)
+                data["validation_errors"] = [
+                    item for item in data["validation_errors"] if item != error
+                ]
     payload_changed = previous_payload != data["raw_payload"]
     status = (
         EventImportCandidate.Status.EXPIRED
@@ -985,3 +995,41 @@ def sync_event_source(source: EventSource) -> EventImportRun:
     source.last_error = "\n".join(errors)
     source.save(update_fields=["last_synced_at", "last_status", "last_error", "updated_at"])
     return run
+
+
+CATEGORY_ERROR = "Catégorie non déterminée"
+COMMUNE_ERROR = "Commune non reconnue"
+
+
+def classify_candidates(ids, *, category=None, commune=None) -> dict:
+    """Attribue une catégorie et/ou une commune à plusieurs candidats.
+
+    Seuls les candidats « À valider » ou « Incomplets » sont modifiés. Le
+    motif d'incomplétude correspondant disparaît ; un candidat sans autre
+    motif devient « À valider ». Rien n'est publié : l'approbation reste un
+    geste humain distinct.
+    """
+    if category is None and commune is None:
+        raise ValueError("Choisissez une catégorie ou une commune.")
+    lock_identity(EventImportCandidate)
+    updated, ready = [], []
+    for candidate in EventImportCandidate.objects.filter(
+        pk__in=list(ids)[:500],
+        status__in=(EventImportCandidate.Status.PENDING, EventImportCandidate.Status.INVALID),
+    ):
+        errors = list(candidate.validation_errors or [])
+        if category is not None:
+            candidate.category = category
+            errors = [error for error in errors if error != CATEGORY_ERROR]
+        if commune is not None:
+            candidate.commune = commune
+            errors = [error for error in errors if error != COMMUNE_ERROR]
+        candidate.validation_errors = errors
+        if candidate.status == EventImportCandidate.Status.INVALID and not errors:
+            candidate.status = EventImportCandidate.Status.PENDING
+            ready.append(candidate.pk)
+        candidate.save(
+            update_fields=["category", "commune", "validation_errors", "status", "last_seen_at"]
+        )
+        updated.append(candidate)
+    return {"updated": updated, "ready_ids": ready}

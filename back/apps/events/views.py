@@ -5,6 +5,7 @@ from datetime import UTC, datetime, time
 
 from django.conf import settings
 from django.contrib.gis.geos import Polygon
+from django.db import transaction
 from django.db.models import Min, Q
 from django.http import HttpResponse
 from django.utils import timezone
@@ -344,6 +345,41 @@ class EventImportCandidateAdminViewSet(viewsets.ModelViewSet):
         candidate.status = EventImportCandidate.Status.REJECTED
         candidate.save(update_fields=["status", "last_seen_at"])
         return Response(self.get_serializer(candidate).data)
+
+    @action(detail=False, methods=["post"], url_path="bulk-classify")
+    def bulk_classify(self, request):
+        """POST {ids, category?, commune?} — classement groupé, sans publication."""
+        from apps.core.models import Commune
+
+        from .imports import classify_candidates
+
+        ids = request.data.get("ids")
+        if not isinstance(ids, list) or not ids:
+            return Response(
+                {"detail": "Sélectionnez au moins un candidat."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        ids = [item for item in ids if isinstance(item, int)]
+        category = commune = None
+        if request.data.get("category"):
+            category = EventCategory.objects.filter(pk=request.data["category"]).first()
+            if category is None:
+                return Response({"detail": "Catégorie inconnue."}, status=status.HTTP_400_BAD_REQUEST)
+        if request.data.get("commune"):
+            commune = Commune.objects.filter(pk=request.data["commune"]).first()
+            if commune is None:
+                return Response({"detail": "Commune inconnue."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            with transaction.atomic():
+                result = classify_candidates(ids, category=category, commune=commune)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                "updated": self.get_serializer(result["updated"], many=True).data,
+                "ready_ids": result["ready_ids"],
+            }
+        )
 
     @action(detail=False, methods=["post"], url_path="bulk-approve")
     def bulk_approve(self, request):
