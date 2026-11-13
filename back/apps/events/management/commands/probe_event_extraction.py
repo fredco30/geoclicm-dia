@@ -57,6 +57,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Pages : {len(pages)} | appels prévus : {len(batches)}")
 
         total_events = 0
+        dated = 0
         undated = 0
         resolvable = 0
         for batch in batches:
@@ -87,7 +88,11 @@ class Command(BaseCommand):
                 title = str(event.get("title") or "")[:60]
                 if occurrences:
                     when = str(occurrences[0].get("starts_at") or "")[:16]
-                    self.stdout.write(f"  {when}  {title}")
+                    # Une date passée est un succès : le modèle a cessé de jeter
+                    # l'information, et c'est notre code qui classe en « Expirés ».
+                    past = when[:10] < date.today().isoformat()
+                    dated += 1
+                    self.stdout.write(f"  {when}{' (passée)' if past else ''}  {title}")
                     continue
 
                 undated += 1
@@ -105,7 +110,7 @@ class Command(BaseCommand):
                     self.stdout.write(f"      preuve : {str(line)[:110]}")
 
         self.stdout.write("")
-        self.stdout.write(f"Événements : {total_events}")
+        self.stdout.write(f"Événements : {total_events}, dont datés : {dated}")
         self.stdout.write(
             f"  dont sans date : {undated}, dont résolubles par le jour : {resolvable}"
         )
