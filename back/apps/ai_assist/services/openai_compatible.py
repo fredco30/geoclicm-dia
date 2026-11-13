@@ -40,6 +40,7 @@ def generate_openai_compatible(
     timeout: int = 120,
     max_attempts: int = 3,
     enforce_user_budget: bool = True,
+    extra_headers: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Appelle ``/chat/completions`` avec budget, reprises et journal d'audit.
 
@@ -95,6 +96,11 @@ def generate_openai_compatible(
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
+    # Certaines passerelles exigent que le client s'annonce. L'en-tête
+    # d'autorisation reste maître : extra_headers ne peut pas l'écraser.
+    for name, value in (extra_headers or {}).items():
+        if name.lower() != "authorization":
+            headers[name] = value
     attempts = max(1, int(max_attempts))
     started = time.time()
     response = None

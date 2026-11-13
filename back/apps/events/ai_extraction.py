@@ -40,6 +40,15 @@ def _provenance_key(url: str) -> str:
 
 
 COLLECT_ENDPOINT_PREFIX = "events.extract."
+# La passerelle OpenCode demande aux clients tiers de s'annoncer et de porter
+# un identifiant de session stable. Il est dérivé de la seule clé technique de
+# la source : opaque, et ne transporte ni nom de projet ni donnée personnelle.
+COLLECT_USER_AGENT = "django-events-collector/1.0"
+
+
+def _session_header(source) -> str:
+    seed = f"events-source-{getattr(source, 'pk', 0)}"
+    return hashlib.sha256(seed.encode()).hexdigest()[:32]
 
 
 def _collect_budget_guard() -> None:
@@ -135,6 +144,10 @@ def _call_ai(source, prompt: str, *, system_prompt: str | None = None) -> dict:
                 timeout=settings.EVENT_AI_HTTP_TIMEOUT,
                 max_attempts=settings.EVENT_AI_MAX_ATTEMPTS,
                 enforce_user_budget=False,
+                extra_headers={
+                    "User-Agent": COLLECT_USER_AGENT,
+                    "x-opencode-session": _session_header(source),
+                },
             )
         except (BudgetExceeded, LLMProviderNotConfigured, LLMProviderError) as exc:
             raise ExtractionUnavailable(str(exc)) from exc

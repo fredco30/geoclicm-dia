@@ -255,11 +255,17 @@ OVH_AI_ENDPOINTS_ACCESS_TOKEN = env(
 DEEPSEEK_BASE_URL = env("DEEPSEEK_BASE_URL", default="https://api.deepseek.com")
 DEEPSEEK_API_KEY = env("DEEPSEEK_API_KEY", default="")
 DEEPSEEK_MODEL = env("DEEPSEEK_MODEL", default="deepseek-v4-flash")
-# OpenCode Zen : passerelle compatible OpenAI. Les modèles GLM et Kimi
-# répondent sur /chat/completions ; les modèles GPT (/responses) et Claude
-# (/messages) ne passent pas par ce client. Le forfait « Go » a sa propre
-# base, https://opencode.ai/zen/go/v1 — à régler dans le .env.
-OPENCODE_BASE_URL = env("OPENCODE_BASE_URL", default="https://opencode.ai/zen/v1")
+# OpenCode : passerelle compatible OpenAI. Les routes vivent sous
+# /inference/, et l'abonnement « Go » a les siennes sous /inference/go/ :
+#   hors Go : https://opencode.ai/inference/openai/v1
+#   avec Go : https://opencode.ai/inference/go/openai/v1
+# Seuls les modèles servis en style OpenAI passent par ce client : les
+# modèles Anthropic (/anthropic/v1/messages) et Google (/google/v1beta) ont
+# leurs propres dialectes. La liste des modèles d'un abonnement se lit sur
+# .../v1/models.
+OPENCODE_BASE_URL = env(
+    "OPENCODE_BASE_URL", default="https://opencode.ai/inference/openai/v1"
+)
 OPENCODE_API_KEY = env("OPENCODE_API_KEY", default="")
 OPENCODE_MODEL = env("OPENCODE_MODEL", default="")
 
