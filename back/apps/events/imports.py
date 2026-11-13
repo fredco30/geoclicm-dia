@@ -25,6 +25,7 @@ from PIL import Image, UnidentifiedImageError
 from apps.assistant.indexers.http_fetcher import fetcher
 from apps.core.models import Commune
 from apps.discovery.cleaning import is_foreign_language_url
+from apps.discovery.page_dates import resolve_page_dates
 from apps.discovery.review import guard_import, lock_identity, preserve_review, review_candidate
 from apps.discovery.validity import validity
 
@@ -120,21 +121,50 @@ def normalize_page_text(value: object) -> str:
     return " ".join(str(value or "").split()).casefold()
 
 
-def years_absent_from_page(occurrences: list[dict], page_text: str) -> list[str]:
-    """Années d'occurrence introuvables dans le texte de la page.
+MAX_GAP_AFTER_PAGE = timedelta(days=365)
+MAX_FUTURE_HORIZON = timedelta(days=730)
 
-    Le prompt d'extraction interdit de fabriquer une date (« ne fabrique pas un
-    1er janvier par défaut ») et de projeter une année que le document ne donne
-    pas. Le modèle le fait quand même, surtout sur les activités permanentes.
-    Une année qui ne figure nulle part dans la page n'a donc pas été lue : elle
-    a été déduite, et seul un humain peut trancher.
 
-    Sans texte de page, il n'y a rien à corroborer : on n'invente pas de motif.
+def page_anchor_date(page_dates: object) -> date | None:
+    """Date la plus récente exposée par la page : modification, sinon publication."""
+    if not isinstance(page_dates, dict):
+        return None
+    found = []
+    for key in ("modified_at", "published_at"):
+        try:
+            found.append(date.fromisoformat(str(page_dates.get(key) or "")[:10]))
+        except ValueError:
+            continue
+    return max(found) if found else None
+
+
+def implausible_date_reason(
+    occurrences: list[dict],
+    page_dates: object,
+    *,
+    now: datetime | None = None,
+) -> str:
+    """Pourquoi la date annoncée ne peut pas venir de cette page, sinon "".
+
+    Une date sans année est ancrée sur la date de la page, mais les candidats
+    déjà collectés l'ont été sur « aujourd'hui » : une page ancienne annonçant
+    « 14 juillet » a donc produit le 14 juillet de l'an prochain, un événement
+    que personne n'a annoncé. Deux garde-fous, volontairement larges pour ne pas
+    condamner une page qui annonce la saison suivante : un événement n'est pas
+    publié plus d'un an avant la dernière modification de sa page, et un agenda
+    local ne programme pas à plus de deux ans.
     """
-    if not page_text:
-        return []
-    years = {str(row.get("starts_at") or "")[:4] for row in occurrences}
-    return sorted(year for year in years if year and year not in page_text)
+    if not occurrences:
+        return ""
+    start = _aware(occurrences[0].get("starts_at"))
+    if start is None:
+        return ""
+    if start - (now or timezone.now()) > MAX_FUTURE_HORIZON:
+        return "plus de deux ans dans le futur"
+    anchor = page_anchor_date(page_dates)
+    if anchor and start.date() - anchor > MAX_GAP_AFTER_PAGE:
+        return f"page datée du {anchor.isoformat()}"
+    return ""
 
 
 def _compact_text(value: object, limit: int | None = None) -> str:
@@ -271,6 +301,7 @@ def _discover_json_ld(
                     "image_url": (page.metadata or {}).get("image_url", ""),
                     "links": page.links,
                     "content": page.cleaned_text,
+                    "page_dates": resolve_page_dates(page.metadata, page.json_ld),
                 }
             )
 
@@ -497,8 +528,8 @@ def _normalize_ai_event(
         errors.append("Catégorie non déterminée")
     if not verified_evidence:
         errors.append("Preuve textuelle IA non vérifiable dans la page")
-    if years_absent_from_page(occurrences, page_text):
-        errors.append(DATE_EVIDENCE_ERROR)
+    if implausible_date_reason(occurrences, page.get("page_dates")):
+        errors.append(DATE_ANCHOR_ERROR)
 
     links = set(page.get("links") or [])
     booking_candidate = _absolute_http_url(page_url, raw.get("booking_url"))
@@ -1058,7 +1089,7 @@ def sync_event_source(source: EventSource) -> EventImportRun:
 CATEGORY_ERROR = "Catégorie non déterminée"
 COMMUNE_ERROR = "Commune non reconnue"
 DATES_ERROR = "Dates absentes, incomplètes ou invalides"
-DATE_EVIDENCE_ERROR = "Date non corroborée par la page"
+DATE_ANCHOR_ERROR = "Date douteuse au regard de la page"
 
 
 def classify_candidates(ids, *, category=None, commune=None) -> dict:
