@@ -205,6 +205,13 @@ export const PUBLISH_ARTICLE: Workflow = {
                 l&apos;article doit être rempli.
               </>,
               <>
+                <UI>Programmer</UI> : dans le bloc <UI>Publication</UI>, choisissez
+                une date et une heure, puis cliquez sur <UI>Programmer</UI>.
+                L&apos;article se met en ligne tout seul à l&apos;heure dite (à
+                5 minutes près). Vous pouvez changer la date, le publier
+                immédiatement ou <UI>Annuler la programmation</UI>.
+              </>,
+              <>
                 Si une information manque, un encadré rouge indique quel champ
                 corriger (ex. <em>« Catégorie : Ce champ est obligatoire. »</em>).
               </>,
