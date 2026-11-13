@@ -104,9 +104,12 @@ class ListingImportCandidateAdminViewSet(viewsets.ModelViewSet):
                     ListingImportCandidate.Status.NEEDS_REVIEW,
                 )
             )
-        if self.action == "list" and "limit" in self.request.query_params:
+        # Toujours borné : sans limite, une liste de plusieurs milliers de
+        # candidats (charges utiles IA comprises) bloquait les workers
+        # Gunicorn et rendait tout le site indisponible.
+        if self.action == "list":
             try:
-                limit = min(max(int(self.request.query_params["limit"]), 1), 100)
+                limit = min(max(int(self.request.query_params.get("limit", 50)), 1), 100)
                 offset = max(int(self.request.query_params.get("offset", 0)), 0)
             except (TypeError, ValueError):
                 limit, offset = 50, 0
