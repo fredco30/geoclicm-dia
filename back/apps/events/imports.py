@@ -78,6 +78,43 @@ def _aware_ics_end(value: object) -> datetime | None:
     return _aware(value)
 
 
+def _derived_end(start: datetime) -> datetime:
+    """Fin déduite quand la page n'en annonce aucune : le minuit suivant.
+
+    Le prompt d'extraction interdit d'inventer une heure, donc beaucoup
+    d'occurrences arrivent sans `ends_at`. Minuit suivant garde l'événement sur
+    sa journée sans publier d'heure de fin inventée : le front masque une fin à
+    00:00 et ne parle de période qu'au-delà de 24 h.
+    """
+    day = timezone.localtime(start, PARIS).date()
+    return timezone.make_aware(datetime.combine(day + timedelta(days=1), time.min), PARIS)
+
+
+def build_occurrences(raw_occurrences: object) -> list[dict]:
+    """Occurrences exploitables d'une extraction IA, fin déduite si elle manque."""
+    rows: list[dict] = []
+    if not isinstance(raw_occurrences, list):
+        return rows
+    for occurrence in raw_occurrences:
+        if not isinstance(occurrence, dict):
+            continue
+        starts_at = _aware(occurrence.get("starts_at"))
+        if not starts_at:
+            continue
+        ends_at = _aware(occurrence.get("ends_at"), end=True)
+        if ends_at is None or ends_at <= starts_at:
+            ends_at = _derived_end(starts_at)
+        rows.append(
+            {
+                "starts_at": starts_at.isoformat(),
+                "ends_at": ends_at.isoformat(),
+                "is_all_day": bool(occurrence.get("is_all_day")),
+            }
+        )
+    rows.sort(key=lambda row: row["starts_at"])
+    return rows
+
+
 def _compact_text(value: object, limit: int | None = None) -> str:
     text = BeautifulSoup(str(value or ""), "lxml").get_text(" ", strip=True)
     text = " ".join(text.split())
@@ -293,8 +330,8 @@ def _normalize_json_ld(
     start = _aware(node.get("startDate"))
     end = _aware(node.get("endDate"), end=True)
     all_day = isinstance(node.get("startDate"), str) and len(node["startDate"]) == 10
-    if start and not end:
-        end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
+    if start and (end is None or end <= start):
+        end = _derived_end(start)
 
     location = node.get("location") or {}
     if isinstance(location, list):
@@ -413,23 +450,7 @@ def _normalize_ai_event(
     if (latitude is None or longitude is None) and address:
         latitude, longitude = _geocode(address, commune)
 
-    occurrences = []
-    raw_occurrences = raw.get("occurrences") or []
-    if isinstance(raw_occurrences, list):
-        for occurrence in raw_occurrences:
-            if not isinstance(occurrence, dict):
-                continue
-            starts_at = _aware(occurrence.get("starts_at"))
-            ends_at = _aware(occurrence.get("ends_at"), end=True)
-            if starts_at and ends_at and ends_at > starts_at:
-                occurrences.append(
-                    {
-                        "starts_at": starts_at.isoformat(),
-                        "ends_at": ends_at.isoformat(),
-                        "is_all_day": bool(occurrence.get("is_all_day")),
-                    }
-                )
-    occurrences.sort(key=lambda row: row["starts_at"])
+    occurrences = build_occurrences(raw.get("occurrences"))
     start = _aware(occurrences[0]["starts_at"]) if occurrences else None
     end = _aware(occurrences[0]["ends_at"]) if occurrences else None
 
@@ -447,7 +468,7 @@ def _normalize_ai_event(
     if not title:
         errors.append("Titre absent")
     if not occurrences:
-        errors.append("Dates absentes, incomplètes ou invalides")
+        errors.append(DATES_ERROR)
     if not commune:
         errors.append("Commune non reconnue")
     if not category:
@@ -539,8 +560,8 @@ def _normalize_ics(source: EventSource, item: dict) -> dict:
             component.decoded("dtstart"), datetime
         )
         end = _aware_ics_end(end_value) if end_value else None
-        if start and not end:
-            end = start + (timedelta(days=1) if all_day else timedelta(hours=2))
+        if start and (end is None or end <= start):
+            end = _derived_end(start)
         if start and end:
             occurrences.append(
                 {
@@ -1012,6 +1033,7 @@ def sync_event_source(source: EventSource) -> EventImportRun:
 
 CATEGORY_ERROR = "Catégorie non déterminée"
 COMMUNE_ERROR = "Commune non reconnue"
+DATES_ERROR = "Dates absentes, incomplètes ou invalides"
 
 
 def classify_candidates(ids, *, category=None, commune=None) -> dict:
