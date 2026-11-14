@@ -39,6 +39,32 @@ def is_foreign_language_url(url: str) -> bool:
     )
 
 
+# Pages utilitaires d'un site : aucun contenu à extraire, mais elles listent
+# souvent tous les titres du site (plan du site) et l'IA en tirait des candidats
+# fantômes. Les pages de liste (agenda, actualités) ne sont PAS exclues : elles
+# portent de vrais évènements.
+_NAVIGATION_SLUGS = frozenset({
+    "plan-du-site", "plan-site", "sitemap", "site-map", "mentions-legales",
+    "mentions", "cgu", "cgv", "conditions-generales", "politique-de-confidentialite",
+    "confidentialite", "donnees-personnelles", "rgpd", "cookies", "gestion-des-cookies",
+    "accessibilite", "credits", "recherche", "search", "connexion", "login",
+    "mon-compte", "panier", "newsletter", "contact", "nous-contacter",
+})
+_NAVIGATION_SEGMENTS = frozenset({"tag", "tags", "author", "auteur", "feed", "wp-json"})
+
+
+def is_navigation_url(url: str) -> bool:
+    """Vrai pour une page utilitaire (plan du site, mentions légales, recherche…)."""
+    parsed = urlparse(url or "")
+    segments = [segment.casefold() for segment in parsed.path.split("/") if segment]
+    if not segments:
+        return False
+    if any(segment in _NAVIGATION_SEGMENTS for segment in segments):
+        return True
+    last = re.sub(r"\.(html?|php|aspx?)$", "", segments[-1])
+    return last in _NAVIGATION_SLUGS
+
+
 def strip_locality_suffix(name: str, *localities: object) -> str:
     """Retire les suffixes de commune répétés en fin de nom.
 
