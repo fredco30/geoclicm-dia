@@ -69,17 +69,19 @@ vides si rien n'est annoncé).
   récurrente ou ponctuelle en plein air ou halle.
 - "places" : un lieu à découvrir, sans date (patrimoine, monument, site naturel,
   plage, balade, point de vue, savoir-faire, activité sportive ou de loisir,
-  adresse gastronomique, hébergement). Champs : source_page_url, title,
+  hébergement). Champs : source_page_url, title,
   short_description, description, address, locality, latitude, longitude, duration,
   difficulty, accessibility, best_season, practical_info, official_url,
   category_hint (un seul mot parmi : patrimoine, nature, plages, balades,
-  points-de-vue, savoir-faire, activites-sports, gastronomie, hebergements),
+  points-de-vue, savoir-faire, activites-sports, hebergements),
   evidence.
 - "businesses" : un commerce, artisan ou service établi (boutique, atelier,
   borne de recharge, cybercafé, banque, agence, médecin, garage...). Les
-  restaurants, bars, glaciers, hébergements et prestataires d'activités de
-  loisir restent dans "places" (gastronomie, hebergements, activites-sports) :
-  ne les mets PAS dans "businesses". Une association (club sportif, comité des
+  restaurants, bars, cafés, glaciers, caves et producteurs vont dans
+  "businesses" avec category_hint parmi : Restaurants, Bars & Cafes, Glaciers,
+  Fruits de mer / Poisson, Producteurs & Caveaux, Food trucks. Les
+  hébergements et prestataires d'activités de loisir restent dans "places"
+  (hebergements, activites-sports). Une association (club sportif, comité des
   fêtes, association culturelle ou solidaire) va dans "businesses" avec
   category_hint = "Associations". Champs : source_page_url, title,
   short_description, description, address, postal_code, locality, latitude,
@@ -107,8 +109,8 @@ Règles impératives :
 6. N'ajoute aucun commentaire hors JSON.
 7. category_hint : choisis la catégorie la plus précise. "activites-sports" pour
    une activité sportive ou de loisir (nautique, voile, équitation, vélo,
-   accrobranche, karting, fitness, parc de loisirs) ; "gastronomie" pour un
-   restaurant, bar, glacier, producteur ou caviste ; "hebergements" pour un
+   accrobranche, karting, fitness, parc de loisirs) ; un restaurant, bar,
+   glacier, producteur ou caviste va dans "businesses" ; "hebergements" pour un
    camping, hôtel, résidence ou location de vacances ; "savoir-faire" uniquement
    pour un artisanat, un atelier ou un savoir-faire local à découvrir.
 8. Année : si le document donne un jour et un mois SANS année, utilise l'année de
@@ -400,6 +402,35 @@ def _locality_names(crawl_source, commune) -> list[str]:
     """
     source_commune = getattr(crawl_source, "commune", None)
     return [item.name for item in (commune, source_commune) if item is not None]
+
+
+_GASTRONOMY_HINTS = {"gastronomie", "gastronomy", "restaurant", "restaurants", "restauration"}
+_GASTRONOMY_SPECIALTIES = (
+    (r"\b(glacier|glaces?|gelato|sorbet)", "Glaciers"),
+    (r"\b(bar|bars|cafe|cafes|pub|brasserie|salon de the)\b", "Bars & Cafes"),
+    (r"\b(cave|caveau|caviste|vins?|domaine|producteur)", "Producteurs & Caveaux"),
+    (r"\b(food ?truck)", "Food trucks"),
+)
+
+
+def is_gastronomy_place(raw: dict) -> bool:
+    """Lieu « gastronomie » : depuis migrate_gastronomie (août 2026), la
+    gastronomie vit dans Commerçants et la catégorie Découvrir est inactive."""
+    hint = _norm_locality(str(raw.get("category_hint") or ""))
+    return hint in _GASTRONOMY_HINTS
+
+
+def as_gastronomy_business(raw: dict) -> dict:
+    """Recopie un lieu gastronomie en commerce avec la spécialité devinée."""
+    import re
+
+    text = _norm_locality(f"{raw.get('title') or ''} {raw.get('short_description') or ''}")
+    hint = "Restaurants"
+    for pattern, name in _GASTRONOMY_SPECIALTIES:
+        if re.search(pattern, text):
+            hint = name
+            break
+    return {**raw, "category_hint": hint}
 
 
 def _place_category(raw: dict, title: str) -> PlaceCategory | None:

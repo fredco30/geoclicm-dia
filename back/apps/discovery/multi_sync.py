@@ -42,9 +42,11 @@ from apps.events.imports import (
 from apps.listings.models import Listing, ListingImportCandidate
 
 from .cleaning import is_foreign_language_url, norm_text
-from .models import Place, PlaceImportCandidate
+from .models import Place, PlaceCategory, PlaceImportCandidate
 from .multi_extraction import (
+    as_gastronomy_business,
     extract_multi,
+    is_gastronomy_place,
     normalize_business,
     normalize_listing,
     normalize_place,
@@ -784,6 +786,17 @@ def _route_results(
     # proche du titre de page). Chaque source distincte est conservée : le service
     # review la rattache au candidat de référence si le doublon est établi.
     # Ne pas perdre deux établissements homonymes par une empreinte trop large.
+    # Filet : un lieu « gastronomie » part en Commerçants (catégorie Découvrir
+    # inactive depuis migrate_gastronomie), sinon il arrive sans catégorie.
+    if not PlaceCategory.objects.filter(slug="gastronomie", is_active=True).exists():
+        kept = []
+        for raw in results["places"]:
+            if is_gastronomy_place(raw):
+                results.setdefault("businesses", []).append(as_gastronomy_business(raw))
+            else:
+                kept.append(raw)
+        results["places"] = kept
+
     places_by_page: dict[str, list[dict]] = {}
     for raw in results["places"]:
         places_by_page.setdefault(raw["source_page_url"], []).append(raw)
