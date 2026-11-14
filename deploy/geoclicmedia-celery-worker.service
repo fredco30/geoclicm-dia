@@ -11,9 +11,14 @@ WorkingDirectory=/var/www/geoclicmedia/back
 Environment="DJANGO_SETTINGS_MODULE=config.settings.prod"
 ExecStart=/var/www/geoclicmedia/back/.venv/bin/celery -A config.celery worker \
     --loglevel=info \
-    --concurrency=2
+    --concurrency=2 \
+    --max-tasks-per-child=50 \
+    --max-memory-per-child=500000
 Restart=on-failure
 RestartSec=10
+# Garde-fou : recyclage des enfants + plafond du service.
+MemoryHigh=1300M
+MemoryMax=1500M
 StandardOutput=append:/var/log/geoclicmedia-celery-worker.log
 StandardError=append:/var/log/geoclicmedia-celery-worker.log
 
