@@ -22,9 +22,45 @@ function date(value: string | null) {
       }).format(new Date(value))
     : "Date manquante";
 }
+function day(value: string) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeZone: "Europe/Paris",
+  }).format(new Date(value));
+}
+type Occ = EventImportCandidate["occurrences"][number];
+function datedOccurrences(row: EventImportCandidate): Occ[] {
+  return (row.occurrences || [])
+    .filter((o) => o.starts_at && !Number.isNaN(new Date(o.starts_at).getTime()))
+    .sort((a, b) => a.starts_at!.localeCompare(b.starts_at!));
+}
+// Prochaine occurrence non terminée, recalculée à l'affichage : starts_at
+// est figé au moment du crawl et peut déjà être passé pour une série.
+function nextOccurrence(row: EventImportCandidate): Occ | null {
+  const now = Date.now();
+  const dated = datedOccurrences(row);
+  return (
+    dated.find((o) => new Date(o.ends_at || o.starts_at!).getTime() >= now) ??
+    dated[dated.length - 1] ??
+    null
+  );
+}
 function schedule(row: EventImportCandidate) {
-  if (row.occurrences && row.occurrences.length > 0 && row.starts_at)
-    return date(row.starts_at);
+  const dated = datedOccurrences(row);
+  const next = nextOccurrence(row);
+  if (next) {
+    const label = next.is_all_day ? day(next.starts_at!) : date(next.starts_at);
+    const now = Date.now();
+    const remaining = dated.filter(
+      (o) => new Date(o.ends_at || o.starts_at!).getTime() >= now,
+    );
+    if (remaining.length > 1) {
+      const last = remaining[remaining.length - 1];
+      return `${label} · ${remaining.length} dates jusqu'au ${day(last.starts_at!)}`;
+    }
+    return label;
+  }
+  if (row.starts_at) return date(row.starts_at);
   const hint =
     row.extraction_evidence && row.extraction_evidence.length
       ? ` « ${row.extraction_evidence[0]} »`
@@ -42,7 +78,11 @@ function isReliable(row: EventImportCandidate) {
     row.extraction_evidence.length === 0
   )
     return false;
-  const end = row.ends_at || row.starts_at;
+  // Fin de la DERNIÈRE occurrence : une série dont la première date est
+  // passée reste fiable tant qu'il lui reste des dates.
+  const dated = datedOccurrences(row);
+  const lastOcc = dated[dated.length - 1];
+  const end = lastOcc ? lastOcc.ends_at || lastOcc.starts_at : row.ends_at || row.starts_at;
   if (!end) return false;
   return new Date(end).getTime() >= Date.now();
 }
