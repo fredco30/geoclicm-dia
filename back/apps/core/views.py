@@ -46,25 +46,34 @@ class CanPublish(BasePermission):
 def pending_counts(request):
     """GET /api/admin/pending-counts/ — candidats « À valider » par boîte.
 
-    Même périmètre que la vue par défaut de chaque boîte : statuts
-    « à vérifier » et « incomplet ».
+    Seulement ce qui est réellement actionnable : les « incomplets » ont
+    leur propre onglet et gonflaient le badge (685 dont une majorité de
+    pages sans évènement). Pour l'Agenda, on exclut aussi les candidats
+    dont la date unique est passée depuis le crawl.
     """
+    from django.db.models import Q
+    from django.utils import timezone
+
     from apps.directory.models import Business, BusinessImportCandidate
     from apps.discovery.models import PlaceImportCandidate
     from apps.events.models import EventImportCandidate
     from apps.listings.models import ListingImportCandidate
 
-    def count(model) -> int:
-        return model.objects.filter(
-            status__in=(model.Status.PENDING, model.Status.INVALID, "needs_review")
-        ).count()
+    def pending(model):
+        return model.objects.filter(status__in=(model.Status.PENDING, "needs_review"))
+
+    # Une série (au moins 2 occurrences) garde son badge : sa première date
+    # peut être passée alors qu'il lui en reste à venir.
+    events = pending(EventImportCandidate).exclude(
+        Q(ends_at__lt=timezone.now()) & Q(occurrences__1__isnull=True)
+    )
 
     return Response(
         {
-            "events": count(EventImportCandidate),
-            "places": count(PlaceImportCandidate),
-            "businesses": count(BusinessImportCandidate),
-            "listings": count(ListingImportCandidate),
+            "events": events.count(),
+            "places": pending(PlaceImportCandidate).count(),
+            "businesses": pending(BusinessImportCandidate).count(),
+            "listings": pending(ListingImportCandidate).count(),
             # Modifications de fiches publiées proposées par les annonceurs.
             "business_changes": Business.objects.filter(pending_changes__isnull=False).count(),
         }
