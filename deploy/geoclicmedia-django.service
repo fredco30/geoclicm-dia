@@ -16,12 +16,17 @@ ExecStart=/var/www/geoclicmedia/back/.venv/bin/gunicorn config.wsgi:application 
     --threads 2 \
     --timeout 60 \
     --graceful-timeout 30 \
+    --max-requests 500 \
+    --max-requests-jitter 50 \
     --access-logfile /var/log/geoclicmedia-django-access.log \
     --error-logfile /var/log/geoclicmedia-django-error.log
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 Restart=on-failure
 RestartSec=5
+# Garde-fou : un worker qui dérape ne peut plus saturer le VPS partagé.
+MemoryHigh=1800M
+MemoryMax=2G
 StandardOutput=journal
 StandardError=journal
 
