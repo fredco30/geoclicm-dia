@@ -226,7 +226,7 @@ export function BusinessImportsAdmin({
           <nav className="mt-2 flex flex-wrap gap-2" aria-label="Filtrer par type">
             {(
               [
-                ["all", `Tout (${counts.all})`],
+                ["all", `Tout (${counts.all}${hasNextPage || page > 1 ? " sur cette page" : ""})`],
                 ["associations", `Associations (${counts.associations})`],
                 ["commerces", `Commerces & services (${counts.commerces})`],
               ] as [Group, string][]
@@ -249,7 +249,7 @@ export function BusinessImportsAdmin({
         {filterStatus === "pending" && pendingRows.length > 0 ? (
           <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl border bg-white p-3 shadow-sm">
             <Button variant="secondary" disabled={pending} onClick={selectReliable}>
-              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables ({reliableCount})
+              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables de la page ({reliableCount})
             </Button>
             <Button
               variant="secondary"

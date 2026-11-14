@@ -180,7 +180,7 @@ export function PlaceImportsAdmin({
               disabled={pending}
               onClick={selectReliable}
             >
-              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables (
+              <CheckSquare className="h-4 w-4" /> Sélectionner les fiables de la page (
               {reliableCount})
             </Button>
             <Button
