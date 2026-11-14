@@ -41,7 +41,7 @@ from apps.events.imports import (
 )
 from apps.listings.models import Listing, ListingImportCandidate
 
-from .cleaning import is_foreign_language_url, norm_text
+from .cleaning import is_foreign_language_url, is_navigation_url, norm_text
 from .models import Place, PlaceCategory, PlaceImportCandidate
 from .multi_extraction import (
     as_gastronomy_business,
@@ -645,6 +645,7 @@ def source_page_urls(crawl_source: CrawlSource, *, short_first: bool = False) ->
         # elles créaient des doublons dans une autre langue. Elles restent
         # dans le corpus de l'assistant.
         and not is_foreign_language_url(page.final_url or page.canonical_url)
+        and not is_navigation_url(page.final_url or page.canonical_url)
     ]
     if short_first:
         pages.sort(key=lambda page: len(page.cleaned_text or ""))
@@ -701,6 +702,12 @@ def run_multi_extraction(
             list(crawl_source.pages.filter(is_active=True).order_by("canonical_url"))
         )
     )
+    # Plan du site, mentions légales… : rien à extraire, des candidats fantômes.
+    crawled_pages = [
+        page
+        for page in crawled_pages
+        if not is_navigation_url(page.final_url or page.canonical_url)
+    ]
     pages = [
         {
             "url": page.final_url or page.canonical_url,
